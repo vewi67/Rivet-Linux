@@ -21,27 +21,45 @@ O Tip quer ser simples sem ser limitado. A pessoa deve conseguir usar o sistema 
 
 **Pré-alfa.**
 
-Este repositório contém a fundação e as decisões iniciais do projeto. Ainda não existe uma imagem instalável do Tip.
+O projeto já tem a arquitetura inicial definida. A próxima meta é produzir a primeira ISO inicializável e instalável.
 
-## Base
+## Decisões técnicas atuais
 
-- Debian
-- Arquitetura de sistema ainda em definição detalhada
-- Desktop, instalador, seleção de pacotes e componentes próprios serão decididos antes da implementação da imagem
+- Base: **Debian 13 Trixie**
+- Arquitetura inicial: **amd64**
+- Desktop: **XFCE 4.20**
+- Display server: **Xorg**
+- Display manager: **LightDM**
+- File manager: **Thunar**
+- Terminal: **xfce4-terminal**
+- Rede: **NetworkManager**
+- Áudio: **PipeWire + WirePlumber**
+- Init: **systemd**
+- Bootloader: **GRUB**
+- Build da ISO: **live-build**
+- Instalador: **Calamares**
+- Sistema de arquivos padrão da instalação: **ext4**
 
 ## Estrutura
 
 ```text
 .
 ├── README.md
+├── AGENTS.md
 ├── CONTRIBUTING.md
 ├── .gitignore
+├── .github/
+│   └── pull_request_template.md
 ├── docs/
 │   ├── philosophy.md
 │   ├── architecture.md
 │   ├── roadmap.md
 │   └── decisions/
-│       └── 0001-debian-base.md
+│       ├── 0001-debian-base.md
+│       ├── 0002-desktop.md
+│       ├── 0003-build-and-installer.md
+│       ├── 0004-initial-system-profile.md
+│       └── 0005-first-milestone.md
 ├── build/
 │   └── README.md
 ├── config/
@@ -56,19 +74,10 @@ Este repositório contém a fundação e as decisões iniciais do projeto. Ainda
 
 O Tip será construído em etapas pequenas, verificáveis e reversíveis.
 
-## Status das decisões
+## Próxima meta
 
-| Área | Situação |
-| --- | --- |
-| Nome | Definido |
-| Base | **Debian** |
-| Filosofia | Definida |
-| Desktop | Em decisão |
-| Instalador | Em decisão |
-| Sistema de build | Em decisão |
-| Seleção de pacotes | Em decisão |
-| Ferramentas próprias | Em decisão |
-| Identidade visual | Em andamento |
-| ISO | Ainda não iniciada |
+**Construir a primeira ISO funcional.**
+
+Ela não precisa representar o Tip perfeito. Precisa ligar, abrir o XFCE, funcionar como desktop, iniciar o Calamares e instalar corretamente em uma máquina virtual.
 
 Veja [docs/architecture.md](docs/architecture.md) para a arquitetura atual e [docs/roadmap.md](docs/roadmap.md) para a sequência planejada.
