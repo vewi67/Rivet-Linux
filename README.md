@@ -59,7 +59,8 @@ O projeto já tem a arquitetura inicial definida. A próxima meta é produzir a 
 │       ├── 0002-desktop.md
 │       ├── 0003-build-and-installer.md
 │       ├── 0004-initial-system-profile.md
-│       └── 0005-first-milestone.md
+│       ├── 0005-first-milestone.md
+│       └── 0006-software-management.md
 ├── build/
 │   └── README.md
 ├── config/
