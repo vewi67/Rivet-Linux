@@ -6,7 +6,8 @@
 
 # Local environment
 .env
-.env.*
+.env.local
+.env.*.local
 
 # Build output
 build/output/
