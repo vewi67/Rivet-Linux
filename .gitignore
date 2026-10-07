@@ -1,0 +1,27 @@
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local environment
+.env
+.env.*
+
+# Build output
+build/output/
+build/work/
+build/cache/
+*.iso
+*.img
+*.qcow2
+*.raw
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Package/build caches
+.cache/
