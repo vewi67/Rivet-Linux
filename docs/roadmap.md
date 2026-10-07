@@ -1,54 +1,60 @@
 # Roadmap do Tip
 
-O roadmap prioriza decisões e verificações antes da expansão do sistema.
+O roadmap prioriza uma ISO utilizável rapidamente. Complexidade só entra depois que o caminho básico estiver funcionando.
 
 ## Fase 0: Fundação
 
-**Status: em andamento**
+**Status: concluída**
 
 - [x] Criar repositório
 - [x] Definir nome: Tip
-- [x] Definir base: Debian
+- [x] Definir base: Debian 13 Trixie
 - [x] Registrar filosofia
 - [x] Registrar regras para contribuições e agentes
 - [x] Registrar arquitetura inicial
-- [ ] Definir release Debian alvo
-- [ ] Definir desktop environment
-- [ ] Definir instalador
-- [ ] Definir sistema de build da ISO
+- [x] Definir arquitetura amd64
+- [x] Definir XFCE + Xorg
+- [x] Definir LightDM, NetworkManager e PipeWire
+- [x] Definir live-build
+- [x] Definir Calamares
+- [x] Definir perfil inicial de aplicativos
+- [x] Definir critérios da primeira ISO
 
-## Fase 1: Primeiro sistema inicializável
+## Fase 1: Primeira ISO funcional
 
-Objetivo: produzir a menor imagem útil que represente corretamente a arquitetura escolhida.
+**Status: próxima**
 
-- [ ] Configuração inicial do build
-- [ ] Root filesystem reproduzível
-- [ ] Boot funcional
-- [ ] Ambiente gráfico
-- [ ] Usuário inicial
-- [ ] Rede
-- [ ] Áudio
-- [ ] Desligamento/reinício
-- [ ] Primeiro teste em máquina virtual
+Objetivo: ter um sistema que inicializa, abre o desktop e pode ser instalado em uma VM.
+
+- [ ] Criar configuração mínima do live-build
+- [ ] Configurar fontes e repositórios Debian
+- [ ] Definir seleção inicial de pacotes
+- [ ] Configurar identidade inicial do Tip
+- [ ] Integrar Calamares
+- [ ] Gerar primeira ISO
+- [ ] Testar boot em VM
+- [ ] Testar XFCE
+- [ ] Testar rede
+- [ ] Testar áudio
+- [ ] Testar instalação
+- [ ] Testar primeiro boot instalado
+- [ ] Testar atualização do sistema
 
 ## Fase 2: Primeira experiência do Tip
 
-Objetivo: fazer o sistema parecer Tip, sem colocar enfeite por cima de uma base instável.
-
-- [ ] Defaults do desktop
-- [ ] Ferramentas essenciais
+- [ ] Refinar defaults do XFCE
 - [ ] Identidade visual
-- [ ] Configurações simples
+- [ ] Ferramentas simples do Tip
 - [ ] Documentação de uso
 - [ ] Teste em hardware real
 
 ## Fase 3: Ferramentas próprias
 
-Criar apenas ferramentas que resolvam problemas identificados durante as fases anteriores.
+Criar apenas ferramentas que resolvam problemas identificados durante o uso.
 
-- [ ] Identificar problemas recorrentes
-- [ ] Projetar APIs/comportamentos
-- [ ] Implementar ferramentas pequenas
+- [ ] Identificar problemas reais
+- [ ] Projetar soluções
+- [ ] Implementar pequenas ferramentas
 - [ ] Adicionar testes
 - [ ] Integrar à imagem
 
@@ -64,6 +70,6 @@ Criar apenas ferramentas que resolvam problemas identificados durante as fases a
 
 ## Regra de escopo
 
-Uma etapa não deve ser marcada como concluída apenas porque "funciona no computador de quem fez".
+Uma etapa não está concluída apenas porque funciona na máquina de quem fez.
 
 Ela precisa ter um caminho de reprodução e uma forma razoável de verificar o resultado.
