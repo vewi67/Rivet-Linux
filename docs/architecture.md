@@ -2,32 +2,76 @@
 
 ## Status
 
-Documento inicial. Ele registra o que já foi decidido e separa isso do que ainda precisa ser definido.
+Arquitetura inicial definida. O foco imediato é produzir uma primeira ISO utilizável rapidamente.
 
-## Fundamento
+## Fundação
 
 ### Base do sistema
 
-**Debian** é a base do Tip.
+**Debian 13 Trixie** é a base do Tip.
 
-Isso é uma decisão de arquitetura, não apenas uma preferência. O Tip deve aproveitar o trabalho existente da base sempre que isso atender aos objetivos do projeto.
+O Tip acompanha a release stable escolhida por nome de suite, usando as atualizações oficiais correspondentes. A release atual de referência é Trixie.
+
+## Perfil inicial
+
+- Arquitetura: amd64
+- Desktop: XFCE 4.20
+- Display server: Xorg
+- Display manager: LightDM
+- File manager: Thunar
+- Terminal: xfce4-terminal
+- Rede: NetworkManager
+- Áudio: PipeWire + WirePlumber
+- Init: systemd
+- Initramfs: initramfs-tools
+- Bootloader: GRUB
+- Filesystem padrão: ext4
+
+## Build e instalação
+
+O sistema será construído com **Debian live-build** e instalado com **Calamares**.
+
+A primeira imagem deve funcionar em UEFI e, quando suportado pelo fluxo do build, BIOS/legacy.
+
+## Repositórios Debian
+
+A configuração deve usar explicitamente:
+
+- trixie
+- trixie-updates
+- trixie-security
+
+Com as seções necessárias:
+
+- main
+- contrib
+- non-free
+- non-free-firmware
+
+Firmware não livre poderá ser incluído quando necessário para hardware suportado.
+
+## Software inicial
+
+O objetivo é ter um desktop usável sem transformar a ISO em um depósito de aplicativos.
+
+Software inicial previsto:
+
+- Firefox ESR
+- LibreOffice Writer e Calc
+- GParted
+- Synaptic
+- utilitários principais do XFCE
+- ferramentas básicas de diagnóstico e rede
+
+Steam, Wine e grandes toolchains de desenvolvimento não serão instalados por padrão.
 
 ## Princípios arquiteturais
 
 ### 1. Aproveitar antes de substituir
 
-Um componente existente do Debian deve ser mantido quando:
-
-- atende ao objetivo;
-- é suficientemente simples de administrar;
-- tem manutenção adequada;
-- não entra em conflito com a filosofia do Tip.
-
-Um componente próprio só deve existir quando resolver um problema real do Tip melhor do que a solução existente.
+Um componente existente do Debian deve ser mantido quando atende ao objetivo do Tip.
 
 ### 2. Camadas claras
-
-A arquitetura futura deve poder ser entendida aproximadamente assim:
 
 ```text
 Debian
@@ -39,54 +83,32 @@ Integrações do Tip
 Experiência do usuário
 ```
 
-Cada camada precisa ter uma responsabilidade clara.
-
 ### 3. Falhas devem ser visíveis
 
-O sistema de build e as ferramentas próprias não devem esconder falhas. Erros precisam aparecer cedo, com mensagens úteis.
+O sistema de build e as ferramentas próprias não devem esconder falhas.
 
 ### 4. Reprodutibilidade
 
-Duas construções feitas a partir da mesma revisão e dos mesmos parâmetros devem buscar produzir o mesmo resultado, dentro das limitações normais do ecossistema de pacotes.
+Mudanças no build devem ser versionadas e reproduzíveis.
 
-## Decisões ainda abertas
+### 5. Simplicidade primeiro
 
-As seguintes decisões devem ser tomadas **antes da primeira ISO funcional**:
+Quando uma solução simples e comprovada resolve o problema, ela é a opção padrão.
 
-- versão/release Debian alvo;
-- desktop environment;
-- gerenciador de login;
-- instalador;
-- conjunto inicial de pacotes;
-- política de atualizações;
-- sistema de build da ISO;
-- configuração padrão de rede;
-- configuração de áudio;
-- políticas de serviços em segundo plano;
-- ferramentas próprias do Tip;
-- estratégia de testes em máquina virtual e hardware real;
-- identidade visual e assets distribuídos na ISO.
+## O que não entra agora
 
-## O que não deve ser feito ainda
+Não implementar:
 
-Não implementar agora:
+- package manager próprio;
+- instalador escrito do zero;
+- sistema de init próprio;
+- kernel próprio;
+- desktop próprio;
+- coleção de scripts sem responsabilidade definida;
+- otimizações agressivas antes de medir.
 
-- um package manager próprio;
-- um instalador escrito do zero;
-- um sistema de init próprio;
-- um kernel próprio;
-- ferramentas de configuração só por estética;
-- uma coleção grande de scripts sem responsabilidade definida.
+## Fase seguinte
 
-Essas coisas aumentariam a superfície de falha antes de o núcleo do Tip estar decidido.
+A próxima implementação deve transformar esta arquitetura em uma **primeira configuração live-build mínima**, seguida de build e teste em VM.
 
-## Critério de aceitação da arquitetura
-
-Antes de começar a automatizar a geração da ISO, deve ser possível explicar:
-
-1. o que vem do Debian;
-2. o que é configuração do Tip;
-3. o que é software próprio do Tip;
-4. como a imagem é construída;
-5. como ela é testada;
-6. como uma mudança pode ser revertida.
+A ISO será tratada como artefato de teste, não como release final.
