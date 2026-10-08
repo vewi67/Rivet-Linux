@@ -39,9 +39,37 @@ jobs:
               set -euo pipefail
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              apt-get install -y --no-install-recommends ca-certificates live-build
+              apt-get install -y --no-install-recommends ca-certificates live-build xorriso
               bash build/build.sh
             '
+
+      - name: Validate generated ISO
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          images=(build/live-image-*.hybrid.iso)
+
+          if [[ ${#images[@]} -ne 1 ]]; then
+            echo "ERROR: expected exactly one generated ISO, found ${#images[@]}." >&2
+            printf '%s\n' "${images[@]}" >&2
+            exit 1
+          fi
+
+          iso="${images[0]}"
+
+          test -s "$iso"
+
+          echo "==> ISO file:"
+          ls -lh "$iso"
+
+          echo "==> ISO metadata:"
+          file "$iso"
+
+          echo "==> El Torito boot information:"
+          xorriso -indev "$iso" -report_el_torito plain
+
+          echo "==> ISO validation passed."
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
