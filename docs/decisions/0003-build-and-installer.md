@@ -1,44 +1,44 @@
-# ADR 0003: live-build e Calamares
+# ADR 0003: live-build and Calamares
 
-- Status: Aceita
-- Data: 2026-10-07
+- **Status:** Accepted
+- **Date:** 2026-10-07
 
-## Contexto
+## Context
 
-O objetivo imediato do Tip é chegar a um sistema inicializável e instalável o mais cedo possível, sem criar uma cadeia de build própria antes de termos uma ISO funcional.
+The immediate goal is to reach a bootable and installable system quickly, without creating a custom build chain before the first ISO exists.
 
-## Decisão
+## Decision
 
 ### Build
 
-Usaremos Debian live-build para construir a imagem.
+Use Debian **live-build** to build the image.
 
-### Instalação
+### Installation
 
-A ISO usará Calamares como instalador gráfico.
+Use **Calamares** as the graphical installer.
 
 ### Boot
 
-A primeira imagem terá como alvo amd64 e suportará inicialização por UEFI, mantendo BIOS/legacy quando suportado pelo fluxo do build.
+The first image targets amd64 and supports UEFI, while retaining BIOS/legacy boot where the live-build flow supports it.
 
-### Repositórios
+### Repositories
 
-A imagem usará as suites do Debian explicitamente por nome, começando com:
+The image uses Debian suites explicitly by name:
 
 - trixie
 - trixie-updates
 - trixie-security
 
-As seções necessárias serão main, contrib, non-free e non-free-firmware.
+The enabled archive areas are main, contrib, non-free, and non-free-firmware.
 
-## Por que não escrever nosso próprio instalador
+## Why not write our own installer?
 
-Calamares já fornece uma estrutura de instalação gráfica adequada a sistemas baseados em Debian. O Tip deve customizar a experiência e a configuração, não reconstruir particionamento, criação de usuário e instalação de sistema do zero.
+Calamares already provides a graphical installation framework suitable for Debian-based systems. Tip should customize the experience and configuration instead of rebuilding partitioning, user creation, and system installation from scratch.
 
-## Por que não criar nosso próprio sistema de build
+## Why not create our own build system?
 
-live-build já resolve a construção de sistemas Live baseados em Debian. Começar com ele reduz código próprio e acelera a chegada da primeira ISO.
+live-build already solves the problem of building Debian-based Live systems. Starting with it reduces custom code and accelerates the first ISO.
 
-## Regra
+## Rule
 
-Qualquer substituição futura de live-build ou Calamares precisa demonstrar um problema concreto que não possa ser resolvido pela configuração existente.
+Replacing live-build or Calamares later requires a concrete problem that cannot reasonably be solved through the existing configuration.
