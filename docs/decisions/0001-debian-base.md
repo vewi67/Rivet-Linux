@@ -1,41 +1,41 @@
-# ADR 0001: Debian como base
+# ADR 0001: Debian as the Base
 
-- **Status:** Aceita
-- **Data:** 2026-10-07
+- **Status:** Accepted
+- **Date:** 2026-10-07
 
-## Contexto
+## Context
 
-O Tip precisa de uma base sólida para que o projeto consiga concentrar esforço na experiência e na filosofia da distribuição, em vez de reconstruir componentes fundamentais sem necessidade.
+Tip needs a solid base so the project can focus on the distribution's experience and philosophy instead of rebuilding fundamental components without a reason.
 
-## Decisão
+## Decision
 
-O Tip será baseado em **Debian**.
+Tip is based on **Debian**.
 
-## Consequências
+## Consequences
 
-### Positivas
+### Positive
 
-- Aproveitamento de uma base Linux estabelecida.
-- Menor necessidade de criar componentes fundamentais do zero.
-- Acesso ao ecossistema de pacotes e ferramentas da base.
-- Mais liberdade para construir a identidade do Tip nas camadas acima.
+- Established Linux foundation.
+- Less need to rebuild fundamental components.
+- Access to Debian's package ecosystem and tooling.
+- More freedom to build Tip's identity in the layers above.
 
-### Negativas
+### Negative
 
-- Algumas decisões do Tip ficarão condicionadas às características e ao ciclo da base escolhida.
-- Será necessário definir cuidadosamente quais componentes serão apenas configurados e quais receberão customização do Tip.
-- O projeto continuará responsável pela integração e pelos testes da experiência final.
+- Some Tip decisions depend on the chosen base and its release cycle.
+- The project must carefully decide which components are configured and which receive Tip-specific customization.
+- Tip remains responsible for integration and testing of the final experience.
 
-## Limite desta decisão
+## Decision boundary
 
-Esta ADR define apenas a **família de base**.
+This ADR defines only the **base family**.
 
-Ela não define ainda:
+It does not define:
 
-- a release Debian;
-- o desktop;
-- o instalador;
-- o sistema de build;
-- a seleção final de pacotes.
+- the Debian release;
+- the desktop;
+- the installer;
+- the build system;
+- the final package selection.
 
-Essas decisões devem ser registradas separadamente quando forem tomadas.
+Those decisions belong in separate ADRs.
