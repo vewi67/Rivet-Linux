@@ -1,45 +1,45 @@
-# ADR 0005: Primeira meta do projeto
+# ADR 0005: First Project Milestone
 
-- Status: Aceita
-- Data: 2026-10-07
+- **Status:** Accepted
+- **Date:** 2026-10-07
 
-## Meta
+## Goal
 
-A primeira grande meta do Tip é:
+The first major Tip milestone is:
 
-Gerar uma ISO inicializável que entre no XFCE, permita testar o desktop e possa ser instalada em uma máquina virtual.
+> Build a bootable ISO that starts XFCE, allows the desktop to be tested, and can install to a virtual machine.
 
-Não é necessário ter todas as ferramentas próprias do Tip nessa primeira etapa.
+The first stage does not need every future Tip tool.
 
-## Critérios de pronto
+## Acceptance criteria
 
-A primeira ISO funcional deve:
+The first functional ISO must:
 
-1. inicializar em VM;
-2. abrir uma sessão gráfica;
-3. reconhecer rede;
-4. ter áudio funcionando na VM quando disponível;
-5. abrir aplicativos básicos;
-6. iniciar o instalador Calamares;
-7. conseguir instalar o sistema em um disco virtual;
-8. inicializar novamente a instalação;
-9. criar um usuário normal;
-10. conseguir atualizar os pacotes depois da instalação.
+1. boot in a VM;
+2. start a graphical session;
+3. recognize networking;
+4. provide audio when the VM exposes it;
+5. launch the basic applications;
+6. start Calamares;
+7. install to a virtual disk;
+8. boot the installed system;
+9. create a normal user;
+10. update packages after installation.
 
-## Fora do escopo
+## Out of scope
 
-Nesta meta ainda não entra:
+This milestone does not include:
 
-- tema definitivo;
-- aplicativo próprio de configurações;
-- software center próprio;
-- suporte a várias arquiteturas;
-- recursos experimentais;
-- otimizações agressivas;
-- branding completo.
+- final theme;
+- custom settings application;
+- custom software center;
+- multiple architectures;
+- experimental features;
+- aggressive optimization;
+- complete branding.
 
-## Regra
+## Rule
 
-Primeiro fazemos o computador ligar, funcionar e instalar.
+First make the computer boot, work, and install.
 
-Depois fazemos ele ser bonito, especial e Tip.
+Then make it beautiful, distinctive, and Tip.
