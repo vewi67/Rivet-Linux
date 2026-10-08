@@ -1,67 +1,67 @@
-# Instruções para agentes do Tip
+# Tip Agent Guidelines
 
-Estas regras valem para qualquer agente de IA que modificar este repositório.
+These rules apply to any AI agent modifying this repository.
 
-## Prioridade
+## Priorities
 
-1. Preserve o comportamento e as decisões já documentadas.
-2. Faça apenas a mudança necessária para a tarefa.
-3. Não invente arquitetura para preencher lacunas.
-4. Não apague ou reescreva arquivos sem necessidade.
-5. Sempre valide o resultado depois da alteração.
+1. Preserve documented behavior and decisions.
+2. Make only the changes required by the task.
+3. Do not invent architecture to fill gaps.
+4. Do not delete or rewrite files without a clear reason.
+5. Always validate the result after editing.
 
-## Antes de editar
+## Before editing
 
-Leia:
+Read:
 
 - `README.md`
 - `CONTRIBUTING.md`
 - `docs/philosophy.md`
 - `docs/architecture.md`
-- a ADR relacionada, quando existir
+- the relevant ADR, when one exists
 
-Depois identifique exatamente quais arquivos precisam mudar.
+Then identify exactly which files need to change.
 
-## Durante a edição
+## While editing
 
-- Prefira alterações pequenas e localizadas.
-- Preserve nomes, caminhos e interfaces existentes.
-- Não adicione dependências sem justificar.
-- Não execute mudanças destrutivas.
-- Não force branches ou histórico.
-- Não silencie erros.
-- Não faça "limpeza" de código fora do escopo.
+- Prefer small, localized changes.
+- Preserve existing names, paths, and interfaces.
+- Do not add dependencies without justification.
+- Do not make destructive changes.
+- Do not force branches or rewrite history.
+- Do not hide errors.
+- Do not clean up unrelated code.
 
-## Arquitetura
+## Architecture
 
-O Tip é baseado em Debian.
+Tip is based on Debian.
 
-Decisões ainda não tomadas não podem ser tratadas como decisões tomadas. Em especial, não escolher silenciosamente desktop, instalador, sistema de build ou ferramentas próprias.
+Undecided architecture must not be treated as decided. In particular, do not silently choose a different desktop, installer, build system, or custom tooling.
 
-Quando uma mudança representar uma decisão arquitetural, primeiro documente a decisão ou peça que ela seja definida.
+When a change represents an architectural decision, document it first or stop and ask for the decision.
 
-## Build e testes
+## Build and validation
 
-Quando houver um sistema de build:
+When a build system exists:
 
-- falhas devem interromper o processo;
-- resultados intermediários devem ser identificáveis;
-- comandos destrutivos devem exigir uma justificativa clara;
-- um build que não passou nos testes não deve ser marcado como concluído.
+- failures must stop the process;
+- intermediate results must be identifiable;
+- destructive commands require a clear reason;
+- a build that has not passed its checks must not be marked as complete.
 
-## Antes de terminar
+## Before finishing
 
-Verifique:
+Check:
 
-- arquivos alterados;
-- caminhos;
-- referências entre arquivos;
-- sintaxe dos arquivos modificados;
-- testes disponíveis;
-- documentação afetada.
+- changed files;
+- paths;
+- cross-file references;
+- syntax;
+- available tests;
+- affected documentation.
 
-Depois informe exatamente o que mudou e o que ainda não foi validado.
+Report exactly what changed and what remains unverified.
 
-## Regra fundamental
+## Fundamental rule
 
-**Não transforme uma tarefa pequena em uma reescrita do Tip.**
+**Do not turn a small task into a rewrite of Tip.**
