@@ -1,53 +1,53 @@
-# ADR 0006: Gerenciamento de software e atualizações
+# ADR 0006: Software Management and Updates
 
-- Status: Aceita
-- Data: 2026-10-07
+- **Status:** Accepted
+- **Date:** 2026-10-07
 
-## Gerenciamento de pacotes
+## Package management
 
-O Tip usará **APT + dpkg**, herdados do Debian.
+Tip uses **APT + dpkg**, inherited from Debian.
 
-Não haverá package manager próprio na primeira versão.
+There is no custom package manager in the first version.
 
 ## Interface
 
-A primeira ISO terá:
+The first ISO provides:
 
-- APT para quem prefere terminal;
-- Synaptic como interface gráfica simples para pacotes.
+- APT for terminal users;
+- Synaptic as a simple graphical package manager.
 
-No futuro, uma ferramenta própria só será criada se existir um problema de usabilidade que essas soluções não resolvam bem.
+A custom tool may be created later only if a real usability problem is found that these tools do not solve well.
 
 ## Flatpak
 
-Flatpak não será obrigatório nem instalado por padrão na primeira ISO.
+Flatpak is not required and is not installed by default in the first ISO.
 
-A prioridade será o repositório Debian, porque isso reduz duplicação de sistemas de atualização e de fontes de software.
+The Debian repositories are the priority because this avoids duplicating software update systems and software sources.
 
-Flatpak poderá ser oferecido posteriormente como opção documentada.
+Flatpak may be offered later as a documented option.
 
-## Atualizações
+## Updates
 
-O Tip usará as atualizações oficiais do Debian para a release Trixie.
+Tip uses the official Debian updates for Trixie.
 
-Não haverá um serviço de atualização próprio nesta fase.
+There is no custom update service at this stage.
 
-As atualizações de segurança e correções devem permanecer compatíveis com o fluxo normal do Debian.
+Security updates and bug fixes remain on the normal Debian update path.
 
-## Repositórios de terceiros
+## Third-party repositories
 
-A ISO não adicionará repositórios de terceiros por padrão.
+The ISO does not add third-party repositories by default.
 
-Repositórios externos poderão ser adicionados pelo usuário.
+Users may add external repositories themselves.
 
 ## Shell
 
-O shell padrão será **Bash**, seguindo o Debian.
+The default shell is **Bash**, following Debian.
 
-O terminal não será removido ou escondido da interface.
+The terminal is not removed or hidden from the interface.
 
-## Política
+## Policy
 
-O Tip deve ter poucas fontes de software, claras e previsíveis.
+Tip should have few software sources, and they should be clear and predictable.
 
-**Uma ferramenta conhecida e confiável é preferível a uma camada própria sem necessidade.**
+**A known, trusted tool is preferable to an unnecessary custom layer.**
