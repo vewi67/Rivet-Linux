@@ -1,48 +1,48 @@
-# Contribuindo com o Tip
+# Contributing to Tip
 
-O Tip está em fase de fundação. Nesta fase, estabilidade do projeto significa **tomar decisões com cuidado antes de escrever código**.
+Tip is still in its foundation phase. At this stage, project stability means making careful decisions before adding complexity.
 
-## Regras obrigatórias
+## Required rules
 
-1. Leia a documentação em `docs/` antes de alterar a arquitetura.
-2. Não introduza uma nova tecnologia, daemon, framework ou camada apenas porque ela parece interessante.
-3. Não substitua componentes do Debian sem uma razão documentada.
-4. Mudanças de arquitetura devem primeiro atualizar a documentação da decisão.
-5. Nunca remover uma funcionalidade existente sem documentar a razão e a alternativa.
-6. Evite mudanças gigantes e difíceis de revisar.
-7. Um agente não deve apagar ou reescrever arquivos que não são necessários para a tarefa.
-8. Antes de marcar uma tarefa como concluída, verifique arquivos alterados, caminhos e referências quebradas.
-9. Scripts de build precisam falhar de forma explícita. Não mascarar erros com `|| true` ou equivalentes sem justificativa.
-10. O estado do repositório deve continuar reproduzível por outra pessoa.
+1. Read the relevant documentation in `docs/` before changing architecture.
+2. Do not introduce a technology, daemon, framework, or layer just because it looks interesting.
+3. Do not replace Debian components without a documented reason.
+4. Architectural changes must update the relevant decision record.
+5. Do not remove existing functionality without documenting the reason and alternative.
+6. Avoid large changes that are difficult to review.
+7. Agents must not delete or rewrite files that are unrelated to the task.
+8. Before marking work complete, check changed files, paths, and broken references.
+9. Build scripts must fail explicitly. Do not hide errors with `|| true` or equivalent without a documented reason.
+10. The repository must remain reproducible by another contributor.
 
-## Agentes de IA
+## AI agents
 
-Agentes podem ajudar a implementar o Tip, mas **não são autoridade sobre a arquitetura**.
+AI agents can help implement Tip, but they are **not architectural authority**.
 
-Um agente deve:
+An agent should:
 
-- trabalhar somente no escopo da tarefa;
-- explicar mudanças que afetem outras áreas;
-- preservar decisões já documentadas;
-- preferir uma pequena alteração correta a uma grande alteração especulativa;
-- parar quando uma decisão de arquitetura ainda não foi tomada.
+- stay within the task scope;
+- explain changes that affect other areas;
+- preserve documented decisions;
+- prefer a small correct change over speculative rewrites;
+- stop when an architectural choice has not been made.
 
-### Regra anti-caos
+### Anti-chaos rule
 
-Se uma tarefa exigir escolher entre duas arquiteturas que ainda não estão documentadas, **não invente uma terceira**. Registre a decisão necessária e aguarde a definição do projeto.
+If a task requires choosing between two architectures that are not documented yet, **do not invent a third option**. Record the decision that is needed and wait for it.
 
-## Antes de enviar uma mudança
+## Before submitting a change
 
-Confirme:
+Confirm:
 
-- o arquivo está no lugar esperado;
-- não há arquivos acidentalmente alterados;
-- referências para caminhos existentes continuam válidas;
-- a documentação continua coerente;
-- o projeto ainda pode ser construído ou testado conforme o estágio atual.
+- the file is in the expected location;
+- no unrelated files were changed;
+- references to paths still work;
+- documentation remains consistent;
+- the project can still be built or validated for its current stage.
 
-## Filosofia
+## Philosophy
 
-O objetivo não é fazer o Tip parecer complexo.
+The goal is not to make Tip look complicated.
 
-O objetivo é fazer o computador parecer simples **sem tirar o controle do usuário**.
+The goal is to make the computer feel simple **without taking control away from the user**.
