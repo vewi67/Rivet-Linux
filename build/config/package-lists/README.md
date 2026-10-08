@@ -1,7 +1,7 @@
 # Package lists
 
-As listas de pacotes da ISO ficam aqui.
+Package lists for the Tip ISO live here.
 
-A primeira lista deve permanecer pequena. Adicione um pacote somente quando ele for necessário para a experiência padrão do Tip ou para o funcionamento do hardware suportado.
+The initial package set should remain small. Add a package only when it is required for the standard Tip experience or for supported hardware.
 
-Não use esta pasta para instalar software apenas para testes pessoais.
+Do not use this directory to install software only for personal testing.
