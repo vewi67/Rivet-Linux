@@ -15,7 +15,6 @@ mkdir -p config/package-lists
 mkdir -p config/includes.chroot/etc/skel
 mkdir -p config/hooks/live
 
-cat > config/package-lists/tip.list.chroot <<'EOF'
 xfce4
 xfce4-terminal
 thunar
