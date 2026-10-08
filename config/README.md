@@ -1,5 +1,7 @@
-# Config
+# Configuration
 
-A pasta `config/` conterá configurações versionadas do Tip.
+This directory contains Tip configuration that does not belong directly to the ISO build tree.
 
-Regra: configurações devem representar decisões reais do projeto. Não adicionar arquivos aqui apenas para testar ideias.
+Configuration should represent a real project decision. Do not add files here just to experiment.
+
+When a configuration becomes part of the generated system image, prefer keeping it under `build/config/` so the live-build input is explicit.
