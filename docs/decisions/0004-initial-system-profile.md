@@ -1,25 +1,25 @@
-# ADR 0004: Perfil inicial do sistema
+# ADR 0004: Initial System Profile
 
-- Status: Aceita
-- Data: 2026-10-07
+- **Status:** Accepted
+- **Date:** 2026-10-07
 
-## Objetivo
+## Goal
 
-Definir o conjunto mínimo de decisões do sistema necessário para construir a primeira ISO utilizável.
+Define the minimum system decisions required for the first usable ISO.
 
 ## Base
 
 - Debian 13 Trixie
-- Arquitetura inicial: amd64
-- Kernel: kernel Debian padrão
+- Initial architecture: amd64
+- Kernel: standard Debian kernel
 - Init: systemd
 - Initramfs: initramfs-tools
 - Bootloader: GRUB
-- Sistema de arquivos padrão do instalador: ext4
+- Default installer filesystem: ext4
 
-O Tip não terá kernel ou init próprios na primeira versão.
+Tip will not ship a custom kernel or init system in the first version.
 
-## Sessão gráfica
+## Graphical session
 
 - Xorg
 - XFCE
@@ -27,56 +27,56 @@ O Tip não terá kernel ou init próprios na primeira versão.
 - Thunar
 - xfce4-terminal
 
-## Serviços
+## Services
 
-- NetworkManager para rede
-- PipeWire + WirePlumber para áudio
-- Serviços do Debian somente quando necessários ao funcionamento do sistema ou hardware
+- NetworkManager for networking
+- PipeWire + WirePlumber for audio
+- Debian services only when required by the system or supported hardware
 
-A regra geral é não ativar daemons extras apenas para adicionar recursos.
+The general rule is not to enable extra daemons just to add optional features.
 
-## Software inicial
+## Initial software
 
-A primeira ISO deve conter somente ferramentas necessárias para um computador desktop utilizável.
+The first ISO should contain only software needed for a usable desktop.
 
-### Incluído
+### Included
 
 - Firefox ESR
-- LibreOffice Writer e Calc
-- utilitários básicos do XFCE
-- utilitários de arquivo e armazenamento necessários
+- LibreOffice Writer and Calc
+- core XFCE utilities
+- required file and storage utilities
 - GParted
 - Synaptic
-- ferramentas básicas de diagnóstico e rede
+- basic diagnostic and networking tools
 
-### Não incluído por padrão
+### Not included by default
 
 - Steam
 - Wine
-- dezenas de aplicativos multimídia
-- ferramentas de desenvolvimento grandes
-- serviços de telemetria próprios
-- software duplicado com a mesma função
+- large multimedia application collections
+- large development toolchains
+- custom telemetry services
+- duplicate applications with the same purpose
 
-O usuário poderá instalar esses componentes depois.
+Users can install these later.
 
-## Idioma e localização
+## Language and locale
 
-A instalação deve oferecer pt-BR e inglês, mas não deve assumir que todo usuário será brasileiro.
+The installer should offer Brazilian Portuguese and English without assuming every user is Brazilian.
 
-O idioma da sessão instalada seguirá a escolha feita no instalador.
+The installed session follows the language selected during installation.
 
-## Atualizações
+## Updates
 
-O sistema seguirá as atualizações normais do Debian para a release escolhida. O Tip não terá um mecanismo de atualização próprio na primeira versão.
+The system follows normal Debian updates for Trixie. Tip does not ship its own update mechanism in the first version.
 
-## Segurança
+## Security
 
-- Manter o modelo de privilégios do Debian.
-- Usuário normal sem acesso root permanente.
-- Operações administrativas via sudo/polkit.
-- Não criar autenticação própria.
+- Keep Debian's privilege model.
+- Normal users do not have permanent root access.
+- Administrative operations use sudo/polkit.
+- Do not create custom authentication.
 
-## Filosofia aplicada
+## Applied philosophy
 
-A ISO deve entregar um sistema pronto para uso sem transformar pronto para uso em cheio de coisas que o usuário não pediu.
+The ISO should be ready to use without turning "ready to use" into "filled with things the user did not ask for."
