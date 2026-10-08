@@ -1,24 +1,24 @@
-## O que mudou?
+## What changed?
 
-<!-- Explique a mudança em poucas linhas. -->
+<!-- Explain the change in a few lines. -->
 
-## Por que mudou?
+## Why?
 
-<!-- Qual problema esta alteração resolve? -->
+<!-- What problem does this change solve? -->
 
-## Escopo
+## Scope
 
-- [ ] A alteração está limitada ao objetivo da tarefa.
-- [ ] Nenhuma arquitetura foi inventada sem documentação.
-- [ ] Não foram feitas mudanças destrutivas.
+- [ ] The change is limited to the task.
+- [ ] No architecture was invented without documentation.
+- [ ] No destructive changes were made.
 
-## Validação
+## Validation
 
-- [ ] Arquivos e caminhos foram verificados.
-- [ ] Referências foram verificadas.
-- [ ] Testes disponíveis foram executados.
-- [ ] Documentação foi atualizada quando necessário.
+- [ ] Changed files and paths were checked.
+- [ ] Cross-file references were checked.
+- [ ] Available tests were run.
+- [ ] Documentation was updated when needed.
 
-## Observações
+## Notes
 
-<!-- Informe limitações, decisões pendentes ou riscos conhecidos. -->
+<!-- Mention limitations, pending decisions, or known risks. -->
