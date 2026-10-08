@@ -6,28 +6,18 @@ BUILD_DIR="$ROOT_DIR/build"
 cd "$BUILD_DIR"
 
 command -v lb >/dev/null 2>&1 || {
-  echo "ERRO: live-build não está instalado."
-  echo "Instale o pacote live-build e tente novamente."
+  echo "ERROR: live-build is not installed." >&2
+  echo "Install the live-build package and try again." >&2
   exit 1
 }
 
 mkdir -p config/package-lists
 mkdir -p config/includes.chroot/etc/skel
 
-lb config \
-  --distribution trixie \
-  --architectures amd64 \
-  --archive-areas "main contrib non-free non-free-firmware" \
-  --binary-images iso-hybrid \
-  --bootappend-live "boot=live components username=tip" \
-  --debian-installer none \
-  --apt-recommends true \
-  --memtest none \
-  --firmware-binary true \
-  --firmware-chroot true
+lb config   --distribution trixie   --architectures amd64   --archive-areas "main contrib non-free non-free-firmware"   --binary-images iso-hybrid   --bootappend-live "boot=live components username=tip"   --debian-installer none   --apt-recommends true   --memtest none   --firmware-binary true   --firmware-chroot true   --iso-application "Tip Linux"   --iso-publisher "Tip Linux Project"   --iso-volume "TIP_LINUX"
 
-echo "==> Construindo Tip..."
+echo "==> Building Tip..."
 lb build
 
-echo "==> Build concluído."
+echo "==> Build complete."
 ls -lh live-image-*.hybrid.iso
