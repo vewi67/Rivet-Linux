@@ -1,0 +1,17 @@
+name: Validate Tip
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    name: Repository validation
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate repository
+        run: bash scripts/validate-repo.sh
