@@ -22,7 +22,10 @@ required_files=(
 
 echo "==> Checking required files..."
 for file in "${required_files[@]}"; do
-  [[ -f "$file" ]] || { echo "ERROR: missing required file: $file" >&2; exit 1; }
+  [[ -f "$file" ]] || {
+    echo "ERROR: missing required file: $file" >&2
+    exit 1
+  }
 done
 
 echo "==> Checking shell syntax..."
@@ -30,23 +33,18 @@ bash -n build/build.sh
 bash -n scripts/validate-repo.sh
 
 echo "==> Checking package list..."
-mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' build/config/package-lists/tip.list.chroot)
-[[ ${#packages[@]} -gt 0 ]] || { echo "ERROR: package list is empty." >&2; exit 1; }
+mapfile -t packages < <(
+  sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d'     build/config/package-lists/tip.list.chroot
+)
 
-if printf '%s\n' "${packages[@]}" | grep -qvE '^[a-z0-9][a-z0-9+.-]*
-  echo "ERROR: duplicate package names found." >&2
-  printf '%s\n' "${packages[@]}" | sort | uniq -d >&2
+[[ ${#packages[@]} -gt 0 ]] || {
+  echo "ERROR: package list is empty." >&2
   exit 1
-fi
+}
 
-echo "==> Checking tracked build configuration..."
-grep -q -- '--distribution trixie' build/build.sh
-grep -q -- '--architectures amd64' build/build.sh
-grep -q -- '--binary-images iso-hybrid' build/build.sh
-grep -q '^calamares$' build/config/package-lists/tip.list.chroot
-grep -q '^calamares-settings-debian
-; then
+if printf '%s\n' "${packages[@]}" | grep -qvE '^[a-z0-9][a-z0-9+.-]*$'; then
   echo "ERROR: package list contains an invalid package name." >&2
+  printf '%s\n' "${packages[@]}" >&2
   exit 1
 fi
 
@@ -63,35 +61,14 @@ grep -q -- '--binary-images iso-hybrid' build/build.sh
 grep -q '^calamares$' build/config/package-lists/tip.list.chroot
 grep -q '^calamares-settings-debian$' build/config/package-lists/tip.list.chroot
 
-echo "==> Repository validation passed."
- build/config/package-lists/tip.list.chroot
-
-echo "==> Checking for stale Portuguese documentation..."
-if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)[[:space:]]' \
+echo "==> Checking documentation language..."
+if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
   README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
-  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' >/tmp/tip-portuguese-check.txt 2>/dev/null; then
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  >/tmp/tip-portuguese-check.txt 2>/dev/null; then
   echo "ERROR: possible Portuguese text found in project documentation:" >&2
   cat /tmp/tip-portuguese-check.txt >&2
   exit 1
 fi
-
-echo "==> Repository validation passed."
-; then
-  echo "ERROR: package list contains an invalid package name." >&2
-  exit 1
-fi
-
-if [[ $(printf '%s\n' "${packages[@]}" | sort | uniq -d | wc -l) -ne 0 ]]; then
-  echo "ERROR: duplicate package names found." >&2
-  printf '%s\n' "${packages[@]}" | sort | uniq -d >&2
-  exit 1
-fi
-
-echo "==> Checking tracked build configuration..."
-grep -q -- '--distribution trixie' build/build.sh
-grep -q -- '--architectures amd64' build/build.sh
-grep -q -- '--binary-images iso-hybrid' build/build.sh
-grep -q '^calamares$' build/config/package-lists/tip.list.chroot
-grep -q '^calamares-settings-debian$' build/config/package-lists/tip.list.chroot
 
 echo "==> Repository validation passed."
