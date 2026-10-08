@@ -1,114 +1,114 @@
-# Arquitetura do Tip
+# Tip Architecture
 
 ## Status
 
-Arquitetura inicial definida. O foco imediato é produzir uma primeira ISO utilizável rapidamente.
+The initial architecture is defined. The immediate focus is a reproducible first ISO, not a large feature set.
 
-## Fundação
+## Foundation
 
-### Base do sistema
+### System base
 
-**Debian 13 Trixie** é a base do Tip.
+**Debian 13 Trixie** is the base of Tip.
 
-O Tip acompanha a release stable escolhida por nome de suite, usando as atualizações oficiais correspondentes. A release atual de referência é Trixie.
+Tip follows the selected Debian stable suite by name and uses its official updates.
 
-## Perfil inicial
+## Initial profile
 
-- Arquitetura: amd64
+- Architecture: amd64
 - Desktop: XFCE 4.20
 - Display server: Xorg
 - Display manager: LightDM
 - File manager: Thunar
 - Terminal: xfce4-terminal
-- Rede: NetworkManager
-- Áudio: PipeWire + WirePlumber
+- Network: NetworkManager
+- Audio: PipeWire + WirePlumber
 - Init: systemd
 - Initramfs: initramfs-tools
 - Bootloader: GRUB
-- Filesystem padrão: ext4
+- Default filesystem: ext4
 
-## Build e instalação
+## Build and installation
 
-O sistema será construído com **Debian live-build** e instalado com **Calamares**.
+The system is built with **Debian live-build** and installed with **Calamares**.
 
-A primeira imagem deve funcionar em UEFI e, quando suportado pelo fluxo do build, BIOS/legacy.
+The first image targets amd64 and should support UEFI. BIOS/legacy support is retained where the live-build flow supports it.
 
-## Repositórios Debian
+## Debian repositories
 
-A configuração deve usar explicitamente:
+The build uses the following suites:
 
 - trixie
 - trixie-updates
 - trixie-security
 
-Com as seções necessárias:
+The enabled archive areas are:
 
 - main
 - contrib
 - non-free
 - non-free-firmware
 
-Firmware não livre poderá ser incluído quando necessário para hardware suportado.
+Non-free firmware may be included when required for supported hardware.
 
-## Software inicial
+## Initial software
 
-O objetivo é ter um desktop usável sem transformar a ISO em um depósito de aplicativos.
+The goal is a usable desktop without turning the ISO into an application warehouse.
 
-Software inicial previsto:
+Initial software includes:
 
 - Firefox ESR
-- LibreOffice Writer e Calc
+- LibreOffice Writer and Calc
 - GParted
 - Synaptic
-- utilitários principais do XFCE
-- ferramentas básicas de diagnóstico e rede
+- core XFCE utilities
+- basic diagnostic and network tools
 
-Steam, Wine e grandes toolchains de desenvolvimento não serão instalados por padrão.
+Steam, Wine, and large development toolchains are not installed by default.
 
-## Princípios arquiteturais
+## Architectural principles
 
-### 1. Aproveitar antes de substituir
+### 1. Reuse before replacing
 
-Um componente existente do Debian deve ser mantido quando atende ao objetivo do Tip.
+Keep a Debian component when it already solves the problem.
 
-### 2. Camadas claras
+### 2. Clear layers
 
 ```text
 Debian
   ↓
-Configuração e seleção de componentes
+Configuration and component selection
   ↓
-Integrações do Tip
+Tip integration
   ↓
-Experiência do usuário
+User experience
 ```
 
-### 3. Falhas devem ser visíveis
+### 3. Fail visibly
 
-O sistema de build e as ferramentas próprias não devem esconder falhas.
+Build tools and Tip tooling must not hide failures.
 
-### 4. Reprodutibilidade
+### 4. Reproducibility
 
-Mudanças no build devem ser versionadas e reproduzíveis.
+Build behavior must be versioned and reproducible.
 
-### 5. Simplicidade primeiro
+### 5. Simplicity first
 
-Quando uma solução simples e comprovada resolve o problema, ela é a opção padrão.
+When a simple, proven solution solves the problem, it is the default.
 
-## O que não entra agora
+## Explicitly out of scope for now
 
-Não implementar:
+Do not implement:
 
-- package manager próprio;
-- instalador escrito do zero;
-- sistema de init próprio;
-- kernel próprio;
-- desktop próprio;
-- coleção de scripts sem responsabilidade definida;
-- otimizações agressivas antes de medir.
+- a custom package manager;
+- a custom installer;
+- a custom init system;
+- a custom kernel;
+- a custom desktop environment;
+- unowned collections of scripts;
+- aggressive optimizations before measuring.
 
-## Fase seguinte
+## Next step
 
-A próxima implementação deve transformar esta arquitetura em uma **primeira configuração live-build mínima**, seguida de build e teste em VM.
+Turn the current architecture into a **validated live-build configuration**, then build and test it in a VM.
 
-A ISO será tratada como artefato de teste, não como release final.
+The ISO is a test artifact, not a final release.
