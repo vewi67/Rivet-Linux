@@ -7,46 +7,24 @@ cd "$BUILD_DIR"
 
 command -v lb >/dev/null 2>&1 || {
   echo "ERRO: live-build não está instalado."
-  echo "Instale o pacote 'live-build' e tente novamente."
+  echo "Instale o pacote live-build e tente novamente."
   exit 1
 }
 
 mkdir -p config/package-lists
 mkdir -p config/includes.chroot/etc/skel
-mkdir -p config/hooks/live
 
-xfce4
-xfce4-terminal
-thunar
-thunar-archive-plugin
-thunar-volman
-lightdm
-xserver-xorg
-network-manager
-network-manager-gnome
-pipewire
-pipewire-pulse
-wireplumber
-firefox-esr
-libreoffice-writer
-libreoffice-calc
-gparted
-synaptic
-calamares
-sudo
-curl
-wget
-nano
-htop
-pciutils
-usbutils
-EOF
-
-cat > config/includes.chroot/etc/skel/.tip-first-build <<'EOF'
-This file identifies a Tip development build.
-EOF
-
-lb config   --distribution trixie   --architectures amd64   --archive-areas "main contrib non-free non-free-firmware"   --binary-images iso-hybrid   --bootappend-live "boot=live components username=tip"   --debian-installer none   --apt-recommends true   --memtest none   --firmware-binary true   --firmware-chroot true
+lb config \
+  --distribution trixie \
+  --architectures amd64 \
+  --archive-areas "main contrib non-free non-free-firmware" \
+  --binary-images iso-hybrid \
+  --bootappend-live "boot=live components username=tip" \
+  --debian-installer none \
+  --apt-recommends true \
+  --memtest none \
+  --firmware-binary true \
+  --firmware-chroot true
 
 echo "==> Construindo Tip..."
 lb build
