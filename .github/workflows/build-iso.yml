@@ -5,10 +5,23 @@ on:
   push:
     paths:
       - "build/**"
+      - "scripts/**"
       - ".github/workflows/build-iso.yml"
 
 jobs:
+  validate:
+    name: Validate repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate repository
+        run: bash scripts/validate-repo.sh
+
   build:
+    name: Build ISO
+    needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
@@ -18,11 +31,8 @@ jobs:
 
       - name: Build inside Debian Trixie
         run: |
-          docker run --privileged --rm \
-            -v "$PWD:/workspace" \
-            -w /workspace \
-            debian:trixie \
-            bash -lc '
+          docker run --privileged --rm             -v "$PWD:/workspace"             -w /workspace             debian:trixie             bash -lc '
+              set -euo pipefail
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
               apt-get install -y --no-install-recommends ca-certificates live-build
@@ -35,3 +45,4 @@ jobs:
           name: tip-iso
           path: build/live-image-*.hybrid.iso
           if-no-files-found: error
+          retention-days: 7
