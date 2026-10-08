@@ -1,12 +1,15 @@
 # Scripts
 
-A pasta `scripts/` conterá automações pequenas e reproduzíveis do projeto.
+The `scripts/` directory contains small, reproducible project automation.
 
-Scripts devem:
+Scripts should:
 
-- ter uma responsabilidade clara;
-- falhar explicitamente;
-- evitar estado implícito;
-- ser documentados quando o comportamento não for óbvio.
+- have one clear responsibility;
+- fail explicitly;
+- avoid hidden state;
+- document non-obvious behavior;
+- be safe to run from any repository checkout.
 
-Nenhum script de produção foi adicionado ainda.
+Repository validation lives in `scripts/validate-repo.sh`.
+
+Production system tooling does not belong here unless the project explicitly decides that it does.
