@@ -1,84 +1,102 @@
 # Tip Linux
 
-> **Seu computador. Suas regras.**
+> **Your computer. Your rules.**
 
-Tip é uma distribuição Linux baseada em Debian, construída com uma ideia simples:
+Tip is a Debian-based Linux distribution built around one simple idea:
 
-**COMPUTADOR É TEU, MEXE NO QUE TU QUER.**
+**YOUR COMPUTER IS YOURS. CHANGE WHAT YOU WANT.**
 
-O Tip quer ser simples sem ser limitado. A pessoa deve conseguir usar o sistema sem precisar conhecer Linux profundamente, mas também deve continuar tendo controle real sobre o computador.
+Tip aims to be simple without being limiting. Everyday tasks should be easy to understand, while the user keeps real control over the system.
 
-## Princípios
+## Principles
 
-- **Controle:** o sistema não deve esconder decisões importantes do usuário.
-- **Simplicidade:** tarefas comuns precisam ser fáceis de descobrir e executar.
-- **Liberdade:** configurações e componentes não devem ser artificialmente bloqueados.
-- **Leveza:** evitar software, serviços e camadas desnecessárias.
-- **Compatibilidade:** priorizar o ecossistema Debian e soluções amplamente suportadas.
-- **Clareza:** preferir comportamento previsível a automações mágicas.
+- **Control:** important system decisions should not be hidden.
+- **Simplicity:** common tasks should have obvious paths.
+- **Freedom:** the system should not artificially lock down configuration.
+- **Lightweight:** avoid unnecessary software, services, and layers.
+- **Compatibility:** stay close to the Debian ecosystem and widely supported solutions.
+- **Clarity:** prefer predictable behavior over unexplained automation.
 
-## Estado atual
+## Project status
 
-**Pré-alfa.**
+**Pre-alpha.**
 
-O projeto já tem a arquitetura inicial definida. A próxima meta é produzir a primeira ISO inicializável e instalável.
+The foundation and initial architecture are in place. The current work is focused on making the build reproducible, validating the configuration, and producing the first usable ISO.
 
-## Decisões técnicas atuais
+## Current architecture
 
-- Base: **Debian 13 Trixie**
-- Arquitetura inicial: **amd64**
-- Desktop: **XFCE 4.20**
-- Display server: **Xorg**
-- Display manager: **LightDM**
-- File manager: **Thunar**
-- Terminal: **xfce4-terminal**
-- Rede: **NetworkManager**
-- Áudio: **PipeWire + WirePlumber**
-- Init: **systemd**
-- Bootloader: **GRUB**
-- Build da ISO: **live-build**
-- Instalador: **Calamares**
-- Sistema de arquivos padrão da instalação: **ext4**
+| Component | Choice |
+|---|---|
+| Base | Debian 13 Trixie |
+| Architecture | amd64 |
+| Desktop | XFCE 4.20 |
+| Display server | Xorg |
+| Display manager | LightDM |
+| File manager | Thunar |
+| Terminal | xfce4-terminal |
+| Network | NetworkManager |
+| Audio | PipeWire + WirePlumber |
+| Init | systemd |
+| Initramfs | initramfs-tools |
+| Bootloader | GRUB |
+| Default filesystem | ext4 |
+| ISO builder | Debian live-build |
+| Installer | Calamares |
+| Package management | APT + dpkg |
 
-## Estrutura
+## Repository layout
 
 ```text
 .
 ├── README.md
 ├── AGENTS.md
 ├── CONTRIBUTING.md
-├── .gitignore
 ├── .github/
-│   └── pull_request_template.md
+│   ├── pull_request_template.md
+│   └── workflows/
+│       └── build-iso.yml
+├── build/
+│   ├── README.md
+│   ├── build.sh
+│   └── config/
+├── config/
 ├── docs/
 │   ├── philosophy.md
 │   ├── architecture.md
 │   ├── roadmap.md
 │   └── decisions/
-│       ├── 0001-debian-base.md
-│       ├── 0002-desktop.md
-│       ├── 0003-build-and-installer.md
-│       ├── 0004-initial-system-profile.md
-│       ├── 0005-first-milestone.md
-│       └── 0006-software-management.md
-├── build/
-│   └── README.md
-├── config/
-│   └── README.md
 └── scripts/
-    └── README.md
+    ├── README.md
+    └── validate-repo.sh
 ```
 
-## Regra de ouro para desenvolvimento
+## Development rule
 
-> **Não implementar antes de definir. Não substituir uma solução estável sem motivo. Não quebrar o que já funciona para ganhar complexidade.**
+> **Define before implementing. Keep stable components when they work. Do not add complexity just because it is possible.**
 
-O Tip será construído em etapas pequenas, verificáveis e reversíveis.
+The project is built in small, verifiable steps. A working foundation comes before visual polish and custom tooling.
 
-## Próxima meta
+## First milestone
 
-**Construir a primeira ISO funcional.**
+The first milestone is a bootable, usable, installable ISO that can:
 
-Ela não precisa representar o Tip perfeito. Precisa ligar, abrir o XFCE, funcionar como desktop, iniciar o Calamares e instalar corretamente em uma máquina virtual.
+1. boot in a virtual machine;
+2. start XFCE;
+3. provide working networking;
+4. provide audio when the VM exposes it;
+5. launch the basic applications;
+6. start Calamares;
+7. install to a virtual disk;
+8. boot the installed system;
+9. create a normal user;
+10. update the installed packages.
 
-Veja [docs/architecture.md](docs/architecture.md) para a arquitetura atual e [docs/roadmap.md](docs/roadmap.md) para a sequência planejada.
+This is a test image, not a final release.
+
+## Why Tip?
+
+The name is short and intentional. A tip is the point or end of something, matching the tip of Tux's beak, which is also the project's visual mark.
+
+---
+
+See [docs/architecture.md](docs/architecture.md) for the technical design and [docs/roadmap.md](docs/roadmap.md) for the development plan.
