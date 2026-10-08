@@ -11,16 +11,16 @@ command -v lb >/dev/null 2>&1 || {
   exit 1
 }
 
-rm -rf config
-
 mkdir -p config/package-lists
 mkdir -p config/includes.chroot/etc/skel
 mkdir -p config/hooks/live
 
 cat > config/package-lists/tip.list.chroot <<'EOF'
-task-xfce-desktop
+xfce4
 xfce4-terminal
 thunar
+thunar-archive-plugin
+thunar-volman
 lightdm
 xserver-xorg
 network-manager
