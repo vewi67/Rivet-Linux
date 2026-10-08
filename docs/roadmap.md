@@ -1,75 +1,76 @@
-# Roadmap do Tip
+# Tip Roadmap
 
-O roadmap prioriza uma ISO utilizável rapidamente. Complexidade só entra depois que o caminho básico estiver funcionando.
+The roadmap prioritizes a usable ISO quickly. Complexity comes only after the basic path works.
 
-## Fase 0: Fundação
+## Phase 0: Foundation
 
-**Status: concluída**
+**Status: complete**
 
-- [x] Criar repositório
-- [x] Definir nome: Tip
-- [x] Definir base: Debian 13 Trixie
-- [x] Registrar filosofia
-- [x] Registrar regras para contribuições e agentes
-- [x] Registrar arquitetura inicial
-- [x] Definir arquitetura amd64
-- [x] Definir XFCE + Xorg
-- [x] Definir LightDM, NetworkManager e PipeWire
-- [x] Definir live-build
-- [x] Definir Calamares
-- [x] Definir perfil inicial de aplicativos
-- [x] Definir critérios da primeira ISO
+- [x] Create repository
+- [x] Define name: Tip
+- [x] Define Debian 13 Trixie as the base
+- [x] Record project philosophy
+- [x] Record agent and contribution rules
+- [x] Record initial architecture
+- [x] Define amd64
+- [x] Define XFCE + Xorg
+- [x] Define LightDM, NetworkManager, and PipeWire
+- [x] Define live-build
+- [x] Define Calamares
+- [x] Define initial application profile
+- [x] Define first-ISO acceptance criteria
 
-## Fase 1: Primeira ISO funcional
+## Phase 1: First functional ISO
 
-**Status: próxima**
+**Status: in progress**
 
-Objetivo: ter um sistema que inicializa, abre o desktop e pode ser instalado em uma VM.
+Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed in a VM.
 
-- [ ] Criar configuração mínima do live-build
-- [ ] Configurar fontes e repositórios Debian
-- [ ] Definir seleção inicial de pacotes
-- [ ] Configurar identidade inicial do Tip
-- [ ] Integrar Calamares
-- [ ] Gerar primeira ISO
-- [ ] Testar boot em VM
-- [ ] Testar XFCE
-- [ ] Testar rede
-- [ ] Testar áudio
-- [ ] Testar instalação
-- [ ] Testar primeiro boot instalado
-- [ ] Testar atualização do sistema
+- [x] Create the minimum live-build configuration
+- [x] Define the initial package selection
+- [x] Add Debian Calamares settings
+- [x] Add repository validation
+- [ ] Validate Debian repository configuration
+- [ ] Build the first ISO
+- [ ] Test boot in a VM
+- [ ] Test XFCE
+- [ ] Test networking
+- [ ] Test audio
+- [ ] Test Calamares
+- [ ] Test installation
+- [ ] Test first boot after installation
+- [ ] Test package updates
 
-## Fase 2: Primeira experiência do Tip
+## Phase 2: First Tip experience
 
-- [ ] Refinar defaults do XFCE
-- [ ] Identidade visual
-- [ ] Ferramentas simples do Tip
-- [ ] Documentação de uso
-- [ ] Teste em hardware real
+- [ ] Refine XFCE defaults
+- [ ] Add the Tip visual identity
+- [ ] Add small Tip tools where real problems exist
+- [ ] Improve user documentation
+- [ ] Test on real hardware
 
-## Fase 3: Ferramentas próprias
+## Phase 3: Custom tools
 
-Criar apenas ferramentas que resolvam problemas identificados durante o uso.
+Create only tools that solve problems found during real use.
 
-- [ ] Identificar problemas reais
-- [ ] Projetar soluções
-- [ ] Implementar pequenas ferramentas
-- [ ] Adicionar testes
-- [ ] Integrar à imagem
+- [ ] Identify real problems
+- [ ] Design small solutions
+- [ ] Implement them
+- [ ] Add tests
+- [ ] Integrate them into the image
 
-## Fase 4: Pré-alfa pública
+## Phase 4: Public pre-alpha
 
-- [ ] Reprodutibilidade verificada
-- [ ] Testes automatizados mínimos
-- [ ] Testes manuais documentados
-- [ ] Instalação validada
-- [ ] Upgrade validado
-- [ ] Recuperação de falhas documentada
-- [ ] Notas de versão
+- [ ] Verify reproducibility
+- [ ] Add minimum automated tests
+- [ ] Document manual testing
+- [ ] Validate installation
+- [ ] Validate upgrades
+- [ ] Document recovery paths
+- [ ] Publish release notes
 
-## Regra de escopo
+## Scope rule
 
-Uma etapa não está concluída apenas porque funciona na máquina de quem fez.
+A stage is not complete just because it works on the creator's machine.
 
-Ela precisa ter um caminho de reprodução e uma forma razoável de verificar o resultado.
+It needs a reproducible path and a reasonable way to verify the result.
