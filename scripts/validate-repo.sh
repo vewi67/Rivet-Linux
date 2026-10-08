@@ -67,7 +67,7 @@ echo "==> Repository validation passed."
  build/config/package-lists/tip.list.chroot
 
 echo "==> Checking for stale Portuguese documentation..."
-if grep -RniE '(^|[[:space:]])(as|para|uma|das|dos|não|não|aqui|deve|somente|pacotes|instalar|teste)[[:space:]]' \
+if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)[[:space:]]' \
   README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
   --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' >/tmp/tip-portuguese-check.txt 2>/dev/null; then
   echo "ERROR: possible Portuguese text found in project documentation:" >&2
