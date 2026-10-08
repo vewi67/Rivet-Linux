@@ -1,0 +1,37 @@
+name: Build Tip ISO
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "build/**"
+      - ".github/workflows/build-iso.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build inside Debian Trixie
+        run: |
+          docker run --privileged --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            debian:trixie \
+            bash -lc '
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y --no-install-recommends ca-certificates live-build
+              bash build/build.sh
+            '
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: tip-iso
+          path: build/live-image-*.hybrid.iso
+          if-no-files-found: error
