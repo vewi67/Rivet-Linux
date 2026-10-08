@@ -16,6 +16,7 @@ libreoffice-calc
 gparted
 synaptic
 calamares
+calamares-settings-debian
 sudo
 curl
 wget
