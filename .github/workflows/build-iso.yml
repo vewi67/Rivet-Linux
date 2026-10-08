@@ -31,7 +31,11 @@ jobs:
 
       - name: Build inside Debian Trixie
         run: |
-          docker run --privileged --rm             -v "$PWD:/workspace"             -w /workspace             debian:trixie             bash -lc '
+          docker run --privileged --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            debian:trixie \
+            bash -lc '
               set -euo pipefail
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
