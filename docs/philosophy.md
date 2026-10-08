@@ -1,59 +1,59 @@
-# Filosofia do Tip
+# Tip Philosophy
 
-## Ideia central
+## Core idea
 
-> **COMPUTADOR É TEU, MEXE NO QUE TU QUER.**
+> **YOUR COMPUTER IS YOURS. CHANGE WHAT YOU WANT.**
 
-O Tip não existe para dizer ao usuário como ele deve usar o próprio computador.
+Tip is not here to tell users how they should use their own computers.
 
-Ele existe para entregar uma base Linux em que as coisas sejam fáceis de entender, fáceis de configurar e difíceis de quebrar por acidente.
+It exists to provide a Linux system that is easy to understand, easy to configure, and difficult to break by accident.
 
-## O que "simples" significa aqui
+## What "simple" means
 
-Simplicidade não significa esconder opções.
+Simplicity does not mean hiding options.
 
-Simplicidade significa:
+It means:
 
-- tarefas normais terem caminhos óbvios;
-- configurações importantes terem nomes claros;
-- o sistema evitar decisões surpreendentes;
-- ferramentas próprias resolverem problemas reais;
-- o terminal continuar disponível para quem quiser controle adicional.
+- normal tasks have obvious paths;
+- important settings have clear names;
+- the system avoids surprising decisions;
+- custom tools solve real problems;
+- the terminal remains available for users who want deeper control.
 
-Uma interface gráfica e o terminal não são inimigos. O melhor caminho é o que deixa a tarefa mais clara.
+A graphical interface and the terminal are not enemies. The best path is the one that makes the task clearer.
 
-## O que "controle" significa
+## What "control" means
 
-Controle significa que o usuário deve conseguir:
+Control means the user can:
 
-- entender quais componentes fazem parte do sistema;
-- alterar configurações relevantes;
-- instalar e remover software;
-- escolher como o sistema funciona;
-- acessar ferramentas de baixo nível quando necessário.
+- understand which components are part of the system;
+- change relevant settings;
+- install and remove software;
+- choose how the system behaves;
+- access lower-level tools when needed.
 
-Controle não significa obrigar todo mundo a configurar tudo manualmente.
+Control does not mean forcing everyone to configure everything manually.
 
-## O que o Tip não pretende ser
+## What Tip is not trying to be
 
-O Tip não precisa ser:
+Tip does not need to be:
 
-- a distro mais bonita;
-- a distro mais rápida;
-- a distro com mais recursos;
-- a distro com a maior quantidade de software pré-instalado;
-- uma cópia de outra distribuição.
+- the prettiest distro;
+- the fastest distro;
+- the distro with the most features;
+- the distro with the most preinstalled software;
+- a copy of another distribution.
 
-A identidade do projeto vem da combinação entre **simplicidade, liberdade e previsibilidade**.
+Its identity comes from the combination of **simplicity, freedom, and predictability**.
 
-## Princípio técnico
+## Technical principle
 
-Sempre que houver uma escolha entre:
+When the choice is between:
 
-**complexidade + uma promessa interessante**
+**complexity + an interesting promise**
 
-e
+and
 
-**uma solução simples + comprovada**
+**a simple + proven solution**
 
-a solução simples deve ser a escolha padrão, salvo uma razão concreta para fazer diferente.
+the simple solution is the default unless there is a concrete reason to do otherwise.
