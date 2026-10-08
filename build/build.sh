@@ -14,7 +14,23 @@ command -v lb >/dev/null 2>&1 || {
 mkdir -p config/package-lists
 mkdir -p config/includes.chroot/etc/skel
 
-lb config   --distribution trixie   --architectures amd64   --archive-areas "main contrib non-free non-free-firmware"   --binary-images iso-hybrid   --bootappend-live "boot=live components username=tip"   --debian-installer none   --apt-recommends true   --memtest none   --firmware-binary true   --firmware-chroot true   --iso-application "Tip Linux"   --iso-publisher "Tip Linux Project"   --iso-volume "TIP_LINUX"
+lb_args=(
+  --distribution trixie
+  --architectures amd64
+  --archive-areas "main contrib non-free non-free-firmware"
+  --binary-images iso-hybrid
+  --bootappend-live "boot=live components username=tip"
+  --debian-installer none
+  --apt-recommends true
+  --memtest none
+  --firmware-binary true
+  --firmware-chroot true
+  --iso-application "Tip Linux"
+  --iso-publisher "Tip Linux Project"
+  --iso-volume "TIP_LINUX"
+)
+
+lb config "${lb_args[@]}"
 
 echo "==> Building Tip..."
 lb build
