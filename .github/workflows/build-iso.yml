@@ -1,4 +1,4 @@
-name: Build Tip ISO
+name: Build Rivet ISO
 
 on:
   workflow_dispatch:
@@ -82,7 +82,7 @@ jobs:
       - name: Upload ISO
         uses: actions/upload-artifact@v4
         with:
-          name: tip-iso
+          name: rivet-iso
           path: build/live-image-*.hybrid.iso
           if-no-files-found: error
           retention-days: 7
