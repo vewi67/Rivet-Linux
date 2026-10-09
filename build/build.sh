@@ -19,20 +19,20 @@ lb_args=(
   --architectures amd64
   --archive-areas "main contrib non-free non-free-firmware"
   --binary-images iso-hybrid
-  --bootappend-live "boot=live components username=tip"
+  --bootappend-live "boot=live components username=rivet"
   --debian-installer none
   --apt-recommends true
   --memtest none
   --firmware-binary true
   --firmware-chroot true
-  --iso-application "Tip Linux"
-  --iso-publisher "Tip Linux Project"
-  --iso-volume "TIP_LINUX"
+  --iso-application "Rivet Linux"
+  --iso-publisher "Rivet Linux Project"
+  --iso-volume "RIVET_LINUX"
 )
 
 lb config "${lb_args[@]}"
 
-echo "==> Building Tip..."
+echo "==> Building Rivet Linux..."
 lb build
 
 echo "==> Build complete."
