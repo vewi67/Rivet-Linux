@@ -5,11 +5,11 @@
 
 ## Context
 
-Tip needs a solid base so the project can focus on the distribution's experience and philosophy instead of rebuilding fundamental components without a reason.
+Rivet needs a solid base so the project can focus on the distribution's experience and philosophy instead of rebuilding fundamental components without a reason.
 
 ## Decision
 
-Tip is based on **Debian**.
+Rivet is based on **Debian**.
 
 ## Consequences
 
@@ -18,13 +18,13 @@ Tip is based on **Debian**.
 - Established Linux foundation.
 - Less need to rebuild fundamental components.
 - Access to Debian's package ecosystem and tooling.
-- More freedom to build Tip's identity in the layers above.
+- More freedom to build Rivet's identity in the layers above.
 
 ### Negative
 
-- Some Tip decisions depend on the chosen base and its release cycle.
-- The project must carefully decide which components are configured and which receive Tip-specific customization.
-- Tip remains responsible for integration and testing of the final experience.
+- Some Rivet decisions depend on the chosen base and its release cycle.
+- The project must carefully decide which components are configured and which receive Rivet-specific customization.
+- Rivet remains responsible for integration and testing of the final experience.
 
 ## Decision boundary
 
