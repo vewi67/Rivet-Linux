@@ -4,10 +4,18 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: rivet-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Repository validation
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
