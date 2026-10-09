@@ -42,5 +42,8 @@ These directories are inside live-build's `includes.chroot/` tree, so their cont
 
 ## Integration status and naming
 
-- The directories are prepared, but XFCE's default wallpaper, LightDM's login background, and Calamares branding have **not** been configured yet.
-- The repository and ISO metadata still use **Tip Linux**. The image filenames and the Rivet branding directory do not, by themselves, change the operating system's official name.
+- A live-build hook now configures XFCE's default wallpaper (`rivet-waves.jpeg`), LightDM's GTK greeter background (`rivet-prism.jpeg`), and Calamares branding using `rivet.logo.png`.
+- `lightdm-gtk-greeter` is included explicitly so the configured greeter is installed.
+- The hook checks that all five assets exist and stops the ISO build if one is missing.
+- The repository and ISO metadata still use **Tip Linux**. The current installer branding also says Tip Linux; the Rivet name is used for the visual identity only until the project name is explicitly changed.
+- These settings are committed, but the newly built ISO still needs to complete successfully and be boot-tested before considering the integration verified.
