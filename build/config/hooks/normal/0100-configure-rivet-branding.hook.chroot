@@ -98,7 +98,7 @@ EOF
 mkdir -p "$(dirname "$RIVET_ICON")"
 cp "$RIVET_LOGO" "$RIVET_ICON"
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-  gtk-update-icon-cache -f -t /usr/share/icons/hicolor >/dev/null 2>&1 || true
+  gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 fi
 
 # Replace the Debian installer launcher with an explicitly branded Rivet entry.
