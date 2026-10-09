@@ -5,7 +5,7 @@
 
 ## Context
 
-The first Tip version needs to be usable quickly, work well across varied hardware, and keep the interface simple without blocking customization.
+The first Rivet version needs to be usable quickly, work well across varied hardware, and keep the interface simple without blocking customization.
 
 ## Decision
 
@@ -19,7 +19,7 @@ The initial desktop is **XFCE 4.20 on Xorg**.
 - Modular and highly configurable.
 - Available directly in Debian 13.
 
-Tip will not create its own desktop environment for the first version.
+Rivet will not create its own desktop environment for the first version.
 
 ## Main components
 
