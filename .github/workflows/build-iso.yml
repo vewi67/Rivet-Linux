@@ -2,11 +2,6 @@ name: Build Rivet ISO
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "build/**"
-      - "scripts/**"
-      - ".github/workflows/build-iso.yml"
 
 jobs:
   validate:
