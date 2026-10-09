@@ -4,6 +4,7 @@ thunar
 thunar-archive-plugin
 thunar-volman
 lightdm
+lightdm-gtk-greeter
 xserver-xorg
 network-manager
 network-manager-gnome
