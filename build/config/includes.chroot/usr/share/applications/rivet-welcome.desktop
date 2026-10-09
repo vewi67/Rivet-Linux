@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Welcome to Rivet Linux
+Comment=Explore your Rivet desktop
+Exec=/usr/bin/rivet-welcome --show-again
+Icon=rivet
+Terminal=false
+Categories=System;
+StartupNotify=true
