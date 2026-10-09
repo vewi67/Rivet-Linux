@@ -29,6 +29,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Make live-build hooks executable
+        run: chmod +x build/config/hooks/normal/*.hook.chroot
+
       - name: Build inside Debian Trixie
         run: |
           docker run --privileged --rm \
