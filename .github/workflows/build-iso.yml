@@ -2,11 +2,26 @@ name: Build Rivet ISO
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'build/**'
+      - 'scripts/validate-repo.sh'
+      - '.github/workflows/build-iso.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rivet-iso-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
     name: Validate repository
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,6 +44,7 @@ jobs:
 
       - name: Build inside Debian Trixie
         run: |
+          set -euo pipefail
           docker run --privileged --rm \
             -v "$PWD:/workspace" \
             -w /workspace \
@@ -37,16 +53,17 @@ jobs:
               set -euo pipefail
               export DEBIAN_FRONTEND=noninteractive
               apt-get update
-              apt-get install -y --no-install-recommends ca-certificates live-build xorriso
+              apt-get install -y --no-install-recommends \
+                ca-certificates live-build xorriso file coreutils
               bash build/build.sh
             '
 
       - name: Install ISO validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xorriso file
+          sudo apt-get install -y --no-install-recommends xorriso file coreutils
 
-      - name: Validate generated ISO
+      - name: Validate generated ISO and checksum
         run: |
           set -euo pipefail
 
@@ -60,24 +77,30 @@ jobs:
           fi
 
           iso="${images[0]}"
+          checksum="${iso}.sha256"
 
           test -s "$iso"
+          test -s "$checksum"
 
           echo "==> ISO file:"
-          ls -lh "$iso"
-
-          echo "==> ISO metadata:"
+          ls -lh "$iso" "$checksum"
           file "$iso"
+
+          echo "==> Verifying SHA-256:"
+          (cd build && sha256sum -c "$(basename "$checksum")")
 
           echo "==> El Torito boot information:"
           xorriso -indev "$iso" -report_el_torito plain
 
           echo "==> ISO validation passed."
 
-      - name: Upload ISO
+      - name: Upload ISO and checksum
         uses: actions/upload-artifact@v4
         with:
           name: rivet-iso
-          path: build/live-image-*.hybrid.iso
+          path: |
+            build/live-image-*.hybrid.iso
+            build/live-image-*.hybrid.iso.sha256
           if-no-files-found: error
-          retention-days: 7
+          compression-level: 0
+          retention-days: 1
