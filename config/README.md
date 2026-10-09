@@ -1,6 +1,6 @@
 # Configuration
 
-This directory contains Tip configuration that does not belong directly to the ISO build tree.
+This directory contains Rivet configuration that does not belong directly to the ISO build tree.
 
 Configuration should represent a real project decision. Do not add files here just to experiment.
 
