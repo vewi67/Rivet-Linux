@@ -21,7 +21,7 @@ Rivet aims to be simple without being limiting. Everyday tasks should be easy to
 
 **Pre-alpha.**
 
-The foundation and initial architecture are in place. The current work is focused on making the build reproducible, validating the configuration, and producing the first usable ISO.
+The foundation and initial architecture are in place. The desktop now includes a first-login welcome window featuring Chip, the Rivet beaver mascot. Current work is focused on validating the configuration, producing the first usable ISO, and testing the complete first-boot experience.
 
 ## Current architecture
 
@@ -43,6 +43,7 @@ The foundation and initial architecture are in place. The current work is focuse
 | ISO builder | Debian live-build |
 | Installer | Calamares |
 | Package management | APT + dpkg |
+| First-login welcome | GTK 3 + Chip mascot |
 
 ## Repository layout
 
