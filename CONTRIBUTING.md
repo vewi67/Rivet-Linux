@@ -1,6 +1,6 @@
-# Contributing to Tip
+# Contributing to Rivet
 
-Tip is still in its foundation phase. At this stage, project stability means making careful decisions before adding complexity.
+Rivet is still in its foundation phase. At this stage, project stability means making careful decisions before adding complexity.
 
 ## Required rules
 
@@ -17,7 +17,7 @@ Tip is still in its foundation phase. At this stage, project stability means mak
 
 ## AI agents
 
-AI agents can help implement Tip, but they are **not architectural authority**.
+AI agents can help implement Rivet, but they are **not architectural authority**.
 
 An agent should:
 
@@ -43,6 +43,6 @@ Confirm:
 
 ## Philosophy
 
-The goal is not to make Tip look complicated.
+The goal is not to make Rivet look complicated.
 
 The goal is to make the computer feel simple **without taking control away from the user**.
