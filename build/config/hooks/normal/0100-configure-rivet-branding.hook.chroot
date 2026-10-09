@@ -101,16 +101,20 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 fi
 
-# Replace the Debian installer launcher with an explicitly branded Rivet entry.
-if [ -f /usr/share/applications/install-debian.desktop ]; then
-  sed -i '/^NoDisplay=/d' /usr/share/applications/install-debian.desktop
-  printf '\nNoDisplay=true\n' >> /usr/share/applications/install-debian.desktop
-fi
-
-if [ ! -x /usr/bin/install-debian ]; then
-  echo "ERROR: Debian Calamares launcher is missing or not executable." >&2
+# Rebrand Debian Trixie's actual Calamares launcher in place.
+INSTALLER="/usr/bin/calamares-install-debian"
+INSTALLER_DESKTOP="/usr/share/applications/calamares-install-debian.desktop"
+if [ ! -x "$INSTALLER" ]; then
+  echo "ERROR: Calamares launcher is missing or not executable: $INSTALLER" >&2
   exit 1
 fi
+if [ ! -s "$INSTALLER_DESKTOP" ]; then
+  echo "ERROR: Calamares desktop entry is missing: $INSTALLER_DESKTOP" >&2
+  exit 1
+fi
+sed -i 's/^Name=.*/Name=Install Rivet Linux/' "$INSTALLER_DESKTOP"
+sed -i 's/^Comment=.*/Comment=Install Rivet Linux on this computer/' "$INSTALLER_DESKTOP"
+sed -i 's/^Icon=.*/Icon=rivet/' "$INSTALLER_DESKTOP"
 
 if [ ! -s /usr/bin/rivet-welcome ]; then
   echo "ERROR: Rivet welcome application is missing." >&2
