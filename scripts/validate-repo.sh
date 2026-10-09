@@ -132,7 +132,7 @@ grep -Fq 'Icon=rivet' "$WELCOME_LAUNCHER"
 grep -Fq 'Exec=install-debian' "$INSTALLER_LAUNCHER"
 grep -Fq 'Icon=rivet' "$INSTALLER_LAUNCHER"
 grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
-grep -Fq '/usr/share/rivet/chip/' "$WELCOME_APP"
+grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 
 echo "==> Checking installer branding integration..."
