@@ -1,4 +1,4 @@
-# Tip Architecture
+# Rivet Architecture
 
 ## Status
 
@@ -8,9 +8,9 @@ The initial architecture is defined. The immediate focus is a reproducible first
 
 ### System base
 
-**Debian 13 Trixie** is the base of Tip.
+**Debian 13 Trixie** is the base of Rivet.
 
-Tip follows the selected Debian stable suite by name and uses its official updates.
+Rivet follows the selected Debian stable suite by name and uses its official updates.
 
 ## Initial profile
 
@@ -78,14 +78,14 @@ Debian
   ↓
 Configuration and component selection
   ↓
-Tip integration
+Rivet integration
   ↓
 User experience
 ```
 
 ### 3. Fail visibly
 
-Build tools and Tip tooling must not hide failures.
+Build tools and Rivet tooling must not hide failures.
 
 ### 4. Reproducibility
 
