@@ -10,7 +10,7 @@ required_files=(
   CONTRIBUTING.md
   build/build.sh
   build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot
-  build/config/package-lists/tip.list.chroot
+  build/config/package-lists/rivet.list.chroot
   .github/workflows/build-iso.yml
   .github/workflows/validate.yml
   build/README.md
@@ -36,7 +36,7 @@ bash -n scripts/validate-repo.sh
 
 echo "==> Checking package list..."
 mapfile -t packages < <(
-  sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' build/config/package-lists/tip.list.chroot
+  sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' build/config/package-lists/rivet.list.chroot
 )
 
 [[ ${#packages[@]} -gt 0 ]] || {
@@ -60,9 +60,132 @@ echo "==> Checking tracked build configuration..."
 grep -q -- '--distribution trixie' build/build.sh
 grep -q -- '--architectures amd64' build/build.sh
 grep -q -- '--binary-images iso-hybrid' build/build.sh
-grep -q '^calamares$' build/config/package-lists/tip.list.chroot
-grep -q '^calamares-settings-debian$' build/config/package-lists/tip.list.chroot
-grep -q '^lightdm-gtk-greeter$' build/config/package-lists/tip.list.chroot
+grep -q -- '--iso-application "Rivet Linux"' build/build.sh
+grep -q -- '--iso-publisher "Rivet Linux Project"' build/build.sh
+grep -q -- '--iso-volume "RIVET_LINUX"' build/build.sh
+grep -q '^    productName: Rivet Linux
+grep -q '^calamares$' build/config/package-lists/rivet.list.chroot
+grep -q '^calamares-settings-debian$' build/config/package-lists/rivet.list.chroot
+grep -q '^lightdm-gtk-greeter$' build/config/package-lists/rivet.list.chroot
+
+echo "==> Checking Rivet visual assets..."
+for asset in \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
+  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
+  [[ -s "$asset" ]] || {
+    echo "ERROR: missing or empty Rivet asset: $asset" >&2
+    exit 1
+  }
+done
+
+echo "==> Checking documentation language..."
+if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
+  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  >/tmp/tip-portuguese-check.txt 2>/dev/null; then
+  echo "ERROR: possible Portuguese text found in project documentation:" >&2
+  cat /tmp/tip-portuguese-check.txt >&2
+  exit 1
+fi
+
+echo "==> Repository validation passed."
+ build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot
+grep -q '^    shortProductName: Rivet
+grep -q '^calamares$' build/config/package-lists/rivet.list.chroot
+grep -q '^calamares-settings-debian$' build/config/package-lists/rivet.list.chroot
+grep -q '^lightdm-gtk-greeter$' build/config/package-lists/rivet.list.chroot
+
+echo "==> Checking Rivet visual assets..."
+for asset in \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
+  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
+  [[ -s "$asset" ]] || {
+    echo "ERROR: missing or empty Rivet asset: $asset" >&2
+    exit 1
+  }
+done
+
+echo "==> Checking documentation language..."
+if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
+  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  >/tmp/tip-portuguese-check.txt 2>/dev/null; then
+  echo "ERROR: possible Portuguese text found in project documentation:" >&2
+  cat /tmp/tip-portuguese-check.txt >&2
+  exit 1
+fi
+
+echo "==> Repository validation passed."
+ build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot
+grep -q '^name: Build Rivet ISO
+grep -q '^calamares$' build/config/package-lists/rivet.list.chroot
+grep -q '^calamares-settings-debian$' build/config/package-lists/rivet.list.chroot
+grep -q '^lightdm-gtk-greeter$' build/config/package-lists/rivet.list.chroot
+
+echo "==> Checking Rivet visual assets..."
+for asset in \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
+  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
+  [[ -s "$asset" ]] || {
+    echo "ERROR: missing or empty Rivet asset: $asset" >&2
+    exit 1
+  }
+done
+
+echo "==> Checking documentation language..."
+if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
+  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  >/tmp/tip-portuguese-check.txt 2>/dev/null; then
+  echo "ERROR: possible Portuguese text found in project documentation:" >&2
+  cat /tmp/tip-portuguese-check.txt >&2
+  exit 1
+fi
+
+echo "==> Repository validation passed."
+ .github/workflows/build-iso.yml
+grep -q '^          name: rivet-iso
+grep -q '^calamares$' build/config/package-lists/rivet.list.chroot
+grep -q '^calamares-settings-debian$' build/config/package-lists/rivet.list.chroot
+grep -q '^lightdm-gtk-greeter$' build/config/package-lists/rivet.list.chroot
+
+echo "==> Checking Rivet visual assets..."
+for asset in \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
+  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
+  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
+  [[ -s "$asset" ]] || {
+    echo "ERROR: missing or empty Rivet asset: $asset" >&2
+    exit 1
+  }
+done
+
+echo "==> Checking documentation language..."
+if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
+  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  >/tmp/tip-portuguese-check.txt 2>/dev/null; then
+  echo "ERROR: possible Portuguese text found in project documentation:" >&2
+  cat /tmp/tip-portuguese-check.txt >&2
+  exit 1
+fi
+
+echo "==> Repository validation passed."
+ .github/workflows/build-iso.yml
+grep -q '^calamares$' build/config/package-lists/rivet.list.chroot
+grep -q '^calamares-settings-debian$' build/config/package-lists/rivet.list.chroot
+grep -q '^lightdm-gtk-greeter$' build/config/package-lists/rivet.list.chroot
 
 echo "==> Checking Rivet visual assets..."
 for asset in \
