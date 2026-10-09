@@ -1,0 +1,121 @@
+#!/usr/bin/python3
+"""Small first-login welcome window for Rivet Linux."""
+
+import glob
+import os
+import random
+import subprocess
+import sys
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, GdkPixbuf
+
+
+CHIP_DIR = "/usr/share/rivet/chip"
+MARKER = os.path.expanduser("~/.config/rivet/welcome-seen")
+
+
+def open_app(command):
+    try:
+        subprocess.Popen(command)
+    except (OSError, ValueError):
+        pass
+
+
+def mark_seen():
+    os.makedirs(os.path.dirname(MARKER), exist_ok=True)
+    with open(MARKER, "w", encoding="utf-8") as marker:
+        marker.write("shown\n")
+
+
+class RivetWelcome(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="Welcome to Rivet Linux")
+        self.set_default_size(620, 430)
+        self.set_resizable(False)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_border_width(28)
+        self.connect("delete-event", self.on_close)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        outer.set_halign(Gtk.Align.CENTER)
+        outer.set_valign(Gtk.Align.CENTER)
+        self.add(outer)
+
+        images = sorted(glob.glob(os.path.join(CHIP_DIR, "*.png")))
+        if images:
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    random.choice(images), 190, 190, True
+                )
+                mascot = Gtk.Image.new_from_pixbuf(pixbuf)
+                mascot.set_halign(Gtk.Align.CENTER)
+                outer.pack_start(mascot, False, False, 0)
+            except Exception:
+                pass
+
+        title = Gtk.Label()
+        title.set_markup(
+            '<span size="xx-large" weight="bold">Welcome to Rivet Linux</span>'
+        )
+        title.set_halign(Gtk.Align.CENTER)
+        outer.pack_start(title, False, False, 0)
+
+        tagline = Gtk.Label()
+        tagline.set_markup(
+            '<span size="large">Your computer. Your rules.</span>'
+        )
+        tagline.set_halign(Gtk.Align.CENTER)
+        outer.pack_start(tagline, False, False, 0)
+
+        description = Gtk.Label(
+            label="A lightweight system built to be explored, used, and changed."
+        )
+        description.set_line_wrap(True)
+        description.set_justify(Gtk.Justification.CENTER)
+        description.set_halign(Gtk.Align.CENTER)
+        outer.pack_start(description, False, False, 4)
+
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        buttons.set_halign(Gtk.Align.CENTER)
+        outer.pack_start(buttons, False, False, 10)
+
+        files_button = Gtk.Button(label="Open files")
+        files_button.connect(
+            "clicked",
+            lambda *_: open_app(["thunar", os.path.expanduser("~")]),
+        )
+        buttons.pack_start(files_button, False, False, 0)
+
+        settings_button = Gtk.Button(label="Settings")
+        settings_button.connect(
+            "clicked", lambda *_: open_app(["xfce4-settings-manager"])
+        )
+        buttons.pack_start(settings_button, False, False, 0)
+
+        done_button = Gtk.Button(label="Let's go")
+        done_button.get_style_context().add_class("suggested-action")
+        done_button.connect("clicked", self.on_done)
+        buttons.pack_start(done_button, False, False, 0)
+
+    def on_done(self, *_):
+        mark_seen()
+        Gtk.main_quit()
+
+    def on_close(self, *_):
+        mark_seen()
+        Gtk.main_quit()
+        return True
+
+
+if __name__ == "__main__":
+    if os.path.exists(MARKER):
+        sys.exit(0)
+    try:
+        RivetWelcome().show_all()
+        Gtk.main()
+    except Exception as error:
+        print(f"Rivet welcome could not start: {error}", file=sys.stderr)
+        sys.exit(1)
