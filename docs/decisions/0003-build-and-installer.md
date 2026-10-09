@@ -33,7 +33,7 @@ The enabled archive areas are main, contrib, non-free, and non-free-firmware.
 
 ## Why not write our own installer?
 
-Calamares already provides a graphical installation framework suitable for Debian-based systems. Tip should customize the experience and configuration instead of rebuilding partitioning, user creation, and system installation from scratch.
+Calamares already provides a graphical installation framework suitable for Debian-based systems. Rivet should customize the experience and configuration instead of rebuilding partitioning, user creation, and system installation from scratch.
 
 ## Why not create our own build system?
 
