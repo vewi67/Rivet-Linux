@@ -17,7 +17,7 @@ Define the minimum system decisions required for the first usable ISO.
 - Bootloader: GRUB
 - Default installer filesystem: ext4
 
-Tip will not ship a custom kernel or init system in the first version.
+Rivet will not ship a custom kernel or init system in the first version.
 
 ## Graphical session
 
@@ -68,7 +68,7 @@ The installed session follows the language selected during installation.
 
 ## Updates
 
-The system follows normal Debian updates for Trixie. Tip does not ship its own update mechanism in the first version.
+The system follows normal Debian updates for Trixie. Rivet does not ship its own update mechanism in the first version.
 
 ## Security
 
