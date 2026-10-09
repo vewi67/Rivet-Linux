@@ -54,18 +54,6 @@ background=$RIVET_LOGIN_WALLPAPER
 EOF
 
 # Keep Debian's tested Calamares module sequence, changing only its branding component.
-if [ ! -f /etc/calamares/settings.conf ]; then
-  echo "ERROR: calamares-settings-debian did not provide /etc/calamares/settings.conf" >&2
-  exit 1
-fi
-if ! grep -qE '^branding:[[:space:]]*' /etc/calamares/settings.conf; then
-  echo "ERROR: could not find Calamares branding setting in settings.conf" >&2
-  exit 1
-fi
-sed -i -E 's/^branding:[[:space:]]*.*/branding: rivet/' /etc/calamares/settings.conf
-
-# A minimal custom branding component. Keep the distro name as Tip Linux for now;
-# the Rivet logo supplies the visual identity without silently renaming the project.
 mkdir -p /etc/calamares/branding/rivet
 cat > /etc/calamares/branding/rivet/branding.desc <<'EOF'
 ---
@@ -77,13 +65,13 @@ windowSize: 900px,600px
 windowPlacement: center
 
 strings:
-    productName: Tip Linux
-    shortProductName: Tip
+    productName: Rivet Linux
+    shortProductName: Rivet
     version: Development
     shortVersion: Dev
-    versionedName: Tip Linux Development
-    shortVersionedName: Tip Dev
-    bootloaderEntryName: Tip Linux
+    versionedName: Rivet Linux Development
+    shortVersionedName: Rivet Dev
+    bootloaderEntryName: Rivet Linux
 
 sidebar: widget
 navigation: widget
