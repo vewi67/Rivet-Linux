@@ -6,6 +6,9 @@ cd "$ROOT_DIR"
 
 PACKAGE_LIST="build/config/package-lists/rivet.list.chroot"
 BRANDING_HOOK="build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
+CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
+WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
+WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 
 required_files=(
   README.md
@@ -14,6 +17,9 @@ required_files=(
   build/build.sh
   "$BRANDING_HOOK"
   "$PACKAGE_LIST"
+  "$WELCOME_APP"
+  "$WELCOME_AUTOSTART"
+  "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml
   .github/workflows/validate.yml
   build/README.md
@@ -36,6 +42,9 @@ echo "==> Checking shell syntax..."
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n scripts/validate-repo.sh
+
+echo "==> Checking welcome application syntax..."
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP"
 
 echo "==> Checking package list..."
 mapfile -t packages < <(
@@ -90,6 +99,17 @@ for asset in \
     exit 1
   }
 done
+
+echo "==> Checking Chip mascot integration..."
+chip_count=$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)
+if [[ "$chip_count" -lt 5 ]]; then
+  echo "ERROR: expected at least five Chip PNG poses, found $chip_count." >&2
+  exit 1
+fi
+grep -q 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
+grep -q 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
+grep -q 'Welcome to Rivet Linux' "$WELCOME_APP"
+grep -q '/usr/share/rivet/chip/' "$WELCOME_APP"
 
 echo "==> Checking documentation language..."
 if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
