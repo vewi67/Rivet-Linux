@@ -10,13 +10,12 @@ CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
-INSTALLER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-installer.desktop"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
-  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$INSTALLER_LAUNCHER"
+  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -120,13 +119,12 @@ grep -Fq 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
 grep -Fq 'Exec=/usr/bin/rivet-welcome --show-again' "$WELCOME_LAUNCHER"
 grep -Fq 'Icon=rivet' "$WELCOME_LAUNCHER"
-grep -Fq 'Exec=install-debian' "$INSTALLER_LAUNCHER"
-grep -Fq 'Icon=rivet' "$INSTALLER_LAUNCHER"
 grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
 grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'branding: rivet' "$BRANDING_HOOK"
-grep -Fq 'Install Rivet Linux' "$INSTALLER_LAUNCHER"
+grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
+grep -Fq 'Icon=rivet' "$BRANDING_HOOK"
 
 echo "==> Checking documentation language..."
 if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
