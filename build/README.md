@@ -1,10 +1,10 @@
 # ISO Build
 
-The `build/` directory contains the reproducible Tip ISO build.
+The `build/` directory contains the reproducible Rivet ISO build.
 
 ## Current builder
 
-Tip uses **Debian live-build** inside a Debian Trixie container in GitHub Actions.
+Rivet uses **Debian live-build** inside a Debian Trixie container in GitHub Actions.
 
 The build configuration is versioned under:
 
@@ -30,7 +30,7 @@ The script intentionally does not delete the tracked configuration directory. Bu
 
 GitHub Actions builds the ISO inside `debian:trixie` and publishes the resulting hybrid ISO as an artifact.
 
-A failed build is not considered a successful Tip build.
+A failed build is not considered a successful Rivet build.
 
 ## Scope
 
