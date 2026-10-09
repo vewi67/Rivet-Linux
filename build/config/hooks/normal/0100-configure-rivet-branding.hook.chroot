@@ -79,10 +79,10 @@ windowPlacement: center
 strings:
     productName: Tip Linux
     shortProductName: Tip
-    version: 0.1
-    shortVersion: 0.1
-    versionedName: Tip Linux 0.1
-    shortVersionedName: Tip 0.1
+    version: Development
+    shortVersion: Dev
+    versionedName: Tip Linux Development
+    shortVersionedName: Tip Dev
     bootloaderEntryName: Tip Linux
 
 sidebar: widget
