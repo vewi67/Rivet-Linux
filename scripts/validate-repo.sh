@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 PACKAGE_LIST="build/config/package-lists/rivet.list.chroot"
@@ -9,20 +9,24 @@ BRANDING_HOOK="build/config/hooks/normal/0100-configure-rivet-branding.hook.chro
 CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
+WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
+INSTALLER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-installer.desktop"
 
 required_files=(
   README.md
   AGENTS.md
   CONTRIBUTING.md
+  build/README.md
   build/build.sh
   "$BRANDING_HOOK"
   "$PACKAGE_LIST"
   "$WELCOME_APP"
   "$WELCOME_AUTOSTART"
+  "$WELCOME_LAUNCHER"
+  "$INSTALLER_LAUNCHER"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml
   .github/workflows/validate.yml
-  build/README.md
   config/README.md
   scripts/README.md
   docs/philosophy.md
@@ -32,7 +36,7 @@ required_files=(
 )
 
 echo "==> Checking required files..."
-for file in "${required_files[@]}"; do
+for file in "\${required_files[@]}"; do
   [[ -f "$file" ]] || {
     echo "ERROR: missing required file: $file" >&2
     exit 1
@@ -44,7 +48,7 @@ bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n scripts/validate-repo.sh
 
-echo "==> Checking welcome application syntax..."
+echo "==> Checking Python syntax..."
 PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP"
 
 echo "==> Checking package list..."
@@ -52,42 +56,56 @@ mapfile -t packages < <(
   sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$PACKAGE_LIST"
 )
 
-[[ ${#packages[@]} -gt 0 ]] || {
+[[ \${#packages[@]} -gt 0 ]] || {
   echo "ERROR: package list is empty." >&2
   exit 1
 }
 
-if printf '%s\n' "${packages[@]}" | grep -qvE '^[a-z0-9][a-z0-9+.-]*$'; then
+if printf '%s\n' "\${packages[@]}" | grep -qvE '^[a-z0-9][a-z0-9+.-]*$'; then
   echo "ERROR: package list contains an invalid package name." >&2
-  printf '%s\n' "${packages[@]}" >&2
+  printf '%s\n' "\${packages[@]}" >&2
   exit 1
 fi
 
-if [[ $(printf '%s\n' "${packages[@]}" | sort | uniq -d | wc -l) -ne 0 ]]; then
-  echo "ERROR: duplicate package names found." >&2
-  printf '%s\n' "${packages[@]}" | sort | uniq -d >&2
+duplicates="$(printf '%s\n' "\${packages[@]}" | sort | uniq -d)"
+if [[ -n "$duplicates" ]]; then
+  echo "ERROR: duplicate package names found:" >&2
+  printf '%s\n' "$duplicates" >&2
   exit 1
 fi
 
-echo "==> Checking Rivet build identity..."
-grep -q -- '--distribution trixie' build/build.sh
-grep -q -- '--architectures amd64' build/build.sh
-grep -q -- '--binary-images iso-hybrid' build/build.sh
-grep -q -- '--iso-application "Rivet Linux"' build/build.sh
-grep -q -- '--iso-publisher "Rivet Linux Project"' build/build.sh
-grep -q -- '--iso-volume "RIVET_LINUX"' build/build.sh
-grep -q 'productName: Rivet Linux' "$BRANDING_HOOK"
-grep -q 'shortProductName: Rivet' "$BRANDING_HOOK"
-grep -q 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
-grep -q '^name: Build Rivet ISO$' .github/workflows/build-iso.yml
-grep -q 'name: rivet-iso' .github/workflows/build-iso.yml
-grep -q '^name: Validate Rivet$' .github/workflows/validate.yml
+require_package() {
+  local package="$1"
+  if ! grep -Fxq "$package" "$PACKAGE_LIST"; then
+    echo "ERROR: required package is missing: $package" >&2
+    exit 1
+  fi
+}
 
 echo "==> Checking required packages..."
-grep -q '^calamares$' "$PACKAGE_LIST"
-grep -q '^calamares-settings-debian$' "$PACKAGE_LIST"
-grep -q '^lightdm-gtk-greeter
-echo "==> Checking Rivet visual assets..."
+for package in \
+  xfce4 thunar lightdm lightdm-gtk-greeter xserver-xorg \
+  network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
+  firefox-esr calamares calamares-settings-debian sudo \
+  python3-gi gir1.2-gtk-3.0; do
+  require_package "$package"
+done
+
+echo "==> Checking Rivet build identity..."
+grep -Fq -- '--distribution trixie' build/build.sh
+grep -Fq -- '--architectures amd64' build/build.sh
+grep -Fq -- '--binary-images iso-hybrid' build/build.sh
+grep -Fq -- '--iso-application "Rivet Linux"' build/build.sh
+grep -Fq -- '--iso-publisher "Rivet Linux Project"' build/build.sh
+grep -Fq -- '--iso-volume "RIVET_LINUX"' build/build.sh
+grep -Fq 'productName: Rivet Linux' "$BRANDING_HOOK"
+grep -Fq 'shortProductName: Rivet' "$BRANDING_HOOK"
+grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
+grep -Fq '^name: Build Rivet ISO$' .github/workflows/build-iso.yml
+grep -Fq 'name: rivet-iso' .github/workflows/build-iso.yml
+grep -Fq '^name: Validate Rivet$' .github/workflows/validate.yml
+
+echo "==> Checking required visual assets..."
 for asset in \
   build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
   build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
@@ -101,126 +119,23 @@ for asset in \
 done
 
 echo "==> Checking Chip mascot integration..."
-chip_count=$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)
+chip_count="$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)"
 if [[ "$chip_count" -lt 5 ]]; then
   echo "ERROR: expected at least five Chip PNG poses, found $chip_count." >&2
   exit 1
 fi
-grep -q 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
-grep -q 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
-grep -q 'Welcome to Rivet Linux' "$WELCOME_APP"
-grep -q '/usr/share/rivet/chip/' "$WELCOME_APP"
 
-echo "==> Checking documentation language..."
-if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
-  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
-  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
-  >/tmp/rivet-portuguese-check.txt 2>/dev/null; then
-  echo "ERROR: possible Portuguese text found in project documentation:" >&2
-  cat /tmp/rivet-portuguese-check.txt >&2
-  exit 1
-fi
+grep -Fq 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
+grep -Fq 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
+grep -Fq 'Exec=/usr/bin/rivet-welcome --show-again' "$WELCOME_LAUNCHER"
+grep -Fq 'Exec=install-debian' "$INSTALLER_LAUNCHER"
+grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
+grep -Fq '/usr/share/rivet/chip/' "$WELCOME_APP"
+grep -Fq -- '--show-again' "$WELCOME_APP"
 
-echo "==> Repository validation passed."
- "$PACKAGE_LIST"
-grep -q '^python3-gi
-echo "==> Checking Rivet visual assets..."
-for asset in \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
-  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
-  [[ -s "$asset" ]] || {
-    echo "ERROR: missing or empty Rivet asset: $asset" >&2
-    exit 1
-  }
-done
-
-echo "==> Checking Chip mascot integration..."
-chip_count=$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)
-if [[ "$chip_count" -lt 5 ]]; then
-  echo "ERROR: expected at least five Chip PNG poses, found $chip_count." >&2
-  exit 1
-fi
-grep -q 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
-grep -q 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
-grep -q 'Welcome to Rivet Linux' "$WELCOME_APP"
-grep -q '/usr/share/rivet/chip/' "$WELCOME_APP"
-
-echo "==> Checking documentation language..."
-if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
-  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
-  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
-  >/tmp/rivet-portuguese-check.txt 2>/dev/null; then
-  echo "ERROR: possible Portuguese text found in project documentation:" >&2
-  cat /tmp/rivet-portuguese-check.txt >&2
-  exit 1
-fi
-
-echo "==> Repository validation passed."
- "$PACKAGE_LIST"
-grep -q '^gir1.2-gtk-3.0
-echo "==> Checking Rivet visual assets..."
-for asset in \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
-  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
-  [[ -s "$asset" ]] || {
-    echo "ERROR: missing or empty Rivet asset: $asset" >&2
-    exit 1
-  }
-done
-
-echo "==> Checking Chip mascot integration..."
-chip_count=$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)
-if [[ "$chip_count" -lt 5 ]]; then
-  echo "ERROR: expected at least five Chip PNG poses, found $chip_count." >&2
-  exit 1
-fi
-grep -q 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
-grep -q 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
-grep -q 'Welcome to Rivet Linux' "$WELCOME_APP"
-grep -q '/usr/share/rivet/chip/' "$WELCOME_APP"
-
-echo "==> Checking documentation language..."
-if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
-  README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
-  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
-  >/tmp/rivet-portuguese-check.txt 2>/dev/null; then
-  echo "ERROR: possible Portuguese text found in project documentation:" >&2
-  cat /tmp/rivet-portuguese-check.txt >&2
-  exit 1
-fi
-
-echo "==> Repository validation passed."
- "$PACKAGE_LIST"
-
-echo "==> Checking Rivet visual assets..."
-for asset in \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-waves.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-factory.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-chip.jpeg \
-  build/config/includes.chroot/usr/share/backgrounds/rivet/rivet-prism.jpeg \
-  build/config/includes.chroot/etc/calamares/branding/rivet/rivet.logo.png; do
-  [[ -s "$asset" ]] || {
-    echo "ERROR: missing or empty Rivet asset: $asset" >&2
-    exit 1
-  }
-done
-
-echo "==> Checking Chip mascot integration..."
-chip_count=$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)
-if [[ "$chip_count" -lt 5 ]]; then
-  echo "ERROR: expected at least five Chip PNG poses, found $chip_count." >&2
-  exit 1
-fi
-grep -q 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
-grep -q 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
-grep -q 'Welcome to Rivet Linux' "$WELCOME_APP"
-grep -q '/usr/share/rivet/chip/' "$WELCOME_APP"
+echo "==> Checking installer branding integration..."
+grep -Fq 'branding: rivet' "$BRANDING_HOOK"
+grep -Fq 'Install Rivet Linux' "$INSTALLER_LAUNCHER"
 
 echo "==> Checking documentation language..."
 if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
