@@ -1,5 +1,7 @@
 # Rivet Chip mascot assets
 
-Place the Chip mascot PNG files in this directory.
+This directory contains the five PNG poses of Chip, Rivet Linux's beaver mascot.
 
-Keep original filenames for now. Once the asset list is finalized, document each image's intended use and integrate selected assets into the Rivet welcome experience and branding.
+The first-login welcome window chooses one available PNG automatically, so the original filenames can stay unchanged. Keep transparent backgrounds where available and use PNG files.
+
+These assets are copied into the installed system at `/usr/share/rivet/chip/` by live-build because they live under `includes.chroot/`.
