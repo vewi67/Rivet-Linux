@@ -1,4 +1,4 @@
-# Tip Agent Guidelines
+# Rivet Agent Guidelines
 
 These rules apply to any AI agent modifying this repository.
 
@@ -34,7 +34,7 @@ Then identify exactly which files need to change.
 
 ## Architecture
 
-Tip is based on Debian.
+Rivet is based on Debian.
 
 Undecided architecture must not be treated as decided. In particular, do not silently choose a different desktop, installer, build system, or custom tooling.
 
@@ -64,4 +64,4 @@ Report exactly what changed and what remains unverified.
 
 ## Fundamental rule
 
-**Do not turn a small task into a rewrite of Tip.**
+**Do not turn a small task into a rewrite of Rivet.**
