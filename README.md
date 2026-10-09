@@ -6,22 +6,22 @@ Rivet is a Debian-based Linux distribution built around one simple idea:
 
 **YOUR COMPUTER IS YOURS. CHANGE WHAT YOU WANT.**
 
-Rivet aims to be simple without being limiting. Everyday tasks should be easy to understand, while the user keeps real control over the system.
+Rivet aims to make everyday computing straightforward without taking control away from the user.
 
 ## Principles
 
 - **Control:** important system decisions should not be hidden.
 - **Simplicity:** common tasks should have obvious paths.
-- **Freedom:** the system should not artificially lock down configuration.
-- **Lightweight:** avoid unnecessary software, services, and layers.
-- **Compatibility:** stay close to the Debian ecosystem and widely supported solutions.
+- **Freedom:** users can configure the system and choose their software.
+- **Lightweight by design:** avoid unnecessary software, services, and layers.
+- **Compatibility:** reuse Debian components and established tools.
 - **Clarity:** prefer predictable behavior over unexplained automation.
 
 ## Project status
 
-**Pre-alpha.**
+**Pre-alpha. Not ready for daily use.**
 
-The foundation and initial architecture are in place. The desktop now includes a first-login welcome window featuring Chip, the Rivet beaver mascot. Current work is focused on validating the configuration, producing the first usable ISO, and testing the complete first-boot experience.
+The initial Debian live-build configuration, Rivet visual identity, Calamares branding, and Chip welcome experience are being integrated. The current priority is to validate the build, boot the ISO in a virtual machine, and test installation and first login. Features are not considered complete until they have been tested in the generated system.
 
 ## Current architecture
 
@@ -29,11 +29,10 @@ The foundation and initial architecture are in place. The desktop now includes a
 |---|---|
 | Base | Debian 13 Trixie |
 | Architecture | amd64 |
-| Desktop | XFCE 4.20 |
+| Desktop | XFCE |
 | Display server | Xorg |
 | Display manager | LightDM |
 | File manager | Thunar |
-| Terminal | xfce4-terminal |
 | Network | NetworkManager |
 | Audio | PipeWire + WirePlumber |
 | Init | systemd |
@@ -43,61 +42,55 @@ The foundation and initial architecture are in place. The desktop now includes a
 | ISO builder | Debian live-build |
 | Installer | Calamares |
 | Package management | APT + dpkg |
-| First-login welcome | GTK 3 + Chip mascot |
+| Welcome app | Python + GTK 3 |
+| Mascot | Chip the beaver |
 
 ## Repository layout
 
-```text
-.
-├── README.md
-├── AGENTS.md
-├── CONTRIBUTING.md
-├── .github/
-│   ├── pull_request_template.md
-│   └── workflows/
-│       └── build-iso.yml
-├── build/
-│   ├── README.md
-│   ├── build.sh
-│   └── config/
-├── config/
-├── docs/
-│   ├── philosophy.md
-│   ├── architecture.md
-│   ├── roadmap.md
-│   └── decisions/
-└── scripts/
-    ├── README.md
-    └── validate-repo.sh
-```
+- .github/workflows/: repository checks and ISO build
+- build/build.sh: local ISO build entry point
+- build/config/package-lists/: installed software selection
+- build/config/hooks/: image-time configuration
+- build/config/includes.chroot/: files included in the live system
+- config/: project-level configuration notes
+- docs/: architecture, philosophy, and roadmap
+- scripts/: repository validation
 
-## Development rule
+## Validate the repository
 
-> **Define before implementing. Keep stable components when they work. Do not add complexity just because it is possible.**
+Run from the repository root:
 
-The project is built in small, verifiable steps. A working foundation comes before visual polish and custom tooling.
+    bash scripts/validate-repo.sh
+
+This checks required files, shell and Python syntax, package-list consistency, branding assets, launcher integration, and documentation conventions. It does not replace building or testing the ISO.
+
+## Build locally
+
+On a Debian-based build environment with live-build, xorriso, file, and coreutils installed:
+
+    bash build/build.sh
+
+The resulting ISO and its SHA-256 checksum are written under build/. See build/README.md for details.
 
 ## First milestone
 
 The first milestone is a bootable, usable, installable ISO that can:
 
-1. boot in a virtual machine;
+1. boot in a virtual machine using BIOS or UEFI;
 2. start XFCE;
 3. provide working networking;
-4. provide audio when the VM exposes it;
-5. launch the basic applications;
-6. start Calamares;
+4. provide audio when the virtual machine exposes it;
+5. launch the included applications;
+6. open the Rivet-branded Calamares installer;
 7. install to a virtual disk;
 8. boot the installed system;
-9. create a normal user;
-10. update the installed packages.
+9. create and use a normal account;
+10. update installed packages.
 
-This is a test image, not a final release.
+This is a development image, not a release. Do not use it as the only copy of an important system.
 
-## Why Rivet?
+## Development rule
 
-Rivet combines proven Debian components with a distinct identity and a straightforward, lightweight experience. The project focuses on making the system understandable and customizable without rebuilding reliable components unnecessarily.
+> **Define before implementing. Keep stable components when they work. Do not add complexity just because it is possible.**
 
----
-
-See [docs/architecture.md](docs/architecture.md) for the technical design and [docs/roadmap.md](docs/roadmap.md) for the development plan.
+See docs/architecture.md, docs/roadmap.md, and CONTRIBUTING.md.
