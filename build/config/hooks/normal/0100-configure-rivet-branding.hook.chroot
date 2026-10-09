@@ -82,4 +82,11 @@ images:
     productWelcome: "rivet.logo.png"
 EOF
 
-echo "Rivet visual configuration installed."
+# Ensure the welcome application is executable in the live and installed systems.
+if [ ! -s /usr/bin/rivet-welcome ]; then
+  echo "ERROR: Rivet welcome application is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-welcome
+
+echo "Rivet visual configuration and welcome experience installed."
