@@ -1,4 +1,4 @@
-# Tip Roadmap
+# Rivet Roadmap
 
 The roadmap prioritizes a usable ISO quickly. Complexity comes only after the basic path works.
 
@@ -7,7 +7,7 @@ The roadmap prioritizes a usable ISO quickly. Complexity comes only after the ba
 **Status: complete**
 
 - [x] Create repository
-- [x] Define name: Tip
+- [x] Define name: Rivet
 - [x] Define Debian 13 Trixie as the base
 - [x] Record project philosophy
 - [x] Record agent and contribution rules
@@ -41,11 +41,11 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [ ] Test first boot after installation
 - [ ] Test package updates
 
-## Phase 2: First Tip experience
+## Phase 2: First Rivet experience
 
 - [ ] Refine XFCE defaults
-- [ ] Add the Tip visual identity
-- [ ] Add small Tip tools where real problems exist
+- [ ] Add the Rivet visual identity
+- [ ] Add small Rivet tools where real problems exist
 - [ ] Improve user documentation
 - [ ] Test on real hardware
 
