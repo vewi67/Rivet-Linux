@@ -2,17 +2,17 @@
 set -eu
 
 RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"
-RIVET_WALLPAPER="\${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg"
-RIVET_LOGIN_WALLPAPER="\${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
+RIVET_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg"
+RIVET_LOGIN_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
 RIVET_ICON="/usr/share/icons/hicolor/256x256/apps/rivet.png"
 
 # Fail early if any required visual asset is absent or empty.
 for asset in \
-  "\${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg" \
-  "\${RIVET_WALLPAPER_DIR}/rivet-factory.jpeg" \
-  "\${RIVET_WALLPAPER_DIR}/rivet-chip.jpeg" \
-  "\${RIVET_LOGIN_WALLPAPER}" \
+  "${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg" \
+  "${RIVET_WALLPAPER_DIR}/rivet-factory.jpeg" \
+  "${RIVET_WALLPAPER_DIR}/rivet-chip.jpeg" \
+  "${RIVET_LOGIN_WALLPAPER}" \
   "/etc/calamares/branding/rivet/rivet.logo.png"; do
   if [ ! -s "$asset" ]; then
     echo "ERROR: required Rivet visual asset missing: $asset" >&2
