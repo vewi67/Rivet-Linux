@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT_DIR/build"
 cd "$BUILD_DIR"
 
-for command_name in lb xorriso sha256sum; do
+for command_name in lb xorriso file sha256sum; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "ERROR: required command '$command_name' is not installed." >&2
-    echo "Install live-build, xorriso, and coreutils, then try again." >&2
+    echo "Install live-build, xorriso, file, and coreutils, then try again." >&2
     exit 1
   fi
 done
@@ -45,20 +45,20 @@ lb_args=(
 )
 
 echo "==> Configuring Rivet Linux for Debian Trixie (amd64)..."
-lb config "\${lb_args[@]}"
+lb config "${lb_args[@]}"
 
 echo "==> Building Rivet Linux..."
 lb build
 
 shopt -s nullglob
 images=(live-image-*.hybrid.iso)
-if [[ \${#images[@]} -ne 1 ]]; then
-  echo "ERROR: expected exactly one ISO, found \${#images[@]}." >&2
-  printf '%s\n' "\${images[@]}" >&2
+if [[ ${#images[@]} -ne 1 ]]; then
+  echo "ERROR: expected exactly one ISO, found ${#images[@]}." >&2
+  printf '%s\n' "${images[@]}" >&2
   exit 1
 fi
 
-iso="\${images[0]}"
+iso="${images[0]}"
 [[ -s "$iso" ]] || {
   echo "ERROR: generated ISO is empty: $iso" >&2
   exit 1
