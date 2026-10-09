@@ -1,12 +1,12 @@
-# Tip Linux
+# Rivet Linux
 
 > **Your computer. Your rules.**
 
-Tip is a Debian-based Linux distribution built around one simple idea:
+Rivet is a Debian-based Linux distribution built around one simple idea:
 
 **YOUR COMPUTER IS YOURS. CHANGE WHAT YOU WANT.**
 
-Tip aims to be simple without being limiting. Everyday tasks should be easy to understand, while the user keeps real control over the system.
+Rivet aims to be simple without being limiting. Everyday tasks should be easy to understand, while the user keeps real control over the system.
 
 ## Principles
 
@@ -93,9 +93,9 @@ The first milestone is a bootable, usable, installable ISO that can:
 
 This is a test image, not a final release.
 
-## Why Tip?
+## Why Rivet?
 
-The name is short and intentional. A tip is the point or end of something, matching the tip of Tux's beak, which is also the project's visual mark.
+Rivet combines proven Debian components with a distinct identity and a straightforward, lightweight experience. The project focuses on making the system understandable and customizable without rebuilding reliable components unnecessarily.
 
 ---
 
