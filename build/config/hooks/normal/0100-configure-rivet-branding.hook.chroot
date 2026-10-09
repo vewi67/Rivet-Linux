@@ -2,24 +2,25 @@
 set -eu
 
 RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"
-RIVET_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg"
-RIVET_LOGIN_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
+RIVET_WALLPAPER="\${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg"
+RIVET_LOGIN_WALLPAPER="\${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
+RIVET_ICON="/usr/share/icons/hicolor/256x256/apps/rivet.png"
 
-# Fail the build if a required visual asset is missing or empty.
+# Fail early if any required visual asset is absent or empty.
 for asset in \
-  "${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg" \
-  "${RIVET_WALLPAPER_DIR}/rivet-factory.jpeg" \
-  "${RIVET_WALLPAPER_DIR}/rivet-chip.jpeg" \
-  "${RIVET_LOGIN_WALLPAPER}" \
-  "${RIVET_LOGO}"; do
+  "\${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg" \
+  "\${RIVET_WALLPAPER_DIR}/rivet-factory.jpeg" \
+  "\${RIVET_WALLPAPER_DIR}/rivet-chip.jpeg" \
+  "\${RIVET_LOGIN_WALLPAPER}" \
+  "/etc/calamares/branding/rivet/rivet.logo.png"; do
   if [ ! -s "$asset" ]; then
     echo "ERROR: required Rivet visual asset missing: $asset" >&2
     exit 1
   fi
 done
 
-# Set the default XFCE wallpaper for the live session and newly created users.
+# Set the default wallpaper for the live session and newly created users.
 for config_dir in \
   "/etc/xdg/xfce4/xfconf/xfce-perchannel-xml" \
   "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml"; do
@@ -41,7 +42,7 @@ for config_dir in \
 EOF
 done
 
-# Use the GTK greeter explicitly and give the login screen its own wallpaper.
+# Use the GTK greeter and the dedicated Rivet login wallpaper.
 mkdir -p /etc/lightdm/lightdm.conf.d /etc/lightdm
 cat > /etc/lightdm/lightdm.conf.d/10-rivet.conf <<'EOF'
 [Seat:*]
@@ -53,7 +54,18 @@ cat > /etc/lightdm/lightdm-gtk-greeter.conf <<EOF
 background=$RIVET_LOGIN_WALLPAPER
 EOF
 
-# Keep Debian's tested Calamares module sequence, changing only its branding component.
+# Point Calamares at Rivet branding while preserving Debian's tested module sequence.
+CALAMARES_SETTINGS="/etc/calamares/settings.conf"
+if [ ! -s "$CALAMARES_SETTINGS" ]; then
+  echo "ERROR: Calamares settings file is missing: $CALAMARES_SETTINGS" >&2
+  exit 1
+fi
+if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$' "$CALAMARES_SETTINGS"; then
+  echo "ERROR: expected Debian branding entry in $CALAMARES_SETTINGS." >&2
+  exit 1
+fi
+sed -i 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' "$CALAMARES_SETTINGS"
+
 mkdir -p /etc/calamares/branding/rivet
 cat > /etc/calamares/branding/rivet/branding.desc <<'EOF'
 ---
@@ -82,11 +94,33 @@ images:
     productWelcome: "rivet.logo.png"
 EOF
 
-# Ensure the welcome application is executable in the live and installed systems.
+# Install the Rivet icon for the desktop and welcome application.
+mkdir -p "$(dirname "$RIVET_ICON")"
+cp "$RIVET_LOGO" "$RIVET_ICON"
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -f -t /usr/share/icons/hicolor >/dev/null 2>&1 || true
+fi
+
+# Replace the Debian installer launcher with an explicitly branded Rivet entry.
+if [ -f /usr/share/applications/install-debian.desktop ]; then
+  sed -i '/^NoDisplay=/d' /usr/share/applications/install-debian.desktop
+  printf '\nNoDisplay=true\n' >> /usr/share/applications/install-debian.desktop
+fi
+
+if [ ! -x /usr/bin/install-debian ]; then
+  echo "ERROR: Debian Calamares launcher is missing or not executable." >&2
+  exit 1
+fi
+
 if [ ! -s /usr/bin/rivet-welcome ]; then
   echo "ERROR: Rivet welcome application is missing." >&2
   exit 1
 fi
 chmod 0755 /usr/bin/rivet-welcome
 
-echo "Rivet visual configuration and welcome experience installed."
+if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
+  echo "ERROR: Calamares branding was not switched to Rivet." >&2
+  exit 1
+fi
+
+echo "Rivet desktop, installer branding, and welcome experience configured."
