@@ -5,7 +5,7 @@
 
 ## Package management
 
-Tip uses **APT + dpkg**, inherited from Debian.
+Rivet uses **APT + dpkg**, inherited from Debian.
 
 There is no custom package manager in the first version.
 
@@ -28,7 +28,7 @@ Flatpak may be offered later as a documented option.
 
 ## Updates
 
-Tip uses the official Debian updates for Trixie.
+Rivet uses the official Debian updates for Trixie.
 
 There is no custom update service at this stage.
 
@@ -48,6 +48,6 @@ The terminal is not removed or hidden from the interface.
 
 ## Policy
 
-Tip should have few software sources, and they should be clear and predictable.
+Rivet should have few software sources, and they should be clear and predictable.
 
 **A known, trusted tool is preferable to an unnecessary custom layer.**
