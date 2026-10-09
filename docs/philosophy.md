@@ -1,10 +1,10 @@
-# Tip Philosophy
+# Rivet Philosophy
 
 ## Core idea
 
 > **YOUR COMPUTER IS YOURS. CHANGE WHAT YOU WANT.**
 
-Tip is not here to tell users how they should use their own computers.
+Rivet is not here to tell users how they should use their own computers.
 
 It exists to provide a Linux system that is easy to understand, easy to configure, and difficult to break by accident.
 
@@ -34,9 +34,9 @@ Control means the user can:
 
 Control does not mean forcing everyone to configure everything manually.
 
-## What Tip is not trying to be
+## What Rivet is not trying to be
 
-Tip does not need to be:
+Rivet does not need to be:
 
 - the prettiest distro;
 - the fastest distro;
