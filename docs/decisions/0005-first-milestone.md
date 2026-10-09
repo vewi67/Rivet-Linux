@@ -5,11 +5,11 @@
 
 ## Goal
 
-The first major Tip milestone is:
+The first major Rivet milestone is:
 
 > Build a bootable ISO that starts XFCE, allows the desktop to be tested, and can install to a virtual machine.
 
-The first stage does not need every future Tip tool.
+The first stage does not need every future Rivet tool.
 
 ## Acceptance criteria
 
@@ -42,4 +42,4 @@ This milestone does not include:
 
 First make the computer boot, work, and install.
 
-Then make it beautiful, distinctive, and Tip.
+Then make it beautiful, distinctive, and Rivet.
