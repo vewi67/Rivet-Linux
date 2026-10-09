@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-"""Small first-login welcome window for Rivet Linux."""
+"""First-login welcome window for Rivet Linux."""
 
 import glob
 import os
 import random
+import shutil
 import subprocess
 import sys
 
@@ -17,29 +18,17 @@ CHIP_DIR = "/usr/share/rivet/chip"
 MARKER = os.path.expanduser("~/.config/rivet/welcome-seen")
 
 
-def open_app(command):
-    try:
-        subprocess.Popen(command)
-    except (OSError, ValueError):
-        pass
-
-
-def mark_seen():
-    os.makedirs(os.path.dirname(MARKER), exist_ok=True)
-    with open(MARKER, "w", encoding="utf-8") as marker:
-        marker.write("shown\n")
-
-
 class RivetWelcome(Gtk.Window):
     def __init__(self):
         super().__init__(title="Welcome to Rivet Linux")
-        self.set_default_size(620, 430)
+        self.set_default_size(640, 460)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
-        self.set_border_width(28)
+        self.set_border_width(24)
+        self.set_icon_name("rivet")
         self.connect("delete-event", self.on_close)
 
-        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         outer.set_halign(Gtk.Align.CENTER)
         outer.set_valign(Gtk.Align.CENTER)
         self.add(outer)
@@ -48,13 +37,14 @@ class RivetWelcome(Gtk.Window):
         if images:
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                    random.choice(images), 190, 190, True
+                    random.choice(images), 160, 160, True
                 )
                 mascot = Gtk.Image.new_from_pixbuf(pixbuf)
                 mascot.set_halign(Gtk.Align.CENTER)
+                mascot.set_tooltip_text("Chip, the Rivet Linux beaver")
                 outer.pack_start(mascot, False, False, 0)
-            except Exception:
-                pass
+            except (OSError, ValueError) as error:
+                print(f"Rivet could not load the Chip image: {error}", file=sys.stderr)
 
         title = Gtk.Label()
         title.set_markup(
@@ -74,25 +64,26 @@ class RivetWelcome(Gtk.Window):
             label="A lightweight system built to be explored, used, and changed."
         )
         description.set_line_wrap(True)
+        description.set_max_width_chars(62)
         description.set_justify(Gtk.Justification.CENTER)
         description.set_halign(Gtk.Align.CENTER)
-        outer.pack_start(description, False, False, 4)
+        outer.pack_start(description, False, False, 2)
+
+        self.status = Gtk.Label()
+        self.status.set_line_wrap(True)
+        self.status.set_halign(Gtk.Align.CENTER)
+        outer.pack_start(self.status, False, False, 0)
 
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         buttons.set_halign(Gtk.Align.CENTER)
-        outer.pack_start(buttons, False, False, 10)
+        outer.pack_start(buttons, False, False, 8)
 
         files_button = Gtk.Button(label="Open files")
-        files_button.connect(
-            "clicked",
-            lambda *_: open_app(["thunar", os.path.expanduser("~")]),
-        )
+        files_button.connect("clicked", self.launch_app, ["thunar", os.path.expanduser("~")])
         buttons.pack_start(files_button, False, False, 0)
 
         settings_button = Gtk.Button(label="Settings")
-        settings_button.connect(
-            "clicked", lambda *_: open_app(["xfce4-settings-manager"])
-        )
+        settings_button.connect("clicked", self.launch_app, ["xfce4-settings-manager"])
         buttons.pack_start(settings_button, False, False, 0)
 
         done_button = Gtk.Button(label="Let's go")
@@ -100,18 +91,33 @@ class RivetWelcome(Gtk.Window):
         done_button.connect("clicked", self.on_done)
         buttons.pack_start(done_button, False, False, 0)
 
+    def launch_app(self, _button, command):
+        if shutil.which(command[0]) is None:
+            self.status.set_text(f"Could not find {command[0]} on this system.")
+            return
+        try:
+            subprocess.Popen(command, close_fds=True)
+        except OSError as error:
+            self.status.set_text(f"Could not open the application: {error}")
+
+    @staticmethod
+    def mark_seen():
+        os.makedirs(os.path.dirname(MARKER), exist_ok=True)
+        with open(MARKER, "w", encoding="utf-8") as marker:
+            marker.write("shown\n")
+
     def on_done(self, *_):
-        mark_seen()
+        self.mark_seen()
         Gtk.main_quit()
 
     def on_close(self, *_):
-        mark_seen()
+        self.mark_seen()
         Gtk.main_quit()
         return True
 
 
 if __name__ == "__main__":
-    if os.path.exists(MARKER):
+    if os.path.exists(MARKER) and "--show-again" not in sys.argv:
         sys.exit(0)
     try:
         RivetWelcome().show_all()
