@@ -45,6 +45,9 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 
 - [ ] Refine XFCE defaults
 - [x] Add the Rivet visual identity
+- [x] Add Chip mascot assets
+- [x] Implement the first-login welcome window
+- [ ] Test the welcome window in a built ISO
 - [ ] Add small Rivet tools where real problems exist
 - [ ] Improve user documentation
 - [ ] Test on real hardware
