@@ -6,18 +6,14 @@ The roadmap prioritizes a usable ISO quickly. Complexity comes only after the ba
 
 **Status: complete**
 
-- [x] Create repository
-- [x] Define name: Rivet
+- [x] Create repository and define the Rivet name
 - [x] Define Debian 13 Trixie as the base
-- [x] Record project philosophy
-- [x] Record agent and contribution rules
-- [x] Record initial architecture
-- [x] Define amd64
-- [x] Define XFCE + Xorg
+- [x] Record project philosophy and contribution rules
+- [x] Record the initial architecture
+- [x] Define amd64 and XFCE + Xorg
 - [x] Define LightDM, NetworkManager, and PipeWire
-- [x] Define live-build
-- [x] Define Calamares
-- [x] Define initial application profile
+- [x] Define live-build and Calamares
+- [x] Define the initial application profile
 - [x] Define first-ISO acceptance criteria
 
 ## Phase 1: First functional ISO
@@ -30,25 +26,28 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Define the initial package selection
 - [x] Add Debian Calamares settings
 - [x] Add repository validation
-- [ ] Validate Debian repository configuration
-- [ ] Build the first ISO
-- [ ] Test boot in a VM
-- [ ] Test XFCE
+- [x] Add ISO format and boot-metadata checks
+- [x] Generate a SHA-256 checksum during builds
+- [ ] Complete a fresh ISO build and retain its artifact
+- [ ] Test boot in a VM using UEFI
+- [ ] Test legacy BIOS boot
+- [ ] Test XFCE and default wallpaper
 - [ ] Test networking
 - [ ] Test audio
-- [ ] Test Calamares
-- [ ] Test installation
+- [ ] Test Rivet branding in Calamares
+- [ ] Test installation to a virtual disk
 - [ ] Test first boot after installation
 - [ ] Test package updates
 
 ## Phase 2: First Rivet experience
 
-- [ ] Refine XFCE defaults
 - [x] Add the Rivet visual identity
 - [x] Add Chip mascot assets
 - [x] Implement the first-login welcome window
+- [x] Add a way to reopen the welcome window
+- [x] Add Rivet-branded application launchers
 - [ ] Test the welcome window in a built ISO
-- [ ] Add small Rivet tools where real problems exist
+- [ ] Refine XFCE defaults after VM testing
 - [ ] Improve user documentation
 - [ ] Test on real hardware
 
@@ -65,15 +64,11 @@ Create only tools that solve problems found during real use.
 ## Phase 4: Public pre-alpha
 
 - [ ] Verify reproducibility
-- [ ] Add minimum automated tests
 - [ ] Document manual testing
-- [ ] Validate installation
-- [ ] Validate upgrades
+- [ ] Validate installation and upgrades
 - [ ] Document recovery paths
-- [ ] Publish release notes
+- [ ] Publish accurate release notes
 
 ## Scope rule
 
-A stage is not complete just because it works on the creator's machine.
-
-It needs a reproducible path and a reasonable way to verify the result.
+A stage is not complete just because it works on the creator's machine. It needs a reproducible path and a reasonable way to verify the result.
