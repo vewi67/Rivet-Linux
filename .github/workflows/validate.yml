@@ -1,4 +1,4 @@
-name: Validate Tip
+name: Validate Rivet
 
 on:
   push:
