@@ -44,7 +44,7 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 ## Phase 2: First Rivet experience
 
 - [ ] Refine XFCE defaults
-- [ ] Add the Rivet visual identity
+- [x] Add the Rivet visual identity
 - [ ] Add small Rivet tools where real problems exist
 - [ ] Improve user documentation
 - [ ] Test on real hardware
