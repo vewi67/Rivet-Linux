@@ -11,7 +11,7 @@ on:
       - '.github/workflows/build-iso.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: rivet-iso-${{ github.ref }}
@@ -94,13 +94,17 @@ jobs:
 
           echo "==> ISO validation passed."
 
-      - name: Upload ISO and checksum
-        uses: actions/upload-artifact@v4
+      - name: Publish ISO as a GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: rivet-iso
-          path: |
+          tag_name: rivet-build-${{ github.run_number }}
+          name: Rivet Linux build #${{ github.run_number }}
+          body: |
+            Automated Rivet Linux ISO build.
+
+            This is a development build, not a stable release.
+            Verify the SHA-256 checksum after downloading the ISO.
+          prerelease: true
+          files: |
             build/live-image-*.hybrid.iso
             build/live-image-*.hybrid.iso.sha256
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 1
