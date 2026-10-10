@@ -92,7 +92,8 @@ grep -Fq 'productName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'shortProductName: Rivet' "$BRANDING_HOOK"
 grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
-grep -Fq 'name: rivet-iso' .github/workflows/build-iso.yml
+grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
+grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 
 echo "==> Checking required visual assets..."
