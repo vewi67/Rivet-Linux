@@ -13,15 +13,15 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf
 
-
 CHIP_DIR = "/usr/share/rivet/chip"
 MARKER = os.path.expanduser("~/.config/rivet/welcome-seen")
+INSTALLER = "/usr/bin/calamares-install-debian"
 
 
 class RivetWelcome(Gtk.Window):
     def __init__(self):
         super().__init__(title="Welcome to Rivet Linux")
-        self.set_default_size(640, 460)
+        self.set_default_size(680, 480)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_border_width(24)
@@ -37,7 +37,7 @@ class RivetWelcome(Gtk.Window):
         if images:
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-                    random.choice(images), 160, 160, True
+                    random.choice(images), 144, 144, True
                 )
                 mascot = Gtk.Image.new_from_pixbuf(pixbuf)
                 mascot.set_halign(Gtk.Align.CENTER)
@@ -54,9 +54,7 @@ class RivetWelcome(Gtk.Window):
         outer.pack_start(title, False, False, 0)
 
         tagline = Gtk.Label()
-        tagline.set_markup(
-            '<span size="large">Your computer. Your rules.</span>'
-        )
+        tagline.set_markup('<span size="large">Your computer. Your rules.</span>')
         tagline.set_halign(Gtk.Align.CENTER)
         outer.pack_start(tagline, False, False, 0)
 
@@ -71,6 +69,7 @@ class RivetWelcome(Gtk.Window):
 
         self.status = Gtk.Label()
         self.status.set_line_wrap(True)
+        self.status.set_max_width_chars(72)
         self.status.set_halign(Gtk.Align.CENTER)
         outer.pack_start(self.status, False, False, 0)
 
@@ -78,16 +77,24 @@ class RivetWelcome(Gtk.Window):
         buttons.set_halign(Gtk.Align.CENTER)
         outer.pack_start(buttons, False, False, 8)
 
+        install_button = Gtk.Button(label="Install Rivet")
+        install_button.get_style_context().add_class("suggested-action")
+        install_button.connect("clicked", self.launch_installer)
+        buttons.pack_start(install_button, False, False, 0)
+
         files_button = Gtk.Button(label="Open files")
-        files_button.connect("clicked", self.launch_app, ["thunar", os.path.expanduser("~")])
+        files_button.connect(
+            "clicked", self.launch_app, ["thunar", os.path.expanduser("~")]
+        )
         buttons.pack_start(files_button, False, False, 0)
 
         settings_button = Gtk.Button(label="Settings")
-        settings_button.connect("clicked", self.launch_app, ["xfce4-settings-manager"])
+        settings_button.connect(
+            "clicked", self.launch_app, ["xfce4-settings-manager"]
+        )
         buttons.pack_start(settings_button, False, False, 0)
 
         done_button = Gtk.Button(label="Let's go")
-        done_button.get_style_context().add_class("suggested-action")
         done_button.connect("clicked", self.on_done)
         buttons.pack_start(done_button, False, False, 0)
 
@@ -96,9 +103,28 @@ class RivetWelcome(Gtk.Window):
             self.status.set_text(f"Could not find {command[0]} on this system.")
             return
         try:
-            subprocess.Popen(command, close_fds=True)
+            subprocess.Popen(command, close_fds=True, start_new_session=True)
+            self.status.set_text(f"Opening {command[0]}...")
         except OSError as error:
             self.status.set_text(f"Could not open the application: {error}")
+
+    def launch_installer(self, _button):
+        if not os.path.isfile(INSTALLER) or not os.access(INSTALLER, os.X_OK):
+            self.status.set_text(
+                "The installer is missing. Please restart the live session or "
+                "report this build as broken."
+            )
+            return
+        try:
+            subprocess.Popen(
+                [INSTALLER], close_fds=True, start_new_session=True
+            )
+            self.status.set_text(
+                "Starting the installer. If an authorization prompt appears, "
+                "complete it to continue."
+            )
+        except OSError as error:
+            self.status.set_text(f"Could not start the installer: {error}")
 
     @staticmethod
     def mark_seen():
@@ -108,12 +134,11 @@ class RivetWelcome(Gtk.Window):
 
     def on_done(self, *_):
         self.mark_seen()
-        Gtk.main_quit()
+        self.destroy()
 
     def on_close(self, *_):
         self.mark_seen()
-        Gtk.main_quit()
-        return True
+        return False
 
 
 if __name__ == "__main__":
