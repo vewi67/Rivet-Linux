@@ -20,7 +20,10 @@ for asset in \
   fi
 done
 
-# Set the default wallpaper for the live session and newly created users.
+# Set Rivet Waves as the default wallpaper for both the live session and
+# newly created users. XFCE expects workspace-specific settings under
+# monitor0/workspace0; monitor-level values alone can fall back to Debian's
+# packaged wallpaper on first login.
 for config_dir in \
   "/etc/xdg/xfce4/xfconf/xfce-perchannel-xml" \
   "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml"; do
@@ -32,9 +35,13 @@ for config_dir in \
     <property name="screen0" type="empty">
       <property name="monitor0" type="empty">
         <property name="image-path" type="string" value="$RIVET_WALLPAPER"/>
-        <property name="last-image" type="string" value="$RIVET_WALLPAPER"/>
-        <property name="image-show" type="bool" value="true"/>
         <property name="image-style" type="int" value="5"/>
+        <property name="image-show" type="bool" value="true"/>
+        <property name="workspace0" type="empty">
+          <property name="color-style" type="int" value="0"/>
+          <property name="image-style" type="int" value="5"/>
+          <property name="last-image" type="string" value="$RIVET_WALLPAPER"/>
+        </property>
       </property>
     </property>
   </property>
