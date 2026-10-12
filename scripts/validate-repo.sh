@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 PACKAGE_LIST="build/config/package-lists/rivet.list.chroot"
 BRANDING_HOOK="build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 SLIDESHOW_HOOK="build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"
+SECURE_LOG_HOOK="build/config/hooks/normal/0200-secure-rivet-installer-logging.hook.chroot"
 CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
@@ -16,7 +17,7 @@ PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desk
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
   build/README.md build/build.sh
-  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
+  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$SECURE_LOG_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$PLANK_AUTOSTART"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
@@ -33,9 +34,13 @@ for file in "${required_files[@]}"; do
 done
 
 echo "==> Checking shell syntax..."
+grep -Fq 'SLIDESHOW_HOOK="config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"' build/build.sh
+grep -Fq 'chmod 0755 {} +' build/build.sh
+
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
+bash -n "$SECURE_LOG_HOOK"
 bash -n scripts/validate-repo.sh
 
 echo "==> Checking Python syntax..."
@@ -147,8 +152,13 @@ grep -Fq 'rivet-disable-xfce-panel' "$BRANDING_HOOK"
 grep -Fq 'xfce4-panel.xml' "$BRANDING_HOOK"
 grep -Fq 'rivet-live-polkit.service' "$BRANDING_HOOK"
 grep -Fq 'polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
+grep -Fq 'install -d -m 0755 /etc/polkit-1/rules.d' "$BRANDING_HOOK"
+grep -Fq 'cat > /etc/polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer-root' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer' "$BRANDING_HOOK"
+grep -Fq 'LOG_FILE="/tmp/rivet-installer.log"' "$SECURE_LOG_HOOK"
+grep -Fq 'LOG_FILE="/run/rivet-installer-root.log"' "$SECURE_LOG_HOOK"
+grep -Fq 'install -o root -g root -m 0644 /dev/null "$LOG_FILE"' "$SECURE_LOG_HOOK"
 grep -Fq 'RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"' "$BRANDING_HOOK"
 grep -Fq 'rivet-waves.jpeg' "$BRANDING_HOOK"
 grep -Fq 'branding: rivet' "$BRANDING_HOOK"
