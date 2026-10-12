@@ -13,6 +13,10 @@
 build/output/
 build/work/
 build/cache/
+build/binary/
+build/chroot/
+build/.build/
+build/*.iso.sha256
 *.iso
 *.img
 *.qcow2

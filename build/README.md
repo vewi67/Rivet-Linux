@@ -28,9 +28,11 @@ The exact ISO filename is determined by live-build. Build state is managed by li
 
 ## GitHub Actions
 
-The Build Rivet ISO workflow validates the repository first, builds in a clean Debian Trixie container, checks the generated ISO and checksum, then uploads the ISO and checksum as a short-lived artifact.
+The Build Rivet ISO workflow validates the repository and builds the ISO in a clean Debian Trixie container for pull requests that change build inputs. This lets CI catch build failures before a change is merged. Pull-request builds upload the ISO and checksum as a temporary artifact retained for one day; they do not publish a release.
 
-If the build succeeds but artifact upload fails, read the workflow log carefully: artifact storage quota and ISO compilation are separate stages. A failed upload does not mean the ISO itself failed to build.
+After a successful build on `main`, the workflow publishes the ISO and checksum as a GitHub pre-release marked as a development build. A manual run on a non-`main` branch builds and validates the ISO without publishing a release.
+
+The build, checksum validation, artifact upload, and release publication are separate steps. Check the failed step in the workflow log before deciding which part failed.
 
 ## Scope
 

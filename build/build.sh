@@ -16,6 +16,7 @@ done
 PACKAGE_LIST="config/package-lists/rivet.list.chroot"
 BRANDING_HOOK="config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 SLIDESHOW_HOOK="config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"
+SECURE_LOG_HOOK="config/hooks/normal/0200-secure-rivet-installer-logging.hook.chroot"
 
 [[ -s "$PACKAGE_LIST" ]] || {
   echo "ERROR: Rivet package list is missing or empty: $PACKAGE_LIST" >&2
@@ -27,6 +28,10 @@ SLIDESHOW_HOOK="config/hooks/normal/0900-configure-rivet-calamares-slideshow.hoo
 }
 [[ -s "$SLIDESHOW_HOOK" ]] || {
   echo "ERROR: Rivet Calamares slideshow hook is missing or empty: $SLIDESHOW_HOOK" >&2
+  exit 1
+}
+[[ -s "$SECURE_LOG_HOOK" ]] || {
+  echo "ERROR: Rivet privileged installer logging hook is missing or empty: $SECURE_LOG_HOOK" >&2
   exit 1
 }
 

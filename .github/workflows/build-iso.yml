@@ -9,9 +9,14 @@ on:
       - 'build/**'
       - 'scripts/validate-repo.sh'
       - '.github/workflows/build-iso.yml'
+  pull_request:
+    paths:
+      - 'build/**'
+      - 'scripts/validate-repo.sh'
+      - '.github/workflows/build-iso.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: rivet-iso-${{ github.ref }}
@@ -25,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Validate repository
         run: bash scripts/validate-repo.sh
@@ -34,10 +41,14 @@ jobs:
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Make live-build hooks executable
         run: chmod +x build/config/hooks/normal/*.hook.chroot
@@ -94,11 +105,37 @@ jobs:
 
           echo "==> ISO validation passed."
 
+      - name: Upload ISO for downstream publishing
+        uses: actions/upload-artifact@v4
+        with:
+          name: rivet-iso
+          path: |
+            build/live-image-*.hybrid.iso
+            build/live-image-*.hybrid.iso.sha256
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish development ISO
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download validated ISO
+        uses: actions/download-artifact@v4
+        with:
+          name: rivet-iso
+          path: build
+
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ github.token }}
           tag_name: rivet-build-${{ github.run_number }}
-          name: Rivet Linux build #${{ github.run_number }}
+          name: "Rivet Linux build #${{ github.run_number }}"
           body: |
             Automated Rivet Linux ISO build.
 
