@@ -3,6 +3,7 @@ xfce4-terminal
 thunar
 thunar-archive-plugin
 thunar-volman
+plank
 lightdm
 lightdm-gtk-greeter
 xserver-xorg
@@ -11,6 +12,7 @@ network-manager-gnome
 pipewire
 pipewire-pulse
 wireplumber
+mate-polkit
 firefox-esr
 libreoffice-writer
 libreoffice-calc
