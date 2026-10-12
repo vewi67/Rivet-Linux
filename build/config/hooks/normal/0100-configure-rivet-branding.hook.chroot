@@ -134,6 +134,41 @@ if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
   exit 1
 fi
 
+# Give new live and installed accounts a populated dock. Put it at the top so
+# it does not collide with XFCE's default bottom panel.
+PLANK_DIR="/etc/skel/.config/plank/dock1"
+PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
+mkdir -p "$PLANK_LAUNCHERS"
+cat > "${PLANK_DIR}/settings" <<'EOF'
+[PlankDockPreferences]
+DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Settings.dockitem;
+IconSize=48
+Position=0
+Alignment=3
+ItemsAlignment=3
+HideMode=1
+ZoomEnabled=true
+ZoomPercent=150
+TooltipsEnabled=true
+EOF
+
+cat > "${PLANK_LAUNCHERS}/Firefox.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/firefox-esr.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Files.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/thunar.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Install-Rivet.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/calamares-install-debian.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Settings.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/xfce-settings-manager.desktop
+EOF
+
 if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
   echo "ERROR: Calamares branding was not switched to Rivet." >&2
   exit 1
