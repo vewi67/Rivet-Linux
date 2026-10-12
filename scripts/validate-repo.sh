@@ -33,6 +33,9 @@ for file in "${required_files[@]}"; do
 done
 
 echo "==> Checking shell syntax..."
+grep -Fq 'SLIDESHOW_HOOK="config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"' build/build.sh
+grep -Fq 'chmod 0755 {} +' build/build.sh
+
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
