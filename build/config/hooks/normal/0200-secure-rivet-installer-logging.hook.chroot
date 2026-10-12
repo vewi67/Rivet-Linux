@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+HELPER="/usr/local/libexec/rivet-installer-root"
+
+if [ ! -s "$HELPER" ]; then
+  echo "ERROR: Rivet privileged installer helper is missing: $HELPER" >&2
+  exit 1
+fi
+
+# The unprivileged launcher keeps its user-writable diagnostic log in /tmp.
+# The privileged helper must never append to that same file: a live user could
+# replace it with a symlink and trick a root process into writing elsewhere.
+if ! grep -Fq 'LOG_FILE="/tmp/rivet-installer.log"' "$HELPER"; then
+  echo "ERROR: unexpected Rivet installer helper log configuration." >&2
+  exit 1
+fi
+
+sed -i 's|LOG_FILE="/tmp/rivet-installer.log"|LOG_FILE="/run/rivet-installer-root.log"|' "$HELPER"
+sed -i '/^LOG_FILE="\/run\/rivet-installer-root.log"$/a install -o root -g root -m 0644 /dev/null "$LOG_FILE"' "$HELPER"
+
+grep -Fq 'LOG_FILE="/run/rivet-installer-root.log"' "$HELPER"
+grep -Fq 'install -o root -g root -m 0644 /dev/null "$LOG_FILE"' "$HELPER"
+
+echo "Rivet privileged installer logging uses a root-owned file under /run."
