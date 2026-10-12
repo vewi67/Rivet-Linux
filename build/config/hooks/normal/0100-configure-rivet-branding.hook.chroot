@@ -167,15 +167,17 @@ X-GNOME-Autostart-enabled=true
 EOF
 
 # Authorize only Rivet's installer helper in the live session.
-# The rule lives in /run (tmpfs), so it cannot be installed onto the target system.
+# Polkit reads rules from /etc/polkit-1/rules.d. This live-system rule is not
+# copied to the installed target by Calamares and disappears when the live
+# session reboots.
 POLKIT_SETUP="/usr/local/sbin/rivet-live-polkit-setup"
-mkdir -p /usr/local/sbin /usr/local/libexec /etc/systemd/system/multi-user.target.wants
+mkdir -p /usr/local/sbin /usr/local/libexec /etc/polkit-1/rules.d /etc/systemd/system/multi-user.target.wants
 cat > "$POLKIT_SETUP" <<'EOF'
 #!/bin/sh
 set -eu
 [ -d /run/live/medium ] || exit 0
-install -d -m 0755 /run/polkit-1/rules.d
-cat > /run/polkit-1/rules.d/50-rivet-live.rules <<'RULES'
+install -d -m 0755 /etc/polkit-1/rules.d
+cat > /etc/polkit-1/rules.d/50-rivet-live.rules <<'RULES'
 polkit.addRule(function(action, subject) {
     if (subject.active && subject.local &&
         action.id === "org.freedesktop.policykit.exec" &&
@@ -184,7 +186,7 @@ polkit.addRule(function(action, subject) {
     }
 });
 RULES
-chmod 0644 /run/polkit-1/rules.d/50-rivet-live.rules
+chmod 0644 /etc/polkit-1/rules.d/50-rivet-live.rules
 EOF
 chmod 0755 "$POLKIT_SETUP"
 cat > /etc/systemd/system/rivet-live-polkit.service <<'EOF'
