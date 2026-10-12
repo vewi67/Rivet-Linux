@@ -13,7 +13,7 @@ for asset in \
   "${RIVET_WALLPAPER_DIR}/rivet-factory.jpeg" \
   "${RIVET_WALLPAPER_DIR}/rivet-chip.jpeg" \
   "${RIVET_LOGIN_WALLPAPER}" \
-  "/etc/calamares/branding/rivet/rivet.logo.png"; do
+  "${RIVET_LOGO}"; do
   if [ ! -s "$asset" ]; then
     echo "ERROR: required Rivet visual asset missing: $asset" >&2
     exit 1
@@ -101,7 +101,7 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 fi
 
-# Rebrand Debian Trixie's actual Calamares launcher in place.
+# Rebrand Debian Trixie's Calamares launcher without bypassing its live-media wrapper.
 INSTALLER="/usr/bin/calamares-install-debian"
 INSTALLER_DESKTOP="/usr/share/applications/calamares-install-debian.desktop"
 if [ ! -x "$INSTALLER" ]; then
@@ -115,6 +115,12 @@ fi
 sed -i 's/^Name=.*/Name=Install Rivet Linux/' "$INSTALLER_DESKTOP"
 sed -i 's/^Comment=.*/Comment=Install Rivet Linux on this computer/' "$INSTALLER_DESKTOP"
 sed -i 's/^Icon=.*/Icon=rivet/' "$INSTALLER_DESKTOP"
+sed -i 's|^Exec=.*|Exec=/usr/bin/calamares-install-debian|' "$INSTALLER_DESKTOP"
+if grep -q '^TryExec=' "$INSTALLER_DESKTOP"; then
+  sed -i 's|^TryExec=.*|TryExec=/usr/bin/calamares-install-debian|' "$INSTALLER_DESKTOP"
+else
+  sed -i '/^Exec=/aTryExec=/usr/bin/calamares-install-debian' "$INSTALLER_DESKTOP"
+fi
 
 if [ ! -s /usr/bin/rivet-welcome ]; then
   echo "ERROR: Rivet welcome application is missing." >&2
@@ -122,9 +128,15 @@ if [ ! -s /usr/bin/rivet-welcome ]; then
 fi
 chmod 0755 /usr/bin/rivet-welcome
 
+# Keep the expected desktop integration present in the built image.
+if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
+  echo "ERROR: Plank autostart entry is missing." >&2
+  exit 1
+fi
+
 if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
   echo "ERROR: Calamares branding was not switched to Rivet." >&2
   exit 1
 fi
 
-echo "Rivet desktop, installer branding, and welcome experience configured."
+echo "Rivet desktop, dock, installer authentication, branding, and welcome experience configured."
