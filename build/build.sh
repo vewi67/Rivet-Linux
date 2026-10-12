@@ -26,7 +26,11 @@ BRANDING_HOOK="config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 }
 
 mkdir -p config/package-lists config/includes.chroot/etc/skel
-chmod 0755 "$BRANDING_HOOK"
+
+# live-build only executes executable hooks. Make every normal hook executable
+# so local builds run the same image-configuration steps as CI, including the
+# Calamares slideshow hook that repairs branding.desc and writes show.qml.
+find config/hooks/normal -maxdepth 1 -type f -name '*.hook.chroot' -exec chmod 0755 {} +
 
 lb_args=(
   --distribution trixie
