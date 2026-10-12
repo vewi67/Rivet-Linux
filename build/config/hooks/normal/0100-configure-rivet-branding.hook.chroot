@@ -146,7 +146,7 @@ IconSize=48
 Position=0
 Alignment=3
 ItemsAlignment=3
-HideMode=1
+HideMode=0
 ZoomEnabled=true
 ZoomPercent=150
 TooltipsEnabled=true
@@ -164,9 +164,20 @@ cat > "${PLANK_LAUNCHERS}/Install-Rivet.dockitem" <<'EOF'
 [PlankDockItemPreferences]
 Launcher=file:///usr/share/applications/calamares-install-debian.desktop
 EOF
+cat > /usr/share/applications/rivet-settings.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Rivet Settings
+Comment=Configure the Rivet desktop
+Exec=xfce4-settings-manager
+Icon=preferences-desktop
+Terminal=false
+Categories=Settings;DesktopSettings;
+EOF
 cat > "${PLANK_LAUNCHERS}/Settings.dockitem" <<'EOF'
 [PlankDockItemPreferences]
-Launcher=file:///usr/share/applications/xfce-settings-manager.desktop
+Launcher=file:///usr/share/applications/rivet-settings.desktop
 EOF
 
 if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
