@@ -54,6 +54,28 @@ cat > /etc/lightdm/lightdm-gtk-greeter.conf <<EOF
 background=$RIVET_LOGIN_WALLPAPER
 EOF
 
+# The packaged MATE agent may be restricted to the MATE session. Explicitly
+# start its authentication agent in Rivet's XFCE session so pkexec can show
+# the authorization dialog when the installer is launched.
+POLKIT_AGENT="/usr/libexec/polkit-mate-authentication-agent-1"
+if [ ! -x "$POLKIT_AGENT" ]; then
+  echo "ERROR: PolicyKit authentication agent is missing: $POLKIT_AGENT" >&2
+  exit 1
+fi
+cat > /etc/xdg/autostart/rivet-polkit-agent.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Rivet Authorization Agent
+Comment=Authorize administrative actions in Rivet
+Exec=/usr/libexec/polkit-mate-authentication-agent-1
+TryExec=/usr/libexec/polkit-mate-authentication-agent-1
+OnlyShowIn=XFCE;
+NoDisplay=true
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+
 # Point Calamares at Rivet branding while preserving Debian's tested module sequence.
 CALAMARES_SETTINGS="/etc/calamares/settings.conf"
 if [ ! -s "$CALAMARES_SETTINGS" ]; then
