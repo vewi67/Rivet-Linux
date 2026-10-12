@@ -135,10 +135,12 @@ class RivetWelcome(Gtk.Window):
     def on_done(self, *_):
         self.mark_seen()
         self.destroy()
+        Gtk.main_quit()
 
     def on_close(self, *_):
         self.mark_seen()
-        return False
+        Gtk.main_quit()
+        return True
 
 
 if __name__ == "__main__":
