@@ -15,6 +15,7 @@ done
 
 PACKAGE_LIST="config/package-lists/rivet.list.chroot"
 BRANDING_HOOK="config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
+SLIDESHOW_HOOK="config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"
 
 [[ -s "$PACKAGE_LIST" ]] || {
   echo "ERROR: Rivet package list is missing or empty: $PACKAGE_LIST" >&2
@@ -24,9 +25,17 @@ BRANDING_HOOK="config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
   echo "ERROR: Rivet branding hook is missing or empty: $BRANDING_HOOK" >&2
   exit 1
 }
+[[ -s "$SLIDESHOW_HOOK" ]] || {
+  echo "ERROR: Rivet Calamares slideshow hook is missing or empty: $SLIDESHOW_HOOK" >&2
+  exit 1
+}
 
 mkdir -p config/package-lists config/includes.chroot/etc/skel
-chmod 0755 "$BRANDING_HOOK"
+
+# live-build only executes executable hooks. Make every normal hook executable
+# so local builds run the same image-configuration steps as CI, including the
+# Calamares slideshow hook that repairs branding.desc and writes show.qml.
+find config/hooks/normal -maxdepth 1 -type f -name '*.hook.chroot' -exec chmod 0755 {} +
 
 lb_args=(
   --distribution trixie

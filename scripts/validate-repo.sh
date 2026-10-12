@@ -33,6 +33,9 @@ for file in "${required_files[@]}"; do
 done
 
 echo "==> Checking shell syntax..."
+grep -Fq 'SLIDESHOW_HOOK="config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"' build/build.sh
+grep -Fq 'chmod 0755 {} +' build/build.sh
+
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
@@ -147,6 +150,8 @@ grep -Fq 'rivet-disable-xfce-panel' "$BRANDING_HOOK"
 grep -Fq 'xfce4-panel.xml' "$BRANDING_HOOK"
 grep -Fq 'rivet-live-polkit.service' "$BRANDING_HOOK"
 grep -Fq 'polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
+grep -Fq 'install -d -m 0755 /etc/polkit-1/rules.d' "$BRANDING_HOOK"
+grep -Fq 'cat > /etc/polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer-root' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer' "$BRANDING_HOOK"
 grep -Fq 'RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"' "$BRANDING_HOOK"
