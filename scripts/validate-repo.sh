@@ -10,12 +10,13 @@ CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
+PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desktop"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
-  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER"
+  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$PLANK_AUTOSTART"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -68,9 +69,9 @@ require_package() {
 
 echo "==> Checking required packages..."
 for package in \
-  xfce4 thunar lightdm lightdm-gtk-greeter xserver-xorg \
+  xfce4 xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
-  firefox-esr calamares calamares-settings-debian sudo \
+  mate-polkit firefox-esr calamares calamares-settings-debian sudo \
   python3-gi gir1.2-gtk-3.0; do
   require_package "$package"
 done
@@ -109,7 +110,7 @@ for asset in \
   }
 done
 
-echo "==> Checking Chip and launcher integration..."
+echo "==> Checking Chip and desktop integration..."
 chip_count="$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)"
 if [[ "$chip_count" -lt 5 ]]; then
   echo "ERROR: expected at least five Chip PNG poses, found $chip_count." >&2
@@ -123,8 +124,16 @@ grep -Fq 'Icon=rivet' "$WELCOME_LAUNCHER"
 grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
 grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
+grep -Fq 'Install Rivet' "$WELCOME_APP"
+grep -Fq 'calamares-install-debian' "$WELCOME_APP"
+
+grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
+grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"
+grep -Fq 'plank' "$BRANDING_HOOK"
+grep -Fq 'mate-polkit' "$PACKAGE_LIST"
 grep -Fq 'branding: rivet' "$BRANDING_HOOK"
 grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
+grep -Fq 'Exec=/usr/bin/calamares-install-debian' "$BRANDING_HOOK"
 grep -Fq 'Icon=rivet' "$BRANDING_HOOK"
 
 echo "==> Checking documentation language..."
