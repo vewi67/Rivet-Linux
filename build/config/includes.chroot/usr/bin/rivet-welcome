@@ -15,7 +15,7 @@ from gi.repository import Gtk, GdkPixbuf
 
 CHIP_DIR = "/usr/share/rivet/chip"
 MARKER = os.path.expanduser("~/.config/rivet/welcome-seen")
-INSTALLER = "/usr/bin/calamares-install-debian"
+INSTALLER = "/usr/local/bin/rivet-installer"
 
 
 class RivetWelcome(Gtk.Window):

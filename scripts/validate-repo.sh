@@ -71,8 +71,8 @@ echo "==> Checking required packages..."
 for package in \
   xfce4 xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
-  mate-polkit firefox-esr calamares calamares-settings-debian sudo \
-  python3-gi gir1.2-gtk-3.0; do
+  mate-polkit polkitd pkexec x11-xserver-utils firefox-esr calamares \
+  calamares-settings-debian sudo python3-gi gir1.2-gtk-3.0; do
   require_package "$package"
 done
 
@@ -125,7 +125,7 @@ grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
 grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'Install Rivet' "$WELCOME_APP"
-grep -Fq 'calamares-install-debian' "$WELCOME_APP"
+grep -Fq 'rivet-installer' "$WELCOME_APP"
 
 grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"
@@ -134,17 +134,24 @@ grep -Fq 'mate-polkit' "$PACKAGE_LIST"
 grep -Fq 'rivet-polkit-agent.desktop' "$BRANDING_HOOK"
 grep -Fq 'polkit-mate-authentication-agent-1' "$BRANDING_HOOK"
 grep -Fq 'OnlyShowIn=XFCE;' "$BRANDING_HOOK"
-grep -Fq 'Position=0' "$BRANDING_HOOK"
+grep -Fq 'Position=3' "$BRANDING_HOOK"
 grep -Fq 'Firefox.dockitem' "$BRANDING_HOOK"
 grep -Fq 'Install-Rivet.dockitem' "$BRANDING_HOOK"
 grep -Fq 'rivet-settings.desktop' "$BRANDING_HOOK"
 grep -Fq 'workspace0' "$BRANDING_HOOK"
 grep -Fq 'last-image' "$BRANDING_HOOK"
+grep -Fq 'rivet-set-wallpaper' "$BRANDING_HOOK"
+grep -Fq 'rivet-disable-xfce-panel' "$BRANDING_HOOK"
+grep -Fq 'xfce4-panel.xml' "$BRANDING_HOOK"
+grep -Fq 'rivet-live-polkit.service' "$BRANDING_HOOK"
+grep -Fq 'polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
+grep -Fq 'rivet-installer-root' "$BRANDING_HOOK"
+grep -Fq 'rivet-installer' "$BRANDING_HOOK"
 grep -Fq 'RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"' "$BRANDING_HOOK"
 grep -Fq 'rivet-waves.jpeg' "$BRANDING_HOOK"
 grep -Fq 'branding: rivet' "$BRANDING_HOOK"
 grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
-grep -Fq 'Exec=/usr/bin/calamares-install-debian' "$BRANDING_HOOK"
+grep -Fq 'Exec=/usr/local/bin/rivet-installer' "$BRANDING_HOOK"
 grep -Fq 'Icon=rivet' "$BRANDING_HOOK"
 
 echo "==> Checking documentation language..."

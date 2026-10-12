@@ -20,10 +20,7 @@ for asset in \
   fi
 done
 
-# Set Rivet Waves as the default wallpaper for both the live session and
-# newly created users. XFCE expects workspace-specific settings under
-# monitor0/workspace0; monitor-level values alone can fall back to Debian's
-# packaged wallpaper on first login.
+# Set the default wallpaper in the system defaults and new-user profile.
 for config_dir in \
   "/etc/xdg/xfce4/xfconf/xfce-perchannel-xml" \
   "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml"; do
@@ -36,7 +33,6 @@ for config_dir in \
       <property name="monitor0" type="empty">
         <property name="image-path" type="string" value="$RIVET_WALLPAPER"/>
         <property name="image-style" type="int" value="5"/>
-        <property name="image-show" type="bool" value="true"/>
         <property name="workspace0" type="empty">
           <property name="color-style" type="int" value="0"/>
           <property name="image-style" type="int" value="5"/>
@@ -48,6 +44,93 @@ for config_dir in \
 </channel>
 EOF
 done
+
+# XFCE may use monitorVirtual1 or another real display name instead of monitor0.
+# Apply the default after XFCE creates the live user's actual backdrop properties.
+cat > /usr/local/bin/rivet-set-wallpaper <<'EOF'
+#!/bin/sh
+set -eu
+WALLPAPER="/usr/share/backgrounds/rivet/rivet-waves.jpeg"
+MARKER="$HOME/.config/rivet/wallpaper-default-applied"
+LOG_DIR="$HOME/.cache/rivet"
+[ -e "$MARKER" ] && exit 0
+[ -s "$WALLPAPER" ] || exit 1
+mkdir -p "$LOG_DIR" "$(dirname "$MARKER")"
+exec >> "$LOG_DIR/wallpaper-default.log" 2>&1
+attempt=0
+properties=""
+while [ "$attempt" -lt 15 ]; do
+  properties="$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /^\/backdrop\/screen0\/.*\/(last-image|last-single-image|image-path)$/ {print $1}' || true)"
+  [ -n "$properties" ] && break
+  attempt=$((attempt + 1))
+  sleep 2
+done
+applied=0
+for property in $properties; do
+  case "$property" in
+    */last-image|*/last-single-image|*/image-path)
+      if xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER"; then
+        applied=1
+      fi
+      ;;
+  esac
+done
+if [ "$applied" -eq 1 ]; then
+  touch "$MARKER"
+  echo "Rivet default wallpaper applied."
+else
+  echo "ERROR: XFCE did not expose usable wallpaper properties."
+  exit 1
+fi
+EOF
+chmod 0755 /usr/local/bin/rivet-set-wallpaper
+mkdir -p /etc/xdg/autostart /etc/skel/.config/autostart
+cat > /etc/xdg/autostart/rivet-wallpaper.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Rivet Wallpaper Defaults
+Comment=Set the initial Rivet desktop wallpaper
+Exec=/usr/local/bin/rivet-set-wallpaper
+OnlyShowIn=XFCE;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+EOF
+cp /etc/xdg/autostart/rivet-wallpaper.desktop /etc/skel/.config/autostart/rivet-wallpaper.desktop
+
+# Remove XFCE's Debian panel configuration so Plank is the only dock.
+for panel_file in \
+  "/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" \
+  "/etc/xdg/xfce4/panel/default.xml" \
+  "/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml"; do
+  mkdir -p "$(dirname "$panel_file")"
+  cat > "$panel_file" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xfce4-panel" version="1.0">
+  <property name="configver" type="int" value="2"/>
+  <property name="panels" type="array"/>
+  <property name="plugins" type="empty"/>
+</channel>
+EOF
+done
+cat > /usr/local/bin/rivet-disable-xfce-panel <<'EOF'
+#!/bin/sh
+sleep 3
+if command -v xfce4-panel >/dev/null 2>&1; then
+  xfce4-panel --quit >/dev/null 2>&1 || true
+fi
+EOF
+chmod 0755 /usr/local/bin/rivet-disable-xfce-panel
+cat > /etc/xdg/autostart/rivet-disable-xfce-panel.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Disable the default XFCE panel
+Comment=Use the Rivet dock instead of the Debian panel
+Exec=/usr/local/bin/rivet-disable-xfce-panel
+OnlyShowIn=XFCE;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+EOF
+cp /etc/xdg/autostart/rivet-disable-xfce-panel.desktop /etc/skel/.config/autostart/rivet-disable-xfce-panel.desktop
 
 # Use the GTK greeter and the dedicated Rivet login wallpaper.
 mkdir -p /etc/lightdm/lightdm.conf.d /etc/lightdm
@@ -82,6 +165,146 @@ NoDisplay=true
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
+
+# Authorize only Rivet's installer helper in the live session.
+# The rule lives in /run (tmpfs), so it cannot be installed onto the target system.
+POLKIT_SETUP="/usr/local/sbin/rivet-live-polkit-setup"
+mkdir -p /usr/local/sbin /usr/local/libexec /etc/systemd/system/multi-user.target.wants
+cat > "$POLKIT_SETUP" <<'EOF'
+#!/bin/sh
+set -eu
+[ -d /run/live/medium ] || exit 0
+install -d -m 0755 /run/polkit-1/rules.d
+cat > /run/polkit-1/rules.d/50-rivet-live.rules <<'RULES'
+polkit.addRule(function(action, subject) {
+    if (subject.active && subject.local &&
+        action.id === "org.freedesktop.policykit.exec" &&
+        action.lookup("program") === "/usr/local/libexec/rivet-installer-root") {
+        return polkit.Result.YES;
+    }
+});
+RULES
+chmod 0644 /run/polkit-1/rules.d/50-rivet-live.rules
+EOF
+chmod 0755 "$POLKIT_SETUP"
+cat > /etc/systemd/system/rivet-live-polkit.service <<'EOF'
+[Unit]
+Description=Temporary Polkit permission for the Rivet live installer
+ConditionPathExists=/run/live/medium
+After=local-fs.target
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/rivet-live-polkit-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+ln -sfn ../rivet-live-polkit.service /etc/systemd/system/multi-user.target.wants/rivet-live-polkit.service
+
+# Diagnostic launcher: show a visible error and save details when startup fails.
+cat > /usr/local/bin/rivet-installer <<'EOF'
+#!/bin/sh
+set -u
+LOG_FILE="/tmp/rivet-installer.log"
+: > "$LOG_FILE" 2>/dev/null || true
+chmod 0666 "$LOG_FILE" 2>/dev/null || true
+exec >> "$LOG_FILE" 2>&1
+XHOST_ALLOWED=0
+show_error() {
+  RIVET_INSTALLER_ERROR="$1" RIVET_INSTALLER_LOG="$LOG_FILE" /usr/bin/python3 - <<'PY'
+import os
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+dialog = Gtk.MessageDialog(
+    None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
+    Gtk.ButtonsType.CLOSE, "Rivet Linux installer could not start",
+)
+dialog.format_secondary_text(
+    os.environ.get("RIVET_INSTALLER_ERROR", "Unknown installer error")
+    + "\n\nDiagnostic log: "
+    + os.environ.get("RIVET_INSTALLER_LOG", "/tmp/rivet-installer.log")
+)
+dialog.run()
+dialog.destroy()
+PY
+}
+cleanup() {
+  if [ "$XHOST_ALLOWED" -eq 1 ]; then
+    xhost -si:localuser:root >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM HUP
+echo "=== Rivet installer started: $(date -Is) ==="
+if [ -z "$(printenv DISPLAY 2>/dev/null || true)" ]; then
+  echo "ERROR: DISPLAY is unset."
+  show_error "The desktop display is unavailable. Log out and try again."
+  exit 1
+fi
+if [ ! -x /usr/bin/pkexec ] || [ ! -x /usr/local/libexec/rivet-installer-root ]; then
+  echo "ERROR: pkexec or Rivet's root helper is missing."
+  show_error "The Polkit launcher or Rivet installer helper is missing."
+  exit 1
+fi
+if ! xhost +si:localuser:root; then
+  echo "ERROR: xhost could not authorize the root installer window."
+  show_error "Could not grant the installer access to the desktop display."
+  exit 1
+fi
+XHOST_ALLOWED=1
+/usr/bin/pkexec /usr/local/libexec/rivet-installer-root
+status=$?
+echo "Rivet installer exit status: $status"
+if [ "$status" -ne 0 ]; then
+  show_error "The installer exited with status $status. See the diagnostic log."
+fi
+exit "$status"
+EOF
+chmod 0755 /usr/local/bin/rivet-installer
+
+# Run Calamares using Debian's fstab safeguard, restore the backup on every exit,
+# and recover the original file if a previous installer attempt was interrupted.
+cat > /usr/local/libexec/rivet-installer-root <<'EOF'
+#!/bin/sh
+set -u
+LOG_FILE="/tmp/rivet-installer.log"
+exec >> "$LOG_FILE" 2>&1
+echo "=== Rivet privileged installer helper: $(date -Is) ==="
+if [ ! -d /run/live/medium ]; then
+  echo "ERROR: installer helper was not launched from live media."
+  exit 20
+fi
+if ! command -v calamares >/dev/null 2>&1; then
+  echo "ERROR: Calamares executable is missing."
+  exit 21
+fi
+restore_fstab() {
+  status=$?
+  trap - EXIT
+  if [ -e /etc/fstab.orig.calamares ]; then
+    mv -f /etc/fstab.orig.calamares /etc/fstab || status=22
+  fi
+  exit "$status"
+}
+trap restore_fstab EXIT
+if [ -e /etc/fstab.orig.calamares ]; then
+  mv -f /etc/fstab.orig.calamares /etc/fstab || exit 23
+fi
+if [ -e /etc/fstab ]; then
+  mv /etc/fstab /etc/fstab.orig.calamares || exit 24
+fi
+export QT_AUTO_SCREEN_SCALE_FACTOR=1
+/usr/bin/calamares
+status=$?
+echo "Calamares exit status: $status"
+exit "$status"
+EOF
+chmod 0755 /usr/local/libexec/rivet-installer-root
 
 # Point Calamares at Rivet branding while preserving Debian's tested module sequence.
 CALAMARES_SETTINGS="/etc/calamares/settings.conf"
@@ -130,7 +353,7 @@ if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 fi
 
-# Rebrand Debian Trixie's Calamares launcher without bypassing its live-media wrapper.
+# Rebrand Calamares and route the desktop entry through Rivet's diagnostic launcher.
 INSTALLER="/usr/bin/calamares-install-debian"
 INSTALLER_DESKTOP="/usr/share/applications/calamares-install-debian.desktop"
 if [ ! -x "$INSTALLER" ]; then
@@ -144,11 +367,16 @@ fi
 sed -i 's/^Name=.*/Name=Install Rivet Linux/' "$INSTALLER_DESKTOP"
 sed -i 's/^Comment=.*/Comment=Install Rivet Linux on this computer/' "$INSTALLER_DESKTOP"
 sed -i 's/^Icon=.*/Icon=rivet/' "$INSTALLER_DESKTOP"
-sed -i 's|^Exec=.*|Exec=/usr/bin/calamares-install-debian|' "$INSTALLER_DESKTOP"
+sed -i 's|^Exec=.*|Exec=/usr/local/bin/rivet-installer|' "$INSTALLER_DESKTOP"
 if grep -q '^TryExec=' "$INSTALLER_DESKTOP"; then
-  sed -i 's|^TryExec=.*|TryExec=/usr/bin/calamares-install-debian|' "$INSTALLER_DESKTOP"
+  sed -i 's|^TryExec=.*|TryExec=/usr/local/bin/rivet-installer|' "$INSTALLER_DESKTOP"
 else
-  sed -i '/^Exec=/aTryExec=/usr/bin/calamares-install-debian' "$INSTALLER_DESKTOP"
+  sed -i '/^Exec=/aTryExec=/usr/local/bin/rivet-installer' "$INSTALLER_DESKTOP"
+fi
+
+if [ ! -x /usr/local/bin/rivet-installer ] || [ ! -x /usr/local/libexec/rivet-installer-root ]; then
+  echo "ERROR: Rivet installer wrapper or root helper is missing." >&2
+  exit 1
 fi
 
 if [ ! -s /usr/bin/rivet-welcome ]; then
@@ -163,8 +391,8 @@ if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
   exit 1
 fi
 
-# Give new live and installed accounts a populated dock. Put it at the top so
-# it does not collide with XFCE's default bottom panel.
+# Give new live and installed accounts a populated bottom dock.
+# XFCE's factory panel is disabled above, preventing overlapping docks.
 PLANK_DIR="/etc/skel/.config/plank/dock1"
 PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
@@ -172,7 +400,7 @@ cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
 DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Settings.dockitem;
 IconSize=48
-Position=0
+Position=3
 Alignment=3
 ItemsAlignment=3
 HideMode=0
