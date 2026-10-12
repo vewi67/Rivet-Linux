@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Validate repository
         run: bash scripts/validate-repo.sh
@@ -45,6 +47,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Make live-build hooks executable
         run: chmod +x build/config/hooks/normal/*.hook.chroot
@@ -131,7 +135,7 @@ jobs:
         with:
           token: ${{ github.token }}
           tag_name: rivet-build-${{ github.run_number }}
-          name: Rivet Linux build #${{ github.run_number }}
+          name: "Rivet Linux build #${{ github.run_number }}"
           body: |
             Automated Rivet Linux ISO build.
 
