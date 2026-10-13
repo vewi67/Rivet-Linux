@@ -325,9 +325,12 @@ if [ -e /etc/fstab ]; then
 fi
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
 
-# Keep verbose Calamares diagnostics in the visible installer error report.
-# -D8 increases logging without enabling Calamares' debug-mode config lookup.
-echo "Launching Calamares with verbose diagnostics (-D8)."
+# Keep verbose Calamares and Qt plugin diagnostics in the visible error report.
+# -D8 increases Calamares logging without enabling debug-mode config lookup.
+# QT_DEBUG_PLUGINS exposes QPA/QML plugin failures that can occur before a
+# Calamares session.log is created.
+export QT_DEBUG_PLUGINS=1
+echo "Launching Calamares with verbose diagnostics (-D8, Qt plugin diagnostics)."
 /usr/bin/calamares -D8
 status=$?
 echo "Calamares exit status: $status"
