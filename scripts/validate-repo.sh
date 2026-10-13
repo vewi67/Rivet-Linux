@@ -23,7 +23,7 @@ required_files=(
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$SECURE_LOG_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$PLANK_AUTOSTART"
   "$CHIP_DIR/README.md"
-  .github/workflows/build-iso.yml .github/workflows/validate.yml
+  .github/workflows/build-iso.yml .github/workflows/build-pr.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
   docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md
 )
@@ -161,9 +161,18 @@ grep -Fq 'productName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'shortProductName: Rivet' "$BRANDING_HOOK"
 grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
-grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
+grep -Fq "if: github.ref == 'refs/heads/main'" .github/workflows/build-iso.yml
+grep -Fq 'name: Publish development ISO' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: "Rivet Linux build #${{ github.run_number }}"' .github/workflows/build-iso.yml
+grep -Fq 'name: Validate Rivet ISO on PR' .github/workflows/build-pr.yml
+grep -Fq 'name: Build and validate ISO (no upload)' .github/workflows/build-pr.yml
+grep -Fq 'permissions:' .github/workflows/build-pr.yml
+grep -Fq 'contents: read' .github/workflows/build-pr.yml
+if grep -Fq 'upload-artifact' .github/workflows/build-pr.yml || grep -Fq 'download-artifact' .github/workflows/build-iso.yml; then
+  echo "ERROR: ISO workflow must not depend on temporary artifact storage." >&2
+  exit 1
+fi
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 
 echo "==> Checking required visual assets..."
