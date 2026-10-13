@@ -106,6 +106,7 @@ jobs:
         with:
           token: ${{ github.token }}
           tag_name: rivet-build-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
           name: "Rivet Linux build #${{ github.run_number }}"
           body: |
             Automated Rivet Linux ISO build.
