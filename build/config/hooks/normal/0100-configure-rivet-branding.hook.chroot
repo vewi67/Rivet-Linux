@@ -324,9 +324,30 @@ if [ -e /etc/fstab ]; then
   mv /etc/fstab /etc/fstab.orig.calamares || exit 24
 fi
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
-/usr/bin/calamares
+
+# Keep verbose Calamares diagnostics in the visible installer error report.
+# -D8 increases logging without enabling Calamares' debug-mode config lookup.
+echo "Launching Calamares with verbose diagnostics (-D8)."
+/usr/bin/calamares -D8
 status=$?
 echo "Calamares exit status: $status"
+
+# Calamares also writes a session.log beneath its root cache directory.
+# Copy relevant errors and the final session lines into the root helper log,
+# which the unprivileged launcher can show in its on-screen error dialog.
+for session_log in \
+  /root/.cache/calamares/session.log \
+  /root/.cache/*/session.log \
+  /root/.cache/*/calamares/session.log \
+  /root/.cache/*/*/session.log \
+  /tmp/session.log; do
+  [ -s "$session_log" ] || continue
+  echo "=== Calamares session log: $session_log (last 25 lines) ==="
+  tail -n 25 "$session_log"
+  echo "=== Relevant Calamares diagnostics from $session_log ==="
+  grep -Ei 'ERROR|FATAL|WARNING|failed|not found|could not|cannot|invalid|exception|QML|plugin|module' "$session_log" | tail -n 40 || true
+done
+
 exit "$status"
 EOF
 chmod 0755 /usr/local/libexec/rivet-installer-root
