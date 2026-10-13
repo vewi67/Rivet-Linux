@@ -226,11 +226,21 @@ dialog = Gtk.MessageDialog(
     None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
     Gtk.ButtonsType.CLOSE, "Rivet Linux installer could not start",
 )
-dialog.format_secondary_text(
+details = (
     os.environ.get("RIVET_INSTALLER_ERROR", "Unknown installer error")
-    + "\n\nDiagnostic log: "
+    + "\n\nLauncher log: "
     + os.environ.get("RIVET_INSTALLER_LOG", "/tmp/rivet-installer.log")
 )
+for path in ("/tmp/rivet-installer.log", "/run/rivet-installer-root.log"):
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as log:
+            lines = log.readlines()
+        if lines:
+            details += "\n\n--- " + path + " (last 25 lines) ---\n"
+            details += "".join(lines[-25:])
+    except OSError:
+        pass
+dialog.format_secondary_text(details)
 dialog.run()
 dialog.destroy()
 PY
@@ -259,7 +269,7 @@ if ! xhost +si:localuser:root; then
   exit 1
 fi
 XHOST_ALLOWED=1
-/usr/bin/pkexec /usr/local/libexec/rivet-installer-root
+/usr/bin/pkexec /usr/local/libexec/rivet-installer-root "$DISPLAY" "${XAUTHORITY:-}"
 status=$?
 echo "Rivet installer exit status: $status"
 if [ "$status" -ne 0 ]; then
@@ -277,6 +287,19 @@ set -u
 LOG_FILE="/tmp/rivet-installer.log"
 exec >> "$LOG_FILE" 2>&1
 echo "=== Rivet privileged installer helper: $(date -Is) ==="
+# pkexec intentionally filters GUI environment variables. Pass the live
+# session's display details as arguments and restore them explicitly so Qt
+# can open Calamares on the user's desktop.
+DISPLAY_VALUE="${1:-}"
+XAUTHORITY_VALUE="${2:-}"
+if [ -z "$DISPLAY_VALUE" ]; then
+  echo "ERROR: DISPLAY was not passed to the privileged installer helper."
+  exit 25
+fi
+export DISPLAY="$DISPLAY_VALUE"
+if [ -n "$XAUTHORITY_VALUE" ]; then
+  export XAUTHORITY="$XAUTHORITY_VALUE"
+fi
 if [ ! -d /run/live/medium ]; then
   echo "ERROR: installer helper was not launched from live media."
   exit 20
