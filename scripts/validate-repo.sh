@@ -105,7 +105,7 @@ grep -Fq 'LOG_FILE="/run/rivet-installer-root.log"' "$TMP_DIR/installer-root-har
 grep -Fq 'install -o root -g root -m 0644 /dev/null "$LOG_FILE"' "$TMP_DIR/installer-root-hardened.sh"
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP"
+PYTHONPYCACHEPREFIX="$TMP_DIR/pycache" python3 -m py_compile "$WELCOME_APP"
 
 echo "==> Checking package list..."
 mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$PACKAGE_LIST")
