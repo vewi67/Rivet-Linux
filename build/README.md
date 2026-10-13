@@ -28,11 +28,11 @@ The exact ISO filename is determined by live-build. Build state is managed by li
 
 ## GitHub Actions
 
-The Build Rivet ISO workflow validates the repository and builds the ISO in a clean Debian Trixie container for pull requests that change build inputs. This lets CI catch build failures before a change is merged. Pull-request builds upload the ISO and checksum as a temporary artifact retained for one day; they do not publish a release.
+The `Validate Rivet ISO on PR` workflow builds and validates the ISO for pull requests that change build inputs. It checks the generated image, SHA-256 checksum, and El Torito boot metadata without uploading a large temporary artifact.
 
-After a successful build on `main`, the workflow publishes the ISO and checksum as a GitHub pre-release marked as a development build. A manual run on a non-`main` branch builds and validates the ISO without publishing a release.
+The `Build Rivet ISO` workflow runs on relevant pushes to `main` and on manual dispatch. It validates and builds the ISO, then publishes the ISO and checksum directly as a GitHub pre-release on `main`. A manual run on another branch validates the image but does not publish a release.
 
-The build, checksum validation, artifact upload, and release publication are separate steps. Check the failed step in the workflow log before deciding which part failed.
+Keeping PR builds artifact-free avoids relying on GitHub Actions artifact-storage quota. Release publication happens only in the main-branch workflow.
 
 ## Scope
 
