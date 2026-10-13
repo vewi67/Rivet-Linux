@@ -89,6 +89,16 @@ jobs:
 
           echo "==> ISO validation passed."
 
+      - name: Upload ISO for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: rivet-linux-iso
+          path: |
+            build/live-image-*.hybrid.iso
+            build/live-image-*.hybrid.iso.sha256
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Publish development ISO
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
