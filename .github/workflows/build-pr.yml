@@ -1,0 +1,81 @@
+name: Validate Rivet ISO on PR
+
+on:
+  pull_request:
+    paths:
+      - 'build/**'
+      - 'scripts/validate-repo.sh'
+      - '.github/workflows/build-iso.yml'
+      - '.github/workflows/build-pr.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rivet-pr-iso-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and validate ISO (no upload)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate repository
+        run: bash scripts/validate-repo.sh
+
+      - name: Make live-build hooks executable
+        run: chmod +x build/config/hooks/normal/*.hook.chroot
+
+      - name: Build inside Debian Trixie
+        run: |
+          set -euo pipefail
+          docker run --privileged --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace \
+            debian:trixie \
+            bash -lc '
+              set -euo pipefail
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update
+              apt-get install -y --no-install-recommends \
+                ca-certificates live-build xorriso file coreutils
+              bash build/build.sh
+            '
+
+      - name: Install ISO validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xorriso file coreutils
+
+      - name: Validate generated ISO and checksum
+        run: |
+          set -euo pipefail
+
+          shopt -s nullglob
+          images=(build/live-image-*.hybrid.iso)
+
+          if [[ ${#images[@]} -ne 1 ]]; then
+            echo "ERROR: expected exactly one generated ISO, found ${#images[@]}." >&2
+            printf '%s\n' "${images[@]}" >&2
+            exit 1
+          fi
+
+          iso="${images[0]}"
+          checksum="${iso}.sha256"
+
+          test -s "$iso"
+          test -s "$checksum"
+          file "$iso"
+          (cd build && sha256sum -c "$(basename "$checksum")")
+          xorriso -indev "$iso" -report_el_torito plain
+
+          echo "==> PR ISO build and validation passed."
