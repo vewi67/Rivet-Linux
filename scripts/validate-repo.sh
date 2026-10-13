@@ -227,6 +227,13 @@ grep -Fq 'install -d -m 0755 /etc/polkit-1/rules.d' "$BRANDING_HOOK"
 grep -Fq 'cat > /etc/polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer-root' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer' "$BRANDING_HOOK"
+# pkexec filters GUI environment variables, so the launcher must pass the
+# display/authentication details and the privileged helper must restore them.
+grep -Fq 'rivet-installer-root "$DISPLAY" "${XAUTHORITY:-}"' "$BRANDING_HOOK"
+grep -Fq 'export DISPLAY="$DISPLAY_VALUE"' "$BRANDING_HOOK"
+grep -Fq 'export XAUTHORITY="$XAUTHORITY_VALUE"' "$BRANDING_HOOK"
+grep -Fq '/run/rivet-installer-root.log' "$BRANDING_HOOK"
+grep -Fq 'last 25 lines' "$BRANDING_HOOK"
 grep -Fq 'LOG_FILE="/tmp/rivet-installer.log"' "$SECURE_LOG_HOOK"
 grep -Fq 'LOG_FILE="/run/rivet-installer-root.log"' "$SECURE_LOG_HOOK"
 grep -Fq 'install -o root -g root -m 0644 /dev/null "$LOG_FILE"' "$SECURE_LOG_HOOK"
