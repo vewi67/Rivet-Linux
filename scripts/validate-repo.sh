@@ -161,7 +161,8 @@ grep -Fq 'productName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'shortProductName: Rivet' "$BRANDING_HOOK"
 grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
-grep -Fq "if: github.ref == 'refs/heads/main'" .github/workflows/build-iso.yml
+grep -Fq "if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/rivet-installer-display-env'" .github/workflows/build-iso.yml
+grep -Fq '      - fix/rivet-installer-display-env' .github/workflows/build-iso.yml
 grep -Fq 'name: Publish development ISO' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: "Rivet Linux build #${{ github.run_number }}"' .github/workflows/build-iso.yml

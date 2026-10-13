@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - fix/rivet-installer-display-env
     paths:
       - 'build/**'
       - 'scripts/validate-repo.sh'
@@ -100,7 +101,7 @@ jobs:
           retention-days: 7
 
       - name: Publish development ISO
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/rivet-installer-display-env'
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ github.token }}
