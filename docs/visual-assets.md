@@ -13,7 +13,7 @@ The four wallpaper files live in build/config/includes.chroot/usr/share/backgrou
 
 The Calamares logo and branding descriptor live in build/config/includes.chroot/etc/calamares/branding/rivet/. The image-time hook switches /etc/calamares/settings.conf from Debian branding to Rivet while preserving Debian's module sequence.
 
-The image-time hook rebrands Debian Trixie's existing Calamares launcher and icon in place, preserving the Debian-provided wrapper and its EFI-related setup behavior.
+The image-time hook changes the visible name, comment, and icon while keeping `/usr/bin/calamares-install-debian` as both `Exec` and `TryExec`. This preserves Debian's launcher logic for X11 access, `pkexec`, and the temporary `/etc/fstab` safeguard. Do not route the desktop entry through a second custom `pkexec` wrapper: `pkexec` normally sanitizes `DISPLAY` and `XAUTHORITY`, which can prevent a privileged Qt GUI from opening.
 
 ## Chip mascot and welcome app
 
