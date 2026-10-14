@@ -226,11 +226,21 @@ dialog = Gtk.MessageDialog(
     None, Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
     Gtk.ButtonsType.CLOSE, "Rivet Linux installer could not start",
 )
-dialog.format_secondary_text(
+details = (
     os.environ.get("RIVET_INSTALLER_ERROR", "Unknown installer error")
-    + "\n\nDiagnostic log: "
+    + "\n\nLauncher log: "
     + os.environ.get("RIVET_INSTALLER_LOG", "/tmp/rivet-installer.log")
 )
+for path in ("/tmp/rivet-installer.log", "/run/rivet-installer-root.log"):
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as log:
+            lines = log.readlines()
+        if lines:
+            details += "\n\n--- " + path + " (last 25 lines) ---\n"
+            details += "".join(lines[-25:])
+    except OSError:
+        pass
+dialog.format_secondary_text(details)
 dialog.run()
 dialog.destroy()
 PY
@@ -259,7 +269,7 @@ if ! xhost +si:localuser:root; then
   exit 1
 fi
 XHOST_ALLOWED=1
-/usr/bin/pkexec /usr/local/libexec/rivet-installer-root
+/usr/bin/pkexec /usr/local/libexec/rivet-installer-root "$DISPLAY" "${XAUTHORITY:-}"
 status=$?
 echo "Rivet installer exit status: $status"
 if [ "$status" -ne 0 ]; then
@@ -277,6 +287,19 @@ set -u
 LOG_FILE="/tmp/rivet-installer.log"
 exec >> "$LOG_FILE" 2>&1
 echo "=== Rivet privileged installer helper: $(date -Is) ==="
+# pkexec intentionally filters GUI environment variables. Pass the live
+# session's display details as arguments and restore them explicitly so Qt
+# can open Calamares on the user's desktop.
+DISPLAY_VALUE="${1:-}"
+XAUTHORITY_VALUE="${2:-}"
+if [ -z "$DISPLAY_VALUE" ]; then
+  echo "ERROR: DISPLAY was not passed to the privileged installer helper."
+  exit 25
+fi
+export DISPLAY="$DISPLAY_VALUE"
+if [ -n "$XAUTHORITY_VALUE" ]; then
+  export XAUTHORITY="$XAUTHORITY_VALUE"
+fi
 if [ ! -d /run/live/medium ]; then
   echo "ERROR: installer helper was not launched from live media."
   exit 20
@@ -301,9 +324,33 @@ if [ -e /etc/fstab ]; then
   mv /etc/fstab /etc/fstab.orig.calamares || exit 24
 fi
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
-/usr/bin/calamares
+
+# Keep verbose Calamares and Qt plugin diagnostics in the visible error report.
+# -D8 increases Calamares logging without enabling debug-mode config lookup.
+# QT_DEBUG_PLUGINS exposes QPA/QML plugin failures that can occur before a
+# Calamares session.log is created.
+export QT_DEBUG_PLUGINS=1
+echo "Launching Calamares with verbose diagnostics (-D8, Qt plugin diagnostics)."
+/usr/bin/calamares -D 8
 status=$?
 echo "Calamares exit status: $status"
+
+# Calamares also writes a session.log beneath its root cache directory.
+# Copy relevant errors and the final session lines into the root helper log,
+# which the unprivileged launcher can show in its on-screen error dialog.
+for session_log in \
+  /root/.cache/calamares/session.log \
+  /root/.cache/*/session.log \
+  /root/.cache/*/calamares/session.log \
+  /root/.cache/*/*/session.log \
+  /tmp/session.log; do
+  [ -s "$session_log" ] || continue
+  echo "=== Calamares session log: $session_log (last 25 lines) ==="
+  tail -n 25 "$session_log"
+  echo "=== Relevant Calamares diagnostics from $session_log ==="
+  grep -Ei 'ERROR|FATAL|WARNING|failed|not found|could not|cannot|invalid|exception|QML|plugin|module' "$session_log" | tail -n 40 || true
+done
+
 exit "$status"
 EOF
 chmod 0755 /usr/local/libexec/rivet-installer-root

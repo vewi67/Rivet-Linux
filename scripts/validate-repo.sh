@@ -161,7 +161,8 @@ grep -Fq 'productName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'shortProductName: Rivet' "$BRANDING_HOOK"
 grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
-grep -Fq "if: github.ref == 'refs/heads/main'" .github/workflows/build-iso.yml
+grep -Fq "if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/fix/rivet-installer-display-env'" .github/workflows/build-iso.yml
+grep -Fq '      - fix/rivet-installer-display-env' .github/workflows/build-iso.yml
 grep -Fq 'name: Publish development ISO' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: "Rivet Linux build #${{ github.run_number }}"' .github/workflows/build-iso.yml
@@ -169,7 +170,7 @@ grep -Fq 'name: Validate Rivet ISO on PR' .github/workflows/build-pr.yml
 grep -Fq 'name: Build and validate ISO (no upload)' .github/workflows/build-pr.yml
 grep -Fq 'permissions:' .github/workflows/build-pr.yml
 grep -Fq 'contents: read' .github/workflows/build-pr.yml
-if grep -Fq 'upload-artifact' .github/workflows/build-pr.yml || grep -Fq 'download-artifact' .github/workflows/build-iso.yml; then
+if grep -Fq 'upload-artifact' .github/workflows/build-pr.yml || grep -Fq 'upload-artifact' .github/workflows/build-iso.yml || grep -Fq 'download-artifact' .github/workflows/build-iso.yml; then
   echo "ERROR: ISO workflow must not depend on temporary artifact storage." >&2
   exit 1
 fi
@@ -227,6 +228,17 @@ grep -Fq 'install -d -m 0755 /etc/polkit-1/rules.d' "$BRANDING_HOOK"
 grep -Fq 'cat > /etc/polkit-1/rules.d/50-rivet-live.rules' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer-root' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer' "$BRANDING_HOOK"
+# pkexec filters GUI environment variables, so the launcher must pass the
+# display/authentication details and the privileged helper must restore them.
+grep -Fq 'rivet-installer-root "$DISPLAY" "${XAUTHORITY:-}"' "$BRANDING_HOOK"
+grep -Fq 'export DISPLAY="$DISPLAY_VALUE"' "$BRANDING_HOOK"
+grep -Fq 'export XAUTHORITY="$XAUTHORITY_VALUE"' "$BRANDING_HOOK"
+grep -Fq '/run/rivet-installer-root.log' "$BRANDING_HOOK"
+grep -Fq 'export QT_DEBUG_PLUGINS=1' "$BRANDING_HOOK"
+grep -Fq '/usr/bin/calamares -D 8' "$BRANDING_HOOK"
+grep -Fq 'Calamares session log' "$BRANDING_HOOK"
+grep -Fq 'Relevant Calamares diagnostics' "$BRANDING_HOOK"
+grep -Fq 'last 25 lines' "$BRANDING_HOOK"
 grep -Fq 'LOG_FILE="/tmp/rivet-installer.log"' "$SECURE_LOG_HOOK"
 grep -Fq 'LOG_FILE="/run/rivet-installer-root.log"' "$SECURE_LOG_HOOK"
 grep -Fq 'install -o root -g root -m 0644 /dev/null "$LOG_FILE"' "$SECURE_LOG_HOOK"
