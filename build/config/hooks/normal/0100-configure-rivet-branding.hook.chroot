@@ -331,7 +331,7 @@ export QT_AUTO_SCREEN_SCALE_FACTOR=1
 # Calamares session.log is created.
 export QT_DEBUG_PLUGINS=1
 echo "Launching Calamares with verbose diagnostics (-D8, Qt plugin diagnostics)."
-/usr/bin/calamares -D8
+/usr/bin/calamares -D 8
 status=$?
 echo "Calamares exit status: $status"
 
