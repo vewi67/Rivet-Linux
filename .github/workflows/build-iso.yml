@@ -94,17 +94,113 @@ jobs:
 
           echo "==> ISO validation passed."
 
+      - name: Prepare GitHub Release assets
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          images=(build/live-image-*.hybrid.iso)
+          if [[ ${#images[@]} -ne 1 ]]; then
+            echo "ERROR: expected exactly one ISO to prepare for release." >&2
+            exit 1
+          fi
+
+          iso="${images[0]}"
+          iso_name="$(basename "$iso")"
+          checksum="${iso}.sha256"
+          release_dir="build/release-assets"
+          rm -rf "$release_dir"
+          mkdir -p "$release_dir"
+          test -s "$checksum"
+          cp "$checksum" "$release_dir/"
+
+          # GitHub Releases limits each individual asset to less than 2 GiB.
+          # Leave margin and split large ISOs into 1800 MiB chunks.
+          size_bytes="$(stat -c '%s' "$iso")"
+          asset_limit=$((1800 * 1024 * 1024))
+          if (( size_bytes <= asset_limit )); then
+            cp "$iso" "$release_dir/$iso_name"
+          else
+            split_prefix="$release_dir/$iso_name.part-"
+            split -b 1800M --numeric-suffixes=0 --suffix-length=2 "$iso" "$split_prefix"
+            total_bytes=0
+            parts=("$release_dir"/"$iso_name".part-*)
+            if [[ ${#parts[@]} -lt 2 ]]; then
+              echo "ERROR: large ISO was not split into multiple release parts." >&2
+              exit 1
+            fi
+            for part in "${parts[@]}"; do
+              part_bytes="$(stat -c '%s' "$part")"
+              if (( part_bytes >= 2 * 1024 * 1024 * 1024 )); then
+                echo "ERROR: release part is too large: $part" >&2
+                exit 1
+              fi
+              total_bytes=$((total_bytes + part_bytes))
+            done
+            if (( total_bytes != size_bytes )); then
+              echo "ERROR: split parts do not add up to the ISO size." >&2
+              exit 1
+            fi
+            # The verified split parts replace the large original in the release payload.
+            rm "$iso"
+          fi
+
+          cat > "$release_dir/reassemble-rivet-iso.sh" <<'SCRIPT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          export LC_ALL=C
+          shopt -s nullglob
+
+          parts=(live-image-*.hybrid.iso.part-*)
+          if (( ${#parts[@]} > 0 )); then
+            iso="${parts[0]%.part-*}"
+            echo "Reassembling ${#parts[@]} parts into $iso..."
+            cat "${parts[@]}" > "$iso"
+          else
+            images=(live-image-*.hybrid.iso)
+            if (( ${#images[@]} != 1 )); then
+              echo "ERROR: expected one ISO or a complete set of ISO parts in this directory." >&2
+              exit 1
+            fi
+            iso="${images[0]}"
+          fi
+
+          checksum="$iso.sha256"
+          if [[ ! -s "$checksum" ]]; then
+            echo "ERROR: checksum file is missing: $checksum" >&2
+            exit 1
+          fi
+          sha256sum -c "$checksum"
+          echo "ISO ready: $iso"
+          SCRIPT
+          chmod 0755 "$release_dir/reassemble-rivet-iso.sh"
+
+          cat > "$release_dir/README-DOWNLOAD.txt" <<'README'
+          Rivet Linux development ISO
+
+          If the ISO is split into files ending in .part-00, .part-01, etc.,
+          download EVERY part, this script, and the matching .sha256 file into
+          the same directory. Run:
+
+              bash reassemble-rivet-iso.sh
+
+          The script reconstructs the ISO and verifies its SHA-256 checksum.
+          If the release contains a single ISO instead, the same script verifies it.
+          README
+
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: rivet-build-${{ github.run_number }}
-          name: Rivet Linux build #${{ github.run_number }}
+          name: "Rivet Linux build #${{ github.run_number }}"
           body: |
-            Automated Rivet Linux ISO build.
+            Automated Rivet Linux development build, not a stable release.
 
-            This is a development build, not a stable release.
-            Verify the SHA-256 checksum after downloading the ISO.
+            GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
+            that limit, download all numbered .part-* files and run
+            reassemble-rivet-iso.sh in the same directory to reconstruct and
+            verify the ISO. The ISO is published directly in this GitHub Release,
+            not as a short-lived Actions artifact.
           prerelease: true
           files: |
-            build/live-image-*.hybrid.iso
-            build/live-image-*.hybrid.iso.sha256
+            build/release-assets/*
