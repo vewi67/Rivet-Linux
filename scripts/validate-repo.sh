@@ -127,7 +127,7 @@ grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
 grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'Install Rivet' "$WELCOME_APP"
-grep -Fq 'rivet-installer' "$WELCOME_APP"
+grep -Fq 'INSTALLER = "/usr/bin/calamares-install-debian"' "$WELCOME_APP"
 
 grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"
