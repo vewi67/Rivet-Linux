@@ -170,7 +170,7 @@ grep -Fq 'name: Validate Rivet ISO on PR' .github/workflows/build-pr.yml
 grep -Fq 'name: Build and validate ISO (no upload)' .github/workflows/build-pr.yml
 grep -Fq 'permissions:' .github/workflows/build-pr.yml
 grep -Fq 'contents: read' .github/workflows/build-pr.yml
-if grep -Fq 'upload-artifact' .github/workflows/build-pr.yml || grep -Fq 'download-artifact' .github/workflows/build-iso.yml; then
+if grep -Fq 'upload-artifact' .github/workflows/build-pr.yml || grep -Fq 'upload-artifact' .github/workflows/build-iso.yml || grep -Fq 'download-artifact' .github/workflows/build-iso.yml; then
   echo "ERROR: ISO workflow must not depend on temporary artifact storage." >&2
   exit 1
 fi
