@@ -89,8 +89,14 @@ The first milestone is a bootable, usable, installable ISO that can:
 
 This is a development image, not a release. Do not use it as the only copy of an important system.
 
+## License and attribution
+
+Rivet's original source code, build scripts, and configuration are licensed under **GNU GPL-3.0-or-later**, unless a file says otherwise. This lets others use Rivet as a foundation, modify it, and redistribute covered code under the license's terms. Modified distributions must preserve required notices and clearly identify modifications as required by the GPL.
+
+Rivet branding and artwork, including the name, logo, and Chip mascot, are not automatically covered by the code license. See [docs/branding-and-attribution.md](docs/branding-and-attribution.md) for attribution guidance, branding boundaries, and third-party license notes.
+
 ## Development rule
 
 > **Define before implementing. Keep stable components when they work. Do not add complexity just because it is possible.**
 
-See docs/architecture.md, docs/roadmap.md, and CONTRIBUTING.md.
+See docs/architecture.md, docs/roadmap.md, docs/branding-and-attribution.md, and CONTRIBUTING.md.
