@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-"""Launch the stock Debian Calamares helper and record otherwise-hidden errors."""
+"""Launch Debian's Calamares helper and verify that its real window appears."""
 
 from datetime import datetime
 import os
 from pathlib import Path
+import re
 import subprocess
 import time
 
@@ -14,8 +15,10 @@ from gi.repository import Gtk
 
 STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"
 POLKIT_AGENT = "/usr/libexec/polkit-mate-authentication-agent-1"
+WINDOW_TITLE = "Rivet Linux Installer"
 STATE_HOME = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state")))
 LOG_PATH = STATE_HOME / "rivet" / "installer-launch.log"
+ROOT_CALAMARES_LOG = "/root/.cache/calamares/session.log"
 WATCH_SECONDS = 20
 
 
@@ -29,8 +32,9 @@ def live_processes():
     found = []
     try:
         entries = list(Path("/proc").iterdir())
-    except OSError:
-        return found
+    except OSError as error:
+        return [f"Could not inspect /proc: {error}"]
+
     for entry in entries:
         if not entry.name.isdigit():
             continue
@@ -43,16 +47,83 @@ def live_processes():
     return found
 
 
+def installer_window_state():
+    """Return the visible Calamares window ID, or None if no mapped window exists."""
+    try:
+        tree = subprocess.run(
+            ["xwininfo", "-root", "-tree"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=3,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return None, f"xwininfo could not inspect the display: {error}"
+
+    if tree.returncode != 0:
+        detail = tree.stderr.strip() or f"xwininfo exited with status {tree.returncode}"
+        return None, detail
+
+    for line in tree.stdout.splitlines():
+        if WINDOW_TITLE not in line:
+            continue
+        match = re.match(r"\s*(0x[0-9a-fA-F]+)\s+", line)
+        if not match:
+            continue
+
+        window_id = match.group(1)
+        try:
+            details = subprocess.run(
+                ["xwininfo", "-id", window_id],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=3,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            return None, f"Could not inspect window {window_id}: {error}"
+
+        if details.returncode == 0 and "Map State: IsViewable" in details.stdout:
+            return window_id, None
+
+    return None, None
+
+
+def append_root_calamares_log():
+    """Copy Calamares' root-owned session log into the user-visible diagnostic log."""
+    try:
+        result = subprocess.run(
+            ["sudo", "-n", "tail", "-n", "160", ROOT_CALAMARES_LOG],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        write_log(f"Could not retrieve Calamares session.log: {error}")
+        return
+
+    if result.returncode == 0:
+        write_log(f"===== Tail of {ROOT_CALAMARES_LOG} =====")
+        write_log(result.stdout if result.stdout.strip() else "<session.log is empty>")
+    else:
+        detail = result.stderr.strip() or f"sudo exited with status {result.returncode}"
+        write_log(f"Could not retrieve Calamares session.log: {detail}")
+
+
 def show_diagnostics(message):
     try:
         log_text = LOG_PATH.read_text(encoding="utf-8", errors="replace")
     except OSError as error:
         log_text = f"Could not read diagnostic log: {error}"
-    log_text = log_text[-16000:]
+    log_text = log_text[-24000:]
 
     dialog = Gtk.Dialog(title="Rivet Installer Diagnostics", flags=Gtk.DialogFlags.MODAL)
     dialog.add_button("Close", Gtk.ResponseType.CLOSE)
-    dialog.set_default_size(850, 500)
+    dialog.set_default_size(900, 540)
     dialog.set_border_width(12)
 
     content = dialog.get_content_area()
@@ -86,16 +157,27 @@ def show_diagnostics(message):
 def main():
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
     with LOG_PATH.open("a", encoding="utf-8") as log:
-        log.write("\n===== Rivet installer launch: "
-                  + datetime.now().astimezone().isoformat()
-                  + " =====\n")
+        log.write(
+            "\n===== Rivet installer launch: "
+            + datetime.now().astimezone().isoformat()
+            + " =====\n"
+        )
         log.write(f"uid={os.getuid()} user={os.environ.get('USER', '')}\n")
-        for key in ("DISPLAY", "XAUTHORITY", "XDG_SESSION_TYPE", "XDG_CURRENT_DESKTOP"):
+        for key in ("DISPLAY", "XAUTHORITY", "XDG_SESSION_TYPE", "XDG_CURRENT_DESKTOP", "XDG_SESSION_ID"):
             log.write(f"{key}={os.environ.get(key, '<unset>')}\n")
-        for path in (STOCK_LAUNCHER, "/usr/bin/calamares", "/usr/bin/pkexec",
-                     "/usr/bin/xhost", "/usr/bin/sudo", POLKIT_AGENT):
-            log.write(f"check {path}: exists={os.path.exists(path)} "
-                      f"executable={os.access(path, os.X_OK)}\n")
+        for path in (
+            STOCK_LAUNCHER,
+            "/usr/bin/calamares",
+            "/usr/bin/pkexec",
+            "/usr/bin/xhost",
+            "/usr/bin/sudo",
+            "/usr/bin/xwininfo",
+            POLKIT_AGENT,
+        ):
+            log.write(
+                f"check {path}: exists={os.path.exists(path)} "
+                f"executable={os.access(path, os.X_OK)}\n"
+            )
         log.flush()
 
     if not os.path.isfile(STOCK_LAUNCHER) or not os.access(STOCK_LAUNCHER, os.X_OK):
@@ -114,40 +196,53 @@ def main():
             )
     except OSError as error:
         write_log(f"ERROR: could not start Debian's launcher: {error!r}")
-        show_diagnostics("Rivet could not start the Debian installer launcher.")
+        show_diagnostics("Rivet could not start Debian's installer launcher.")
         return 1
 
     deadline = time.monotonic() + WATCH_SECONDS
+    last_window_error = None
     while time.monotonic() < deadline:
-        processes = live_processes()
-        if any(item.startswith("calamares ") for item in processes):
-            write_log("SUCCESS: a Calamares process appeared: " + ", ".join(processes))
+        window_id, window_error = installer_window_state()
+        if window_error and window_error != last_window_error:
+            write_log(window_error)
+            last_window_error = window_error
+
+        if window_id:
+            write_log(f"SUCCESS: visible Calamares window detected: {window_id}")
             return 0
 
         return_code = process.poll()
         if return_code is not None:
             time.sleep(0.3)
-            processes = live_processes()
-            if any(item.startswith("calamares ") for item in processes):
-                write_log("SUCCESS: Calamares remains active after launcher exit.")
+            window_id, window_error = installer_window_state()
+            if window_id:
+                write_log(f"SUCCESS: visible Calamares window detected after launcher exit: {window_id}")
                 return 0
-            write_log(f"ERROR: Debian launcher exited with status {return_code} "
-                      f"before a Calamares process appeared.")
+
+            processes = live_processes()
+            write_log(f"ERROR: Debian launcher exited with status {return_code} before a visible installer window appeared.")
             write_log("Processes observed: " + (", ".join(processes) if processes else "<none>"))
+            if window_error:
+                write_log(window_error)
+            append_root_calamares_log()
             show_diagnostics(
-                "The Debian launcher exited before Calamares appeared. "
-                "The details below should show why."
+                "The Debian launcher exited before a visible Calamares window appeared. "
+                "Review the captured launcher output and Calamares session log below."
             )
             return 1
-        time.sleep(0.4)
+
+        time.sleep(0.8)
 
     processes = live_processes()
-    write_log(f"WARNING: no Calamares process detected after {WATCH_SECONDS} seconds.")
+    write_log(f"WARNING: no visible '{WINDOW_TITLE}' window detected after {WATCH_SECONDS} seconds.")
     write_log("Processes observed: " + (", ".join(processes) if processes else "<none>"))
+    write_log("A running process alone is not considered proof that the installer window opened.")
+    if last_window_error:
+        write_log(last_window_error)
+    append_root_calamares_log()
     show_diagnostics(
-        "No Calamares window was detected within 20 seconds. "
-        "A pending authentication prompt may still be active; the launcher was not killed. "
-        "Review the diagnostic output below."
+        f"No visible '{WINDOW_TITLE}' window was detected within {WATCH_SECONDS} seconds. "
+        "The launcher was not killed. Check for an authentication prompt and inspect the captured logs."
     )
     return 2
 

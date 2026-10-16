@@ -77,7 +77,7 @@ echo "==> Checking required packages..."
 for package in \
   xfce4 xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
-  mate-polkit polkitd pkexec x11-xserver-utils firefox-esr calamares \
+  mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
   calamares-settings-debian sudo python3-gi gir1.2-gtk-3.0; do
   require_package "$package"
 done
@@ -141,6 +141,10 @@ grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'Install Rivet' "$WELCOME_APP"
 grep -Fq 'INSTALLER = "/usr/bin/rivet-installer"' "$WELCOME_APP"
 grep -Fq 'STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"' "$INSTALLER_HELPER"
+grep -Fq 'ROOT_CALAMARES_LOG = "/root/.cache/calamares/session.log"' "$INSTALLER_HELPER"
+grep -Fq 'WINDOW_TITLE = "Rivet Linux Installer"' "$INSTALLER_HELPER"
+grep -Fq 'xwininfo' "$INSTALLER_HELPER"
+grep -Fq 'not considered proof that the installer window opened' "$INSTALLER_HELPER"
 
 grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"

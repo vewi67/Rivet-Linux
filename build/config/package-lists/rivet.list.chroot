@@ -32,3 +32,4 @@ gir1.2-gtk-3.0
 polkitd
 pkexec
 x11-xserver-utils
+x11-utils
