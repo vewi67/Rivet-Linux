@@ -11,13 +11,14 @@ CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
+RIVET_INSTALLER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-installer.desktop"
 PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desktop"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
-  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$PLANK_AUTOSTART"
+  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -156,9 +157,13 @@ grep -Fq 'slideshowAPI: 2' "$SLIDESHOW_HOOK"
 grep -Fq 'Presentation {' "$SLIDESHOW_HOOK"
 grep -Fq 'centeredText: qsTr("Installing Rivet Linux")' "$SLIDESHOW_HOOK"
 grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
-grep -Fq 'Exec=/usr/bin/calamares-install-debian' "$BRANDING_HOOK"
-grep -Fq 'TryExec=/usr/bin/calamares-install-debian' "$BRANDING_HOOK"
-grep -Fq 'Icon=rivet' "$BRANDING_HOOK"
+grep -Fq 'NoDisplay=true' "$BRANDING_HOOK"
+grep -Fq 'rivet-installer.desktop' "$BRANDING_HOOK"
+grep -Fq 'rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop' "$BRANDING_HOOK"
+grep -Fq 'Exec=/usr/bin/calamares-install-debian' "$RIVET_INSTALLER_LAUNCHER"
+grep -Fq 'TryExec=/usr/bin/calamares-install-debian' "$RIVET_INSTALLER_LAUNCHER"
+grep -Fq 'Icon=rivet' "$RIVET_INSTALLER_LAUNCHER"
+grep -Fq 'Name=Install Rivet Linux' "$RIVET_INSTALLER_LAUNCHER"
 
 echo "==> Checking documentation language..."
 if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
