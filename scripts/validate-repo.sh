@@ -7,6 +7,8 @@ cd "$ROOT_DIR"
 PACKAGE_LIST="build/config/package-lists/rivet.list.chroot"
 BRANDING_HOOK="build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 SLIDESHOW_HOOK="build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot"
+BRANDING_DESC="build/config/includes.chroot/etc/calamares/branding/rivet/branding.desc"
+BRANDING_SLIDESHOW="build/config/includes.chroot/etc/calamares/branding/rivet/show.qml"
 CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
@@ -17,7 +19,7 @@ PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desk
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
   build/README.md build/build.sh
-  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$PACKAGE_LIST" "$WELCOME_APP"
+  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
@@ -92,9 +94,9 @@ for setting in \
     exit 1
   }
 done
-grep -Fq 'productName: Rivet Linux' "$BRANDING_HOOK"
-grep -Fq 'shortProductName: Rivet' "$BRANDING_HOOK"
-grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_HOOK"
+grep -Fq 'productName: Rivet Linux' "$BRANDING_DESC"
+grep -Fq 'shortProductName: Rivet' "$BRANDING_DESC"
+grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_DESC"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
 grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
 grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
@@ -152,10 +154,10 @@ grep -Fq 'xfce4-panel.xml' "$BRANDING_HOOK"
 grep -Fq 'RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"' "$BRANDING_HOOK"
 grep -Fq 'rivet-waves.jpeg' "$BRANDING_HOOK"
 grep -Fq 'branding: rivet' "$BRANDING_HOOK"
-grep -Fq 'slideshow: "show.qml"' "$SLIDESHOW_HOOK"
-grep -Fq 'slideshowAPI: 2' "$SLIDESHOW_HOOK"
-grep -Fq 'Presentation {' "$SLIDESHOW_HOOK"
-grep -Fq 'centeredText: qsTr("Installing Rivet Linux")' "$SLIDESHOW_HOOK"
+grep -Fq 'slideshow: "show.qml"' "$BRANDING_DESC"
+grep -Fq 'slideshowAPI: 2' "$BRANDING_DESC"
+grep -Fq 'Presentation {' "$BRANDING_SLIDESHOW"
+grep -Fq 'centeredText: qsTr("Installing Rivet Linux")' "$BRANDING_SLIDESHOW"
 grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
 grep -Fq 'NoDisplay=true' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer.desktop' "$BRANDING_HOOK"
