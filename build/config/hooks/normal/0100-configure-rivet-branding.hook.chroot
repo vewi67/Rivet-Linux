@@ -57,31 +57,83 @@ LOG_DIR="$HOME/.cache/rivet"
 [ -s "$WALLPAPER" ] || exit 1
 mkdir -p "$LOG_DIR" "$(dirname "$MARKER")"
 exec >> "$LOG_DIR/wallpaper-default.log" 2>&1
+
+# Wait for xfdesktop itself, not merely any xfconf property. The system
+# defaults may expose monitor0 before XFCE creates the active monitor's
+# workspace-specific last-image property.
 attempt=0
 properties=""
-while [ "$attempt" -lt 15 ]; do
-  properties="$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /^\/backdrop\/screen0\/.*\/(last-image|last-single-image|image-path)$/ {print $1}' || true)"
-  [ -n "$properties" ] && break
+while [ "$attempt" -lt 30 ]; do
+  if pgrep -x xfdesktop >/dev/null 2>&1; then
+    sleep 2
+    properties="$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /^\/backdrop\/screen[0-9]+\/.*\/(last-image|last-single-image|image-path)$/ {print $1}' || true)"
+    if printf '%s\n' "$properties" | grep -Eq '/workspace[0-9]+/(last-image|last-single-image)$'; then
+      break
+    fi
+  fi
   attempt=$((attempt + 1))
-  sleep 2
+  sleep 1
 done
-applied=0
+
+if ! printf '%s\n' "$properties" | grep -Eq '/workspace[0-9]+/(last-image|last-single-image)$'; then
+  echo "ERROR: XFCE did not expose a workspace wallpaper property after starting."
+  exit 1
+fi
+
+# Apply Waves to every workspace wallpaper property that XFCE currently
+# exposes, including monitor names other than monitor0.
+updated=0
+failed=0
 for property in $properties; do
   case "$property" in
-    */last-image|*/last-single-image|*/image-path)
+    */last-image|*/last-single-image)
       if xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER"; then
-        applied=1
+        current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
+        if [ "$current" = "$WALLPAPER" ]; then
+          updated=$((updated + 1))
+        else
+          failed=1
+          echo "ERROR: wallpaper property did not retain Waves: $property"
+        fi
+      else
+        failed=1
+        echo "ERROR: could not set wallpaper property: $property"
       fi
+      ;;
+    */image-path)
+      xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER" || true
       ;;
   esac
 done
-if [ "$applied" -eq 1 ]; then
-  touch "$MARKER"
-  echo "Rivet default wallpaper applied."
+
+if [ "$updated" -gt 0 ] && [ "$failed" -eq 0 ]; then
+  # Make the running desktop refresh after its active workspace properties
+  # have been changed, then verify the values again before writing the marker.
+  xfdesktop --reload >/dev/null 2>&1 || true
+  sleep 1
+  properties="$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /^\/backdrop\/screen[0-9]+\/.*\/(last-image|last-single-image)$/ {print $1}' || true)"
+  verified=0
+  for property in $properties; do
+    current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
+    if [ "$current" = "$WALLPAPER" ]; then
+      verified=$((verified + 1))
+    else
+      echo "ERROR: wallpaper property is not Waves after reload: $property ($current)"
+      failed=1
+    fi
+  done
+  if [ "$verified" -gt 0 ] && [ "$failed" -eq 0 ]; then
+    touch "$MARKER"
+    echo "Rivet default wallpaper applied and verified."
+  else
+    echo "ERROR: could not verify Rivet's default wallpaper."
+    exit 1
+  fi
 else
-  echo "ERROR: XFCE did not expose usable wallpaper properties."
+  echo "ERROR: no workspace wallpaper property was updated successfully."
   exit 1
 fi
+EOF
 EOF
 chmod 0755 /usr/local/bin/rivet-set-wallpaper
 mkdir -p /etc/xdg/autostart /etc/skel/.config/autostart
