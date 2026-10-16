@@ -9,3 +9,4 @@ Icon=rivet
 Terminal=false
 Categories=System;
 StartupNotify=true
+StartupWMClass=calamares
