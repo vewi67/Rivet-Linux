@@ -11,6 +11,7 @@ BRANDING_DESC="build/config/includes.chroot/etc/calamares/branding/rivet/brandin
 BRANDING_SLIDESHOW="build/config/includes.chroot/etc/calamares/branding/rivet/show.qml"
 CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
+INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
 RIVET_INSTALLER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-installer.desktop"
@@ -19,7 +20,7 @@ PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desk
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
   build/README.md build/build.sh
-  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP"
+  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
@@ -42,7 +43,7 @@ bash -n "$SLIDESHOW_HOOK"
 bash -n scripts/validate-repo.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP"
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER"
 
 echo "==> Checking package list..."
 mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$PACKAGE_LIST")
@@ -94,9 +95,12 @@ for setting in \
     exit 1
   }
 done
-grep -Fq 'productName: Rivet Linux' "$BRANDING_DESC"
-grep -Fq 'shortProductName: Rivet' "$BRANDING_DESC"
-grep -Fq 'bootloaderEntryName: Rivet Linux' "$BRANDING_DESC"
+grep -Fxq 'productName: Rivet Linux' "$BRANDING_DESC"
+grep -Fxq 'shortProductName: Rivet' "$BRANDING_DESC"
+grep -Fxq 'bootloaderEntryName: Rivet Linux' "$BRANDING_DESC"
+grep -Fxq 'productLogo: "rivet.logo.png"' "$BRANDING_DESC"
+grep -Fxq 'productIcon: "rivet.logo.png"' "$BRANDING_DESC"
+grep -Fxq 'productWelcome: "rivet.logo.png"' "$BRANDING_DESC"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
 grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
 grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
@@ -133,7 +137,8 @@ grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
 grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'Install Rivet' "$WELCOME_APP"
-grep -Fq 'INSTALLER = "/usr/bin/calamares-install-debian"' "$WELCOME_APP"
+grep -Fq 'INSTALLER = "/usr/bin/rivet-installer"' "$WELCOME_APP"
+grep -Fq 'STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"' "$INSTALLER_HELPER"
 
 grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"
@@ -162,8 +167,8 @@ grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
 grep -Fq 'NoDisplay=true' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer.desktop' "$BRANDING_HOOK"
 grep -Fq 'rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop' "$BRANDING_HOOK"
-grep -Fq 'Exec=/usr/bin/calamares-install-debian' "$RIVET_INSTALLER_LAUNCHER"
-grep -Fq 'TryExec=/usr/bin/calamares-install-debian' "$RIVET_INSTALLER_LAUNCHER"
+grep -Fq 'Exec=/usr/bin/rivet-installer' "$RIVET_INSTALLER_LAUNCHER"
+grep -Fq 'TryExec=/usr/bin/rivet-installer' "$RIVET_INSTALLER_LAUNCHER"
 grep -Fq 'Icon=rivet' "$RIVET_INSTALLER_LAUNCHER"
 grep -Fq 'Name=Install Rivet Linux' "$RIVET_INSTALLER_LAUNCHER"
 

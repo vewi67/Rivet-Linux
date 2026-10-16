@@ -1,0 +1,156 @@
+#!/usr/bin/python3
+"""Launch the stock Debian Calamares helper and record otherwise-hidden errors."""
+
+from datetime import datetime
+import os
+from pathlib import Path
+import subprocess
+import time
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"
+POLKIT_AGENT = "/usr/libexec/polkit-mate-authentication-agent-1"
+STATE_HOME = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state")))
+LOG_PATH = STATE_HOME / "rivet" / "installer-launch.log"
+WATCH_SECONDS = 20
+
+
+def write_log(message):
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LOG_PATH.open("a", encoding="utf-8") as log:
+        log.write(message.rstrip() + "\n")
+
+
+def live_processes():
+    found = []
+    try:
+        entries = list(Path("/proc").iterdir())
+    except OSError:
+        return found
+    for entry in entries:
+        if not entry.name.isdigit():
+            continue
+        try:
+            name = (entry / "comm").read_text(encoding="utf-8").strip()
+            if name in {"calamares", "pkexec", "polkit-mate-authentication-agent-1"}:
+                found.append(f"{name} (PID {entry.name})")
+        except (OSError, UnicodeError):
+            continue
+    return found
+
+
+def show_diagnostics(message):
+    try:
+        log_text = LOG_PATH.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        log_text = f"Could not read diagnostic log: {error}"
+    log_text = log_text[-16000:]
+
+    dialog = Gtk.Dialog(title="Rivet Installer Diagnostics", flags=Gtk.DialogFlags.MODAL)
+    dialog.add_button("Close", Gtk.ResponseType.CLOSE)
+    dialog.set_default_size(850, 500)
+    dialog.set_border_width(12)
+
+    content = dialog.get_content_area()
+    heading = Gtk.Label(label=message)
+    heading.set_line_wrap(True)
+    heading.set_xalign(0)
+    content.pack_start(heading, False, False, 8)
+
+    location = Gtk.Label(
+        label=f"Diagnostic log: {LOG_PATH}\nYou can select and copy the log below."
+    )
+    location.set_line_wrap(True)
+    location.set_xalign(0)
+    content.pack_start(location, False, False, 6)
+
+    scroller = Gtk.ScrolledWindow()
+    scroller.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+    text_view = Gtk.TextView()
+    text_view.set_editable(False)
+    text_view.set_cursor_visible(False)
+    text_view.set_monospace(True)
+    text_view.get_buffer().set_text(log_text)
+    scroller.add(text_view)
+    content.pack_start(scroller, True, True, 6)
+
+    dialog.show_all()
+    dialog.run()
+    dialog.destroy()
+
+
+def main():
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LOG_PATH.open("a", encoding="utf-8") as log:
+        log.write("\n===== Rivet installer launch: "
+                  + datetime.now().astimezone().isoformat()
+                  + " =====\n")
+        log.write(f"uid={os.getuid()} user={os.environ.get('USER', '')}\n")
+        for key in ("DISPLAY", "XAUTHORITY", "XDG_SESSION_TYPE", "XDG_CURRENT_DESKTOP"):
+            log.write(f"{key}={os.environ.get(key, '<unset>')}\n")
+        for path in (STOCK_LAUNCHER, "/usr/bin/calamares", "/usr/bin/pkexec",
+                     "/usr/bin/xhost", "/usr/bin/sudo", POLKIT_AGENT):
+            log.write(f"check {path}: exists={os.path.exists(path)} "
+                      f"executable={os.access(path, os.X_OK)}\n")
+        log.flush()
+
+    if not os.path.isfile(STOCK_LAUNCHER) or not os.access(STOCK_LAUNCHER, os.X_OK):
+        write_log("ERROR: Debian's Calamares launcher is missing or not executable.")
+        show_diagnostics("The Debian Calamares launcher is missing or cannot be executed.")
+        return 1
+
+    try:
+        with LOG_PATH.open("a", encoding="utf-8") as log:
+            process = subprocess.Popen(
+                [STOCK_LAUNCHER],
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                close_fds=True,
+                start_new_session=True,
+            )
+    except OSError as error:
+        write_log(f"ERROR: could not start Debian's launcher: {error!r}")
+        show_diagnostics("Rivet could not start the Debian installer launcher.")
+        return 1
+
+    deadline = time.monotonic() + WATCH_SECONDS
+    while time.monotonic() < deadline:
+        processes = live_processes()
+        if any(item.startswith("calamares ") for item in processes):
+            write_log("SUCCESS: a Calamares process appeared: " + ", ".join(processes))
+            return 0
+
+        return_code = process.poll()
+        if return_code is not None:
+            time.sleep(0.3)
+            processes = live_processes()
+            if any(item.startswith("calamares ") for item in processes):
+                write_log("SUCCESS: Calamares remains active after launcher exit.")
+                return 0
+            write_log(f"ERROR: Debian launcher exited with status {return_code} "
+                      f"before a Calamares process appeared.")
+            write_log("Processes observed: " + (", ".join(processes) if processes else "<none>"))
+            show_diagnostics(
+                "The Debian launcher exited before Calamares appeared. "
+                "The details below should show why."
+            )
+            return 1
+        time.sleep(0.4)
+
+    processes = live_processes()
+    write_log(f"WARNING: no Calamares process detected after {WATCH_SECONDS} seconds.")
+    write_log("Processes observed: " + (", ".join(processes) if processes else "<none>"))
+    show_diagnostics(
+        "No Calamares window was detected within 20 seconds. "
+        "A pending authentication prompt may still be active; the launcher was not killed. "
+        "Review the diagnostic output below."
+    )
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

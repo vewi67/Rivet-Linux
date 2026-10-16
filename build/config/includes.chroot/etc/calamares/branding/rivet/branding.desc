@@ -7,21 +7,21 @@ windowSize: 900px,600px
 windowPlacement: center
 
 strings:
-    productName: Rivet Linux
-    shortProductName: Rivet
-    version: Development
-    shortVersion: Dev
-    versionedName: Rivet Linux Development
-    shortVersionedName: Rivet Dev
-    bootloaderEntryName: Rivet Linux
+productName: Rivet Linux
+shortProductName: Rivet
+version: Development
+shortVersion: Dev
+versionedName: Rivet Linux Development
+shortVersionedName: Rivet Dev
+bootloaderEntryName: Rivet Linux
 
 sidebar: widget
 navigation: widget
 
 images:
-    productLogo: "rivet.logo.png"
-    productIcon: "rivet.logo.png"
-    productWelcome: "rivet.logo.png"
+productLogo: "rivet.logo.png"
+productIcon: "rivet.logo.png"
+productWelcome: "rivet.logo.png"
 
 slideshow: "show.qml"
 slideshowAPI: 2
