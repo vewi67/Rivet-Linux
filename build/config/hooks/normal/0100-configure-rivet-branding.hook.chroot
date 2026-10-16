@@ -180,32 +180,11 @@ fi
 sed -i 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' "$CALAMARES_SETTINGS"
 
 mkdir -p /etc/calamares/branding/rivet
-cat > /etc/calamares/branding/rivet/branding.desc <<'EOF'
----
-componentName: rivet
-welcomeStyleCalamares: true
-welcomeExpandingLogo: true
-windowExpanding: normal
-windowSize: 900px,600px
-windowPlacement: center
-
-strings:
-    productName: Rivet Linux
-    shortProductName: Rivet
-    version: Development
-    shortVersion: Dev
-    versionedName: Rivet Linux Development
-    shortVersionedName: Rivet Dev
-    bootloaderEntryName: Rivet Linux
-
-sidebar: widget
-navigation: widget
-
-images:
-    productLogo: "rivet.logo.png"
-    productIcon: "rivet.logo.png"
-    productWelcome: "rivet.logo.png"
-EOF
+BRANDING_DESC="/etc/calamares/branding/rivet/branding.desc"
+if [ ! -s "$BRANDING_DESC" ]; then
+  echo "ERROR: Rivet Calamares branding descriptor is missing: $BRANDING_DESC" >&2
+  exit 1
+fi
 
 # Install the Rivet icon for the desktop and welcome application.
 mkdir -p "$(dirname "$RIVET_ICON")"
