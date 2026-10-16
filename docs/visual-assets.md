@@ -13,7 +13,7 @@ The four wallpaper files live in build/config/includes.chroot/usr/share/backgrou
 
 The Calamares logo and branding descriptor live in build/config/includes.chroot/etc/calamares/branding/rivet/. The image-time hook switches /etc/calamares/settings.conf from Debian branding to Rivet while preserving Debian's module sequence.
 
-The image-time hook changes the visible name, comment, and icon while keeping `/usr/bin/calamares-install-debian` as both `Exec` and `TryExec`. This preserves Debian's launcher logic for X11 access, `pkexec`, and the temporary `/etc/fstab` safeguard. Do not route the desktop entry through a second custom `pkexec` wrapper: `pkexec` normally sanitizes `DISPLAY` and `XAUTHORITY`, which can prevent a privileged Qt GUI from opening.
+Rivet ships its own `rivet-installer.desktop` entry with the Rivet name and icon. It invokes Debian's packaged `/usr/bin/calamares-install-debian` helper unchanged, preserving Debian's launcher logic for display authorization, `pkexec`, and its temporary `/etc/fstab` safeguard. The unbranded Debian menu entry is hidden and its desktop-icon autostart is disabled to avoid duplicate or misleading shortcuts. Do not add a second custom `pkexec` wrapper: `pkexec` normally sanitizes `DISPLAY` and `XAUTHORITY`, which can prevent a privileged Qt GUI from opening.
 
 ## Chip mascot and welcome app
 
