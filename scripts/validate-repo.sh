@@ -95,12 +95,14 @@ for setting in \
     exit 1
   }
 done
-grep -Fxq 'productName: Rivet Linux' "$BRANDING_DESC"
-grep -Fxq 'shortProductName: Rivet' "$BRANDING_DESC"
-grep -Fxq 'bootloaderEntryName: Rivet Linux' "$BRANDING_DESC"
-grep -Fxq 'productLogo: "rivet.logo.png"' "$BRANDING_DESC"
-grep -Fxq 'productIcon: "rivet.logo.png"' "$BRANDING_DESC"
-grep -Fxq 'productWelcome: "rivet.logo.png"' "$BRANDING_DESC"
+grep -Fxq '    productName: Rivet Linux' "$BRANDING_DESC"
+grep -Fxq '    shortProductName: Rivet' "$BRANDING_DESC"
+grep -Fxq '    bootloaderEntryName: Rivet Linux' "$BRANDING_DESC"
+grep -Fxq '    productLogo: "rivet.logo.png"' "$BRANDING_DESC"
+grep -Fxq '    productIcon: "rivet.logo.png"' "$BRANDING_DESC"
+grep -Fxq '    productWelcome: "rivet.logo.png"' "$BRANDING_DESC"
+grep -Fxq 'style: {}' "$BRANDING_DESC"
+grep -Fxq 'uploadServer: {}' "$BRANDING_DESC"
 grep -Fq 'name: Build Rivet ISO' .github/workflows/build-iso.yml
 grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
 grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
