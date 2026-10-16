@@ -5,48 +5,19 @@ BRANDING_DIR="/etc/calamares/branding/rivet"
 BRANDING_DESC="${BRANDING_DIR}/branding.desc"
 SLIDESHOW="${BRANDING_DIR}/show.qml"
 
+# The branding descriptor and slideshow are supplied as static, versioned files.
+# This hook validates them without rewriting Calamares' UI at build time.
 if [ ! -s "$BRANDING_DESC" ]; then
   echo "ERROR: Rivet Calamares branding descriptor is missing: $BRANDING_DESC" >&2
   exit 1
 fi
-
-mkdir -p "$BRANDING_DIR"
-
-# Calamares expects the branding descriptor to name a slideshow, and the
-# custom branding directory must actually contain that QML file.
-if grep -Eq '^[[:space:]]*slideshow:' "$BRANDING_DESC"; then
-  sed -i -E 's|^[[:space:]]*slideshow:.*$|slideshow: "show.qml"|' "$BRANDING_DESC"
-else
-  printf '\nslideshow: "show.qml"\n' >> "$BRANDING_DESC"
+if [ ! -s "$SLIDESHOW" ]; then
+  echo "ERROR: Rivet Calamares slideshow is missing: $SLIDESHOW" >&2
+  exit 1
 fi
 
-if grep -Eq '^[[:space:]]*slideshowAPI:' "$BRANDING_DESC"; then
-  sed -i -E 's|^[[:space:]]*slideshowAPI:.*$|slideshowAPI: 2|' "$BRANDING_DESC"
-else
-  printf 'slideshowAPI: 2\n' >> "$BRANDING_DESC"
-fi
-
-cat > "$SLIDESHOW" <<'QML'
-import QtQuick 2.0
-import calamares.slideshow 1.0
-
-Presentation {
-    id: presentation
-
-    Slide {
-        centeredText: qsTr("Installing Rivet Linux")
-    }
-
-    function onActivate() {
-        presentation.currentSlide = 0
-    }
-
-    function onLeave() {
-    }
-}
-QML
-
-# Fail the image build immediately if the descriptor and slideshow disagree.
-grep -Fq 'slideshow: "show.qml"' "$BRANDING_DESC"
-grep -Fq 'slideshowAPI: 2' "$BRANDING_DESC"
-test -s "$SLIDESHOW"
+grep -Fxq 'componentName: rivet' "$BRANDING_DESC"
+grep -Fxq 'slideshow: "show.qml"' "$BRANDING_DESC"
+grep -Fxq 'slideshowAPI: 2' "$BRANDING_DESC"
+grep -Fq 'Presentation {' "$SLIDESHOW"
+grep -Fq 'centeredText: qsTr("Installing Rivet Linux")' "$SLIDESHOW"
