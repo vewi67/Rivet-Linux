@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install Rivet Linux
+Comment=Install Rivet Linux on this computer
+Exec=/usr/bin/calamares-install-debian
+TryExec=/usr/bin/calamares-install-debian
+Icon=rivet
+Terminal=false
+Categories=System;
+StartupNotify=true
