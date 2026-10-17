@@ -20,7 +20,7 @@ set_if_changed() {
 
 get_image_properties() {
   xfconf-query -c "$CHANNEL" -lv 2>/dev/null |
-    awk '$1 ~ /^\/backdrop\/screen[0-9]+\/monitor[^/]+\/workspace[0-9]+\/(last-image|last-single-image)$/ {print $1}' || true
+    awk '$1 ~ /^\/backdrop\/screen[0-9]+\/monitor[^/]+\/workspace-?[0-9]+\/(last-image|last-single-image)$/ {print $1}' || true
 }
 
 configure_property() {
