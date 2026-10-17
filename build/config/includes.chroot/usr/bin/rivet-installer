@@ -9,6 +9,7 @@ import subprocess
 import time
 
 STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"
+PIPELINE_CHECKER = "/usr/lib/rivet/check-installer-pipeline.py"
 POLKIT_AGENT = "/usr/libexec/polkit-mate-authentication-agent-1"
 WINDOW_TITLE = "Rivet Linux Installer"
 WINDOW_CLASS = "calamares"
@@ -270,6 +271,34 @@ def main():
         write_log("ERROR: Debian's Calamares launcher is missing or not executable.")
         show_diagnostics("The Debian Calamares launcher is missing or cannot be executed.")
         return 1
+
+    if not os.path.isfile(PIPELINE_CHECKER):
+        write_log(f"ERROR: Rivet installer pipeline checker is missing: {PIPELINE_CHECKER}")
+        show_diagnostics(
+            "Rivet cannot verify that disk setup, system extraction, and bootloader installation "
+            "are configured correctly. The installer was not started."
+        )
+        return 1
+
+    result, error = _command(
+        ["/usr/bin/python3", PIPELINE_CHECKER, "--root", "/"],
+        timeout=8,
+    )
+    if error:
+        write_log(f"ERROR: could not run installer pipeline preflight: {error}")
+        show_diagnostics("Rivet could not validate the installation pipeline. The installer was not started.")
+        return 1
+    if result.returncode != 0:
+        write_log("ERROR: installer pipeline preflight failed.")
+        write_log(result.stdout.strip())
+        write_log(result.stderr.strip())
+        show_diagnostics(
+            "Rivet's installation pipeline is incomplete or misconfigured. "
+            "The installer was not started; see the diagnostic report."
+        )
+        return 1
+
+    write_log("Installer pipeline preflight passed: " + result.stdout.strip())
 
     log_signature_before, log_signature_error = root_calamares_log_signature()
     if log_signature_error:
