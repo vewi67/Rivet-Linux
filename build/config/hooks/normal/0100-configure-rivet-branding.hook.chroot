@@ -390,6 +390,17 @@ if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$' "$CALAMARE
 fi
 sed -i 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' "$CALAMARES_SETTINGS"
 
+# Add a last explicit confirmation before destructive disk work. Once file
+# systems and boot records are being written, prevent accidental cancellation.
+for setting in prompt-install disable-cancel-during-exec; do
+  if ! grep -Eq "^[[:space:]]*${setting}:[[:space:]]*(true|false)[[:space:]]*(#.*)?$" "$CALAMARES_SETTINGS"; then
+    echo "ERROR: required Calamares installation-safety setting is missing: ${setting}" >&2
+    exit 1
+  fi
+done
+sed -Ei 's/^[[:space:]]*prompt-install:[[:space:]]*.*/prompt-install: true/' "$CALAMARES_SETTINGS"
+sed -Ei 's/^[[:space:]]*disable-cancel-during-exec:[[:space:]]*.*/disable-cancel-during-exec: true/' "$CALAMARES_SETTINGS"
+
 mkdir -p /etc/calamares/branding/rivet
 BRANDING_DESC="/etc/calamares/branding/rivet/branding.desc"
 if [ ! -s "$BRANDING_DESC" ]; then
