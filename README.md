@@ -21,7 +21,7 @@ Rivet aims to make everyday computing straightforward without taking control awa
 
 **Pre-alpha. Not ready for daily use.**
 
-The initial Debian live-build configuration, Rivet visual identity, Calamares branding, and Chip welcome experience are being integrated. The current priority is to validate the build, boot the ISO in a virtual machine, and test installation and first login. Features are not considered complete until they have been tested in the generated system.
+The initial Debian live-build configuration, Rivet visual identity, Calamares branding, Chip welcome experience, and Rivet Atmosphere controls are being integrated. Atmosphere uses XFCE's native wallpaper cycler and has automated behavioral tests, but the visual result still needs to be checked in a real desktop session. The current priority is to boot an explicitly authorized ISO in a virtual machine and test installation and first login. Features are not considered complete until they have been tested in the generated system.
 
 ## Current architecture
 
@@ -43,6 +43,7 @@ The initial Debian live-build configuration, Rivet visual identity, Calamares br
 | Installer | Calamares |
 | Package management | APT + dpkg |
 | Welcome app | Python + GTK 3 |
+| Wallpaper atmosphere | XFCE native backdrop cycler + GTK 3 control |
 | Mascot | Chip the beaver |
 
 ## Repository layout
