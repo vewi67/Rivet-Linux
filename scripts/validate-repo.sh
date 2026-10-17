@@ -142,6 +142,10 @@ grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
+grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
+grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
+grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
+grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
 # Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
 if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
   echo "ERROR: ISO build workflow must not have a push trigger." >&2
