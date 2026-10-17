@@ -1,0 +1,232 @@
+#!/usr/bin/python3
+"""Small GTK control panel for Rivet's native XFCE wallpaper cycling."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import re
+import subprocess
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+CHANNEL = "xfce4-desktop"
+WALLPAPER_DIR = Path("/usr/share/backgrounds/rivet")
+MODE_FILE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "rivet" / "atmosphere-mode"
+GUARD = "/usr/bin/rivet-wallpaper-guard"
+IMAGE_PROPERTY = re.compile(
+    r"^(/backdrop/screen\d+/monitor[^/]+/workspace\d+)/(last-image|last-single-image)$"
+)
+
+
+def run_query(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["xfconf-query", "-c", CHANNEL, *args],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=5,
+    )
+
+
+def image_properties() -> list[tuple[str, str, str]]:
+    result = run_query("-lv")
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "XFCE desktop settings are unavailable.")
+
+    found: list[tuple[str, str, str]] = []
+    for line in result.stdout.splitlines():
+        fields = line.strip().split(None, 1)
+        if len(fields) != 2:
+            continue
+        match = IMAGE_PROPERTY.fullmatch(fields[0])
+        if match:
+            found.append((fields[0], match.group(1), fields[1].strip()))
+    return found
+
+
+def cycle_enabled(prefix: str) -> bool:
+    result = run_query("-p", f"{prefix}/backdrop-cycle-enable")
+    return result.returncode == 0 and result.stdout.strip().lower() in {"true", "1", "yes"}
+
+
+def is_rivet_art(image: str) -> bool:
+    try:
+        path = Path(image).resolve(strict=True)
+        root = WALLPAPER_DIR.resolve(strict=True)
+        return path.is_file() and path.parent == root and path.name.startswith("rivet-") and path.suffix.lower() == ".jpeg"
+    except (OSError, RuntimeError):
+        return False
+
+
+def save_mode(mode: str) -> None:
+    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temporary = MODE_FILE.with_suffix(".tmp")
+    temporary.write_text(mode + "\n", encoding="utf-8")
+    temporary.replace(MODE_FILE)
+
+
+def apply_mode(mode: str) -> tuple[int, int]:
+    backdrops = image_properties()
+    eligible = [(prop, prefix, image) for prop, prefix, image in backdrops if is_rivet_art(image)]
+
+    if mode == "ambient" and not eligible:
+        raise ValueError(
+            "Choose one of the Rivet wallpapers first. Your current personal wallpaper "
+            "will not be replaced."
+        )
+
+    save_mode(mode)
+    result = subprocess.run(
+        [GUARD, "--once"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        timeout=10,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or "Could not update the wallpaper mode.")
+
+    refreshed = image_properties()
+    active = sum(1 for _prop, prefix, image in refreshed if is_rivet_art(image) and cycle_enabled(prefix))
+    return active, len(eligible)
+
+
+class RivetAtmosphere(Gtk.Window):
+    def __init__(self) -> None:
+        super().__init__(title="Rivet Atmosphere")
+        self.set_default_size(500, 390)
+        self.set_border_width(22)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.connect("destroy", Gtk.main_quit)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+        self.add(outer)
+
+        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        header.set_halign(Gtk.Align.CENTER)
+        icon = Gtk.Image.new_from_icon_name("preferences-desktop-wallpaper", Gtk.IconSize.DIALOG)
+        icon.set_pixel_size(52)
+        header.pack_start(icon, False, False, 0)
+
+        title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
+        title = Gtk.Label()
+        title.set_markup('<span size="x-large" weight="bold">Rivet Atmosphere</span>')
+        title.set_xalign(0)
+        subtitle = Gtk.Label(label="Your desktop, in motion.")
+        subtitle.set_xalign(0)
+        title_box.pack_start(title, False, False, 0)
+        title_box.pack_start(subtitle, False, False, 0)
+        header.pack_start(title_box, True, True, 0)
+        outer.pack_start(header, False, False, 0)
+
+        description = Gtk.Label(
+            label=(
+                "Waves, Factory, Prism and Chip take turns on your desktop. "
+                "The change is deliberately slow: one wallpaper every 30 minutes. "
+                "Choose a personal wallpaper and Rivet pauses the rotation automatically."
+            )
+        )
+        description.set_line_wrap(True)
+        description.set_max_width_chars(58)
+        description.set_xalign(0)
+        outer.pack_start(description, False, False, 0)
+
+        separator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        outer.pack_start(separator, False, False, 0)
+
+        mode_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        mode_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        mode_title = Gtk.Label()
+        mode_title.set_markup('<span weight="bold">Rivet Atmosphere</span>')
+        mode_title.set_xalign(0)
+        mode_subtitle = Gtk.Label(label="Rotate the Rivet wallpaper collection")
+        mode_subtitle.set_xalign(0)
+        mode_subtitle.set_line_wrap(True)
+        mode_text.pack_start(mode_title, False, False, 0)
+        mode_text.pack_start(mode_subtitle, False, False, 0)
+        mode_row.pack_start(mode_text, True, True, 0)
+
+        self.toggle = Gtk.Switch()
+        self.toggle.set_valign(Gtk.Align.CENTER)
+        self.toggle.connect("notify::active", self.on_toggle)
+        mode_row.pack_start(self.toggle, False, False, 0)
+        outer.pack_start(mode_row, False, False, 0)
+
+        self.status = Gtk.Label()
+        self.status.set_line_wrap(True)
+        self.status.set_xalign(0)
+        outer.pack_start(self.status, False, False, 0)
+
+        buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        buttons.set_halign(Gtk.Align.END)
+        choose = Gtk.Button(label="Choose wallpaper")
+        choose.connect("clicked", self.open_wallpaper_settings)
+        buttons.pack_start(choose, False, False, 0)
+        close = Gtk.Button(label="Close")
+        close.connect("clicked", lambda *_: self.destroy())
+        buttons.pack_start(close, False, False, 0)
+        outer.pack_end(buttons, False, False, 0)
+
+        self._updating = True
+        self.refresh_state()
+        self._updating = False
+
+    def refresh_state(self) -> None:
+        try:
+            backdrops = image_properties()
+            eligible = [(prop, prefix, image) for prop, prefix, image in backdrops if is_rivet_art(image)]
+            enabled = bool(eligible) and all(cycle_enabled(prefix) for _prop, prefix, _image in eligible)
+            mode = MODE_FILE.read_text(encoding="utf-8").strip() if MODE_FILE.exists() else "ambient"
+            enabled = enabled and mode != "static"
+            self.toggle.set_active(enabled)
+            if not eligible:
+                self.status.set_text("Choose a Rivet wallpaper to enable Atmosphere. Personal wallpapers stay untouched.")
+            elif enabled:
+                self.status.set_text(f"Atmosphere is on for {len(eligible)} desktop area(s). Your own wallpapers remain static.")
+            else:
+                self.status.set_text("Atmosphere is paused. Your current wallpaper will stay still.")
+        except (OSError, RuntimeError) as error:
+            self.status.set_text(str(error))
+
+    def on_toggle(self, switch: Gtk.Switch, _param: object) -> None:
+        if self._updating:
+            return
+        requested = "ambient" if switch.get_active() else "static"
+        try:
+            active, eligible = apply_mode(requested)
+            if requested == "ambient":
+                self.status.set_text(
+                    f"Atmosphere is on. The Rivet collection will rotate every 30 minutes "
+                    f"across {active} desktop area(s)."
+                )
+            else:
+                self.status.set_text("Atmosphere is off. Your wallpaper will stay still.")
+        except (OSError, RuntimeError, ValueError) as error:
+            self.status.set_text(str(error))
+            self._updating = True
+            switch.set_active(False)
+            self._updating = False
+
+    @staticmethod
+    def open_wallpaper_settings(*_args: object) -> None:
+        try:
+            subprocess.Popen(["xfdesktop-settings"], close_fds=True, start_new_session=True)
+        except OSError:
+            dialog = Gtk.MessageDialog(
+                message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.CLOSE,
+                text="Could not open XFCE wallpaper settings.",
+            )
+            dialog.run()
+            dialog.destroy()
+
+
+if __name__ == "__main__":
+    RivetAtmosphere().show_all()
+    Gtk.main()
