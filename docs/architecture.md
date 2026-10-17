@@ -54,6 +54,7 @@ Initial software includes:
 - core XFCE utilities
 - basic diagnostic and network tools
 - a small GTK welcome application
+- Rivet Atmosphere controls using XFCE's native wallpaper cycler
 
 Steam, Wine, and large development toolchains are not installed by default.
 
