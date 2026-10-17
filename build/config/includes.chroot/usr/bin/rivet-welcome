@@ -59,7 +59,10 @@ class RivetWelcome(Gtk.Window):
         outer.pack_start(tagline, False, False, 0)
 
         description = Gtk.Label(
-            label="A lightweight system built to be explored, used, and changed."
+            label=(
+                "A lightweight system built to be explored, used, and changed. "
+                "Set the mood with Rivet Atmosphere, which can gently rotate our wallpapers."
+            )
         )
         description.set_line_wrap(True)
         description.set_max_width_chars(62)
@@ -93,6 +96,12 @@ class RivetWelcome(Gtk.Window):
             "clicked", self.launch_app, ["xfce4-settings-manager"]
         )
         buttons.pack_start(settings_button, False, False, 0)
+
+        atmosphere_button = Gtk.Button(label="Atmosphere")
+        atmosphere_button.connect(
+            "clicked", self.launch_app, ["rivet-atmosphere"]
+        )
+        buttons.pack_start(atmosphere_button, False, False, 0)
 
         done_button = Gtk.Button(label="Let's go")
         done_button.connect("clicked", self.on_done)
