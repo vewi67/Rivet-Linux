@@ -16,13 +16,17 @@ WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
 RIVET_INSTALLER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-installer.desktop"
 PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desktop"
+ATMOSPHERE_APP="build/config/includes.chroot/usr/bin/rivet-atmosphere"
+ATMOSPHERE_GUARD="build/config/includes.chroot/usr/bin/rivet-wallpaper-guard"
+ATMOSPHERE_DESKTOP="build/config/includes.chroot/usr/share/applications/rivet-atmosphere.desktop"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
+  "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -41,6 +45,7 @@ echo "==> Checking shell syntax..."
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
+sh -n "$ATMOSPHERE_GUARD"
 bash -n scripts/validate-repo.sh
 
 echo "==> Extracting and checking the generated wallpaper startup script..."
@@ -63,8 +68,9 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" scripts/test-wallpaper-defaults.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py
 python3 scripts/test-wallpaper-defaults.py
+python3 scripts/test-atmosphere.py
 
 echo "==> Checking package list..."
 mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$PACKAGE_LIST")
@@ -207,6 +213,8 @@ grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'Install Rivet' "$WELCOME_APP"
 grep -Fq 'INSTALLER = "/usr/bin/rivet-installer"' "$WELCOME_APP"
+grep -Fq 'rivet-atmosphere' "$WELCOME_APP"
+grep -Fq 'Gtk.Button(label="Atmosphere")' "$WELCOME_APP"
 grep -Fq 'STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"' "$INSTALLER_HELPER"
 grep -Fq 'ROOT_CALAMARES_LOG = "/root/.cache/calamares/session.log"' "$INSTALLER_HELPER"
 grep -Fq 'WINDOW_CLASS = "calamares"' "$INSTALLER_HELPER"
@@ -229,6 +237,20 @@ grep -Fq 'Position=3' "$BRANDING_HOOK"
 grep -Fq 'Firefox.dockitem' "$BRANDING_HOOK"
 grep -Fq 'Install-Rivet.dockitem' "$BRANDING_HOOK"
 grep -Fq 'rivet-settings.desktop' "$BRANDING_HOOK"
+grep -Fq 'rivet-wallpaper-guard --once' "$BRANDING_HOOK"
+grep -Fq 'Name=Rivet Atmosphere Service' "$BRANDING_HOOK"
+grep -Fq 'Exec=/usr/bin/rivet-wallpaper-guard' "$BRANDING_HOOK"
+grep -Fq 'atmosphere-mode' "$BRANDING_HOOK"
+grep -Fq 'Atmosphere.dockitem' "$BRANDING_HOOK"
+grep -Fq 'rivet-atmosphere.desktop' "$BRANDING_HOOK"
+grep -Fq 'Exec=/usr/bin/rivet-atmosphere' "$ATMOSPHERE_DESKTOP"
+grep -Fq 'Rivet Atmosphere' "$ATMOSPHERE_APP"
+grep -Fq 'workspace-?' "$ATMOSPHERE_APP"
+grep -Fq '/workspace-?[0-9]+' "$ATMOSPHERE_GUARD"
+grep -Fq 'backdrop-cycle-period" int 1' "$ATMOSPHERE_GUARD"
+grep -Fq 'backdrop-cycle-timer" uint 30' "$ATMOSPHERE_GUARD"
+grep -Fq 'backdrop-cycle-random-order" bool true' "$ATMOSPHERE_GUARD"
+grep -Fq 'backdrop-cycle-enable" bool true' "$ATMOSPHERE_GUARD"
 grep -Fq 'workspace0' "$BRANDING_HOOK"
 grep -Fq 'last-image' "$BRANDING_HOOK"
 grep -Fq 'rivet-set-wallpaper' "$BRANDING_HOOK"
