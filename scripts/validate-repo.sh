@@ -42,6 +42,25 @@ bash -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
 bash -n scripts/validate-repo.sh
 
+echo "==> Extracting and checking the generated wallpaper startup script..."
+python3 - "$BRANDING_HOOK" /tmp/rivet-set-wallpaper-validation.sh <<'PY'
+import sys
+from pathlib import Path
+
+source = Path(sys.argv[1]).read_text(encoding="utf-8")
+begin = "cat > /usr/local/bin/rivet-set-wallpaper <<'EOF'\n"
+end = "\nEOF\nchmod 0755 /usr/local/bin/rivet-set-wallpaper"
+start = source.find(begin)
+if start < 0:
+    raise SystemExit("ERROR: wallpaper startup script heredoc is missing.")
+start += len(begin)
+finish = source.find(end, start)
+if finish < 0:
+    raise SystemExit("ERROR: wallpaper startup script heredoc is unterminated.")
+Path(sys.argv[2]).write_text(source[start:finish] + "\n", encoding="utf-8")
+PY
+sh -n /tmp/rivet-set-wallpaper-validation.sh
+
 echo "==> Checking Python syntax..."
 PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER"
 
@@ -212,9 +231,16 @@ grep -Fq 'workspace0' "$BRANDING_HOOK"
 grep -Fq 'last-image' "$BRANDING_HOOK"
 grep -Fq 'rivet-set-wallpaper' "$BRANDING_HOOK"
 grep -Fq 'pgrep -x xfdesktop' "$BRANDING_HOOK"
-grep -Fq '/workspace[0-9]+/(last-image|last-single-image)' "$BRANDING_HOOK"
-grep -Fq 'xfdesktop --reload' "$BRANDING_HOOK"
-grep -Fq 'Rivet default wallpaper applied and verified.' "$BRANDING_HOOK"
+grep -Fq 'xrandr --query' "$BRANDING_HOOK"
+grep -Fq 'monitor([^/]+)' "$BRANDING_HOOK"
+grep -Fq 'workspace$workspace/last-image' "$BRANDING_HOOK"
+grep -Fq -- '--create --type string --set "$WALLPAPER"' "$BRANDING_HOOK"
+grep -Fq 'Preserving user wallpaper' "$BRANDING_HOOK"
+grep -Fq 'Rivet Waves wallpaper properties verified' "$BRANDING_HOOK"
+if grep -Fq '[ -e "$MARKER" ] && exit 0' "$BRANDING_HOOK"; then
+  echo "ERROR: wallpaper startup still has a permanent one-time skip marker." >&2
+  exit 1
+fi
 # NetworkManager's graphical applet requires the status bar's system tray.
 grep -Fq 'value="systray"' "$BRANDING_HOOK"
 grep -Fq 'value="clock"' "$BRANDING_HOOK"
