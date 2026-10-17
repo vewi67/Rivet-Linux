@@ -21,3 +21,12 @@ grep -Fxq 'slideshow: "show.qml"' "$BRANDING_DESC"
 grep -Fxq 'slideshowAPI: 2' "$BRANDING_DESC"
 grep -Fq 'Presentation {' "$SLIDESHOW"
 grep -Fq 'centeredText: qsTr("Installing Rivet Linux")' "$SLIDESHOW"
+
+# Refuse to produce an image with a branded but non-functional installer.
+# This checks the real Debian-provided sequence and its live-image/GRUB settings.
+INSTALLER_CHECKER="/usr/lib/rivet/check-installer-pipeline.py"
+if [ ! -s "$INSTALLER_CHECKER" ]; then
+  echo "ERROR: Rivet installer pipeline checker is missing: $INSTALLER_CHECKER" >&2
+  exit 1
+fi
+python3 "$INSTALLER_CHECKER" --root /
