@@ -50,24 +50,71 @@ done
 cat > /usr/local/bin/rivet-set-wallpaper <<'EOF'
 #!/bin/sh
 set -eu
+
 WALLPAPER="/usr/share/backgrounds/rivet/rivet-waves.jpeg"
-MARKER="$HOME/.config/rivet/wallpaper-default-applied"
 LOG_DIR="$HOME/.cache/rivet"
-[ -e "$MARKER" ] && exit 0
-[ -s "$WALLPAPER" ] || exit 1
-mkdir -p "$LOG_DIR" "$(dirname "$MARKER")"
+mkdir -p "$LOG_DIR"
 exec >> "$LOG_DIR/wallpaper-default.log" 2>&1
 
-# Wait for xfdesktop itself, not merely any xfconf property. The system
-# defaults may expose monitor0 before XFCE creates the active monitor's
-# workspace-specific last-image property.
+if [ ! -s "$WALLPAPER" ]; then
+  echo "ERROR: Rivet Waves wallpaper is missing: $WALLPAPER"
+  exit 1
+fi
+
+# XFCE 4.20 can use monitor-level properties or workspace-level properties.
+# Replace Debian/XFCE stock images and missing paths, but preserve valid images
+# chosen by the user.
+needs_replacement() {
+  image="$1"
+  case "$image" in
+    ""|"$WALLPAPER"|/usr/share/images/desktop-base/*|/usr/share/backgrounds/xfce/*|/usr/share/xfce4/backdrops/*)
+      return 0
+      ;;
+  esac
+  [ ! -f "$image" ] && return 0
+  return 1
+}
+
+set_style_for_property() {
+  property="$1"
+  parent="$(dirname "$property")"
+  xfconf-query -c xfce4-desktop -p "$parent/image-style" --create --type int --set 5 >/dev/null 2>&1
+  xfconf-query -c xfce4-desktop -p "$parent/color-style" --create --type int --set 0 >/dev/null 2>&1
+}
+
+set_wallpaper() {
+  property="$1"
+  if ! xfconf-query -c xfce4-desktop -p "$property" --create --type string --set "$WALLPAPER" >/dev/null 2>&1; then
+    echo "ERROR: could not set wallpaper property: $property"
+    return 1
+  fi
+  current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
+  if [ "$current" != "$WALLPAPER" ]; then
+    echo "ERROR: wallpaper property did not retain Rivet Waves: $property ($current)"
+    return 1
+  fi
+  if ! set_style_for_property "$property"; then
+    echo "ERROR: could not set wallpaper fit/style for: $property"
+    return 1
+  fi
+  echo "Set Rivet Waves: $property"
+  return 0
+}
+
+get_backdrop_properties() {
+  xfconf-query -c xfce4-desktop -lv 2>/dev/null |
+    awk '$1 ~ /^\/backdrop\/screen[0-9]+\/.*\/(last-image|last-single-image|image-path)$/ {print $1}' || true
+}
+
+# Wait for xfdesktop and its monitor configuration. Do not assume the property
+# path contains /workspaceN: that assumption fails on some Trixie/XFCE setups.
 attempt=0
 properties=""
 while [ "$attempt" -lt 30 ]; do
   if pgrep -x xfdesktop >/dev/null 2>&1; then
-    sleep 2
-    properties="$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /^\/backdrop\/screen[0-9]+\/.*\/(last-image|last-single-image|image-path)$/ {print $1}' || true)"
-    if printf '%s\n' "$properties" | grep -Eq '/workspace[0-9]+/(last-image|last-single-image)$'; then
+    properties="$(get_backdrop_properties)"
+    monitors="$(xrandr --query 2>/dev/null | awk '/ connected/{print $1}' || true)"
+    if [ -n "$properties" ] || [ -n "$monitors" ]; then
       break
     fi
   fi
@@ -75,63 +122,122 @@ while [ "$attempt" -lt 30 ]; do
   sleep 1
 done
 
-if ! printf '%s\n' "$properties" | grep -Eq '/workspace[0-9]+/(last-image|last-single-image)$'; then
-  echo "ERROR: XFCE did not expose a workspace wallpaper property after starting."
+# Build screen/monitor pairs from both properties already exposed by XFCE and
+# active XRandR outputs. This covers monitor0, monitorDP-1, monitorVirtual-1,
+# and monitordefault, without hardcoding one physical display name.
+pairs="$(
+  {
+    printf '%s\n' "$properties" |
+      sed -nE 's#^/backdrop/(screen[0-9]+)/monitor([^/]+)/.*#\1 \2#p'
+    xrandr --query 2>/dev/null | awk '/ connected/{printf "screen0 %s\n", $1}' || true
+  } | sort -u
+)"
+if [ -z "$pairs" ]; then
+  pairs="screen0 default"
+fi
+
+workspaces="$(xfconf-query -c xfwm4 -p /general/workspace_count 2>/dev/null || true)"
+case "$workspaces" in
+  ""|*[!0-9]*) workspaces=4 ;;
+esac
+if [ "$workspaces" -lt 1 ] || [ "$workspaces" -gt 32 ]; then
+  workspaces=4
+fi
+
+# Do several passes because xfdesktop may create or migrate its active monitor
+# properties after the first autostart entries have already begun.
+round=1
+while [ "$round" -le 3 ]; do
+  properties="$(get_backdrop_properties)"
+  failed=0
+
+  # First fix every existing current-image or legacy-image property, including
+  # properties that do not contain a workspace number.
+  for property in $properties; do
+    current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
+    if needs_replacement "$current"; then
+      if ! set_wallpaper "$property"; then
+        failed=1
+      fi
+    else
+      echo "Preserving user wallpaper: $property ($current)"
+    fi
+  done
+
+  # Ensure each monitor/workspace has an explicit last-image property, which
+  # is the binding used by modern xfdesktop. Respect a valid custom monitor-
+  # level image instead of overriding it with the default.
+  for pair in $pairs; do
+    set -- $pair
+    screen="$1"
+    monitor="$2"
+    monitor_root="/backdrop/$screen/monitor$monitor"
+    custom_base=0
+
+    for base_property in \
+      "$monitor_root/last-image" \
+      "$monitor_root/last-single-image" \
+      "$monitor_root/image-path"; do
+      if printf '%s\n' "$properties" | grep -Fxq "$base_property"; then
+        base_value="$(xfconf-query -c xfce4-desktop -p "$base_property" 2>/dev/null || true)"
+        if ! needs_replacement "$base_value"; then
+          custom_base=1
+        fi
+      fi
+    done
+
+    workspace=0
+    while [ "$workspace" -lt "$workspaces" ]; do
+      property="$monitor_root/workspace$workspace/last-image"
+      if ! printf '%s\n' "$properties" | grep -Fxq "$property"; then
+        if [ "$custom_base" -eq 0 ]; then
+          if ! set_wallpaper "$property"; then
+            failed=1
+          fi
+        else
+          echo "Preserving custom monitor-level wallpaper for $monitor_root"
+        fi
+      fi
+      workspace=$((workspace + 1))
+    done
+  done
+
+  if [ "$failed" -ne 0 ]; then
+    echo "WARNING: one or more wallpaper properties could not be set in pass $round."
+  fi
+  xfdesktop --reload >/dev/null 2>&1 || true
+  sleep 2
+  round=$((round + 1))
+done
+
+# Verify that no Debian/XFCE stock image or missing image path remains in the
+# active xfconf backdrop properties. Custom, existing user-selected images are
+# deliberately allowed.
+properties="$(get_backdrop_properties)"
+unresolved=0
+verified=0
+for property in $properties; do
+  current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
+  if [ "$current" = "$WALLPAPER" ]; then
+    verified=$((verified + 1))
+  elif needs_replacement "$current"; then
+    echo "ERROR: unresolved default/missing wallpaper: $property ($current)"
+    unresolved=1
+  fi
+done
+
+if [ "$unresolved" -ne 0 ]; then
+  echo "ERROR: Rivet wallpaper configuration could not be fully verified."
   exit 1
 fi
 
-# Apply Waves to every workspace wallpaper property that XFCE currently
-# exposes, including monitor names other than monitor0.
-updated=0
-failed=0
-for property in $properties; do
-  case "$property" in
-    */last-image|*/last-single-image)
-      if xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER"; then
-        current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
-        if [ "$current" = "$WALLPAPER" ]; then
-          updated=$((updated + 1))
-        else
-          failed=1
-          echo "ERROR: wallpaper property did not retain Waves: $property"
-        fi
-      else
-        failed=1
-        echo "ERROR: could not set wallpaper property: $property"
-      fi
-      ;;
-    */image-path)
-      xfconf-query -c xfce4-desktop -p "$property" -s "$WALLPAPER" || true
-      ;;
-  esac
-done
-
-if [ "$updated" -gt 0 ] && [ "$failed" -eq 0 ]; then
-  # Make the running desktop refresh after its active workspace properties
-  # have been changed, then verify the values again before writing the marker.
-  xfdesktop --reload >/dev/null 2>&1 || true
-  sleep 1
-  properties="$(xfconf-query -c xfce4-desktop -lv 2>/dev/null | awk '$1 ~ /^\/backdrop\/screen[0-9]+\/.*\/(last-image|last-single-image)$/ {print $1}' || true)"
-  verified=0
-  for property in $properties; do
-    current="$(xfconf-query -c xfce4-desktop -p "$property" 2>/dev/null || true)"
-    if [ "$current" = "$WALLPAPER" ]; then
-      verified=$((verified + 1))
-    else
-      echo "ERROR: wallpaper property is not Waves after reload: $property ($current)"
-      failed=1
-    fi
-  done
-  if [ "$verified" -gt 0 ] && [ "$failed" -eq 0 ]; then
-    touch "$MARKER"
-    echo "Rivet default wallpaper applied and verified."
-  else
-    echo "ERROR: could not verify Rivet's default wallpaper."
-    exit 1
-  fi
+# Older builds used a one-time marker. Remove it because this script now checks
+# every login, repairs distro defaults, and leaves valid user wallpapers alone.
+rm -f "$HOME/.config/rivet/wallpaper-default-applied"
+if [ "$verified" -gt 0 ]; then
+  echo "Rivet Waves wallpaper properties verified; user-selected wallpapers are preserved."
 else
-  echo "ERROR: no workspace wallpaper property was updated successfully."
-  exit 1
+  echo "No stock wallpaper needed replacing; existing user-selected wallpapers were preserved."
 fi
 EOF
 chmod 0755 /usr/local/bin/rivet-set-wallpaper
