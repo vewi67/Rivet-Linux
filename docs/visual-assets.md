@@ -23,6 +23,18 @@ The welcome app is installed at /usr/bin/rivet-welcome. It opens automatically i
 
 The Rivet logo is also installed into the hicolor icon theme for the welcome and installer launchers.
 
+## Rivet Atmosphere
+
+Rivet Atmosphere gives the wallpaper collection a quiet, optional rhythm without adding a custom animation engine or a continuously polling process.
+
+- New user profiles start in **ambient** mode with Rivet Waves as the default wallpaper.
+- XFCE's native backdrop cycler selects among the four images in the Rivet wallpaper directory in random order, changing every 30 minutes.
+- A small GTK control panel named **Rivet Atmosphere** is available from the welcome window, the Plank dock, and the application menu.
+- Turning Atmosphere off stores a per-user static preference. Choosing a wallpaper outside the Rivet collection stops cycling for that desktop area without overwriting the chosen image.
+- Choosing a Rivet wallpaper again resumes cycling when ambient mode is enabled.
+
+The repository validator runs behavioral tests for the XFCE settings, static mode, and preservation of personal wallpapers. These tests do not render a real desktop; a booted ISO still needs visual verification before Atmosphere is considered fully verified.
+
 ## Verification
 
 Repository validation checks the required assets, package dependencies, launchers, and Python syntax. The ISO still needs boot and first-login testing in a virtual machine before these features can be considered verified.
