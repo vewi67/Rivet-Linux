@@ -1,11 +1,7 @@
 name: Build Rivet ISO
 
 on:
-  # A one-time, explicit authorization commit can initiate a build.
-  # Ordinary pushes only run validation and never build/publish an ISO.
-  push:
-    branches: [main]
-  # Standard manual invocation still requires the explicit YES confirmation.
+  # ISO builds are opt-in only. The default confirmation is NO.
   workflow_dispatch:
     inputs:
       authorize_iso:
@@ -38,7 +34,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[AUTHORIZE-ISO]'))
+    if: inputs.authorize_iso == 'YES'
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 45

@@ -146,12 +146,13 @@ grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.
 grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
-# ISO builds must have either the explicit manual YES input or a commit-message gate.
-grep -Fq 'branches: [main]' .github/workflows/build-iso.yml
-grep -Fq "[AUTHORIZE-ISO]" .github/workflows/build-iso.yml
+# Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
+if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
+  echo "ERROR: ISO build workflow must not have a push trigger." >&2
+  exit 1
+fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
-grep -Fq "inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
-grep -Fq "github.event_name == 'push' && contains(github.event.head_commit.message, '[AUTHORIZE-ISO]')" .github/workflows/build-iso.yml
+grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
 
 echo "==> Checking XFCE status-panel XML..."
 python3 - "$BRANDING_HOOK" <<'PY'
