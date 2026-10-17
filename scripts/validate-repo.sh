@@ -89,7 +89,10 @@ for setting in \
   '--binary-images iso-hybrid' \
   '--iso-application "Rivet Linux"' \
   '--iso-publisher "Rivet Linux Project"' \
-  '--iso-volume "RIVET_LINUX"'; do
+  '--iso-volume "RIVET_LINUX"' \
+  '--archive-areas "main contrib non-free non-free-firmware"' \
+  '--firmware-binary true' \
+  '--firmware-chroot true'; do
   grep -Fq -- "$setting" build/build.sh || {
     echo "ERROR: build identity setting missing: $setting" >&2
     exit 1
@@ -117,6 +120,42 @@ if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
 fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
 grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
+
+echo "==> Checking XFCE status-panel XML..."
+python3 - "$BRANDING_HOOK" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+hook = Path(sys.argv[1]).read_text(encoding="utf-8")
+match = re.search(r"""cat > "\$panel_file" <<'EOF'\n(.*?)\nEOF""", hook, re.S)
+if not match:
+    raise SystemExit("ERROR: could not find the generated XFCE panel XML in the branding hook.")
+try:
+    root = ET.fromstring(match.group(1))
+except ET.ParseError as error:
+    raise SystemExit(f"ERROR: generated XFCE panel XML is invalid: {error}")
+
+if root.tag != "channel" or root.attrib.get("name") != "xfce4-panel":
+    raise SystemExit("ERROR: generated XML is not an XFCE panel configuration.")
+plugins = {
+    item.attrib.get("name"): item.attrib.get("value")
+    for item in root.findall("./property[@name='plugins']/property")
+}
+if plugins.get("plugin-1") != "systray":
+    raise SystemExit("ERROR: XFCE status panel must provide a system tray for NetworkManager.")
+if plugins.get("plugin-2") != "clock":
+    raise SystemExit("ERROR: XFCE status panel clock plugin is missing.")
+panels = root.find("./property[@name='panels']")
+panel = panels.find("./property[@name='panel-1']") if panels is not None else None
+if panel is None:
+    raise SystemExit("ERROR: XFCE panel configuration does not define panel-1.")
+position = panel.find("./property[@name='position']")
+if position is None or not position.attrib.get("value", "").startswith("p=6;"):
+    raise SystemExit("ERROR: XFCE status panel must be positioned at the top.")
+print("XFCE status-panel XML is valid; system tray and clock are configured.")
+PY
 
 echo "==> Checking required visual assets..."
 for asset in \
