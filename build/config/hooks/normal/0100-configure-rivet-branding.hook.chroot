@@ -239,6 +239,15 @@ if [ "$verified" -gt 0 ]; then
 else
   echo "No stock wallpaper needed replacing; existing user-selected wallpapers were preserved."
 fi
+
+# Activate the native XFCE cycler after repairing the initial wallpaper.
+if [ -x /usr/bin/rivet-wallpaper-guard ]; then
+  if /usr/bin/rivet-wallpaper-guard --once; then
+    echo "Rivet Atmosphere settings applied."
+  else
+    echo "WARNING: Rivet Atmosphere could not apply its initial settings."
+  fi
+fi
 EOF
 chmod 0755 /usr/local/bin/rivet-set-wallpaper
 mkdir -p /etc/xdg/autostart /etc/skel/.config/autostart
@@ -253,6 +262,32 @@ NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
 cp /etc/xdg/autostart/rivet-wallpaper.desktop /etc/skel/.config/autostart/rivet-wallpaper.desktop
+
+# Rivet Atmosphere uses xfdesktop's native backdrop cycler, with a small
+# control panel. It adds no animation daemon and preserves personal wallpapers.
+for atmosphere_file in \
+  /usr/bin/rivet-wallpaper-guard \
+  /usr/bin/rivet-atmosphere \
+  /usr/share/applications/rivet-atmosphere.desktop; do
+  if [ ! -s "$atmosphere_file" ]; then
+    echo "ERROR: Rivet Atmosphere component is missing: $atmosphere_file" >&2
+    exit 1
+  fi
+done
+chmod 0755 /usr/bin/rivet-wallpaper-guard /usr/bin/rivet-atmosphere
+cat > /etc/xdg/autostart/rivet-wallpaper-guard.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Rivet Atmosphere Service
+Comment=Keep Rivet wallpaper ambience in sync with XFCE
+Exec=/usr/bin/rivet-wallpaper-guard
+OnlyShowIn=XFCE;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+EOF
+cp /etc/xdg/autostart/rivet-wallpaper-guard.desktop /etc/skel/.config/autostart/rivet-wallpaper-guard.desktop
+mkdir -p /etc/skel/.config/rivet
+printf 'ambient\n' > /etc/skel/.config/rivet/atmosphere-mode
 
 # Keep Plank as the app dock and provide a thin top status bar.
 # NetworkManager's nm-applet requires an XDG system tray to expose Wi-Fi networks.
@@ -408,14 +443,13 @@ if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
   exit 1
 fi
 
-# Give new live and installed accounts a populated bottom dock.
-# XFCE's factory panel is disabled above, preventing overlapping docks.
+# Give new live and installed accounts a populated bottom dock, separate from the top status bar.
 PLANK_DIR="/etc/skel/.config/plank/dock1"
 PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Settings.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Settings.dockitem;Atmosphere.dockitem;
 IconSize=48
 Position=3
 Alignment=3
@@ -454,9 +488,14 @@ cat > "${PLANK_LAUNCHERS}/Settings.dockitem" <<'EOF'
 Launcher=file:///usr/share/applications/rivet-settings.desktop
 EOF
 
+cat > "${PLANK_LAUNCHERS}/Atmosphere.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-atmosphere.desktop
+EOF
+
 if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
   echo "ERROR: Calamares branding was not switched to Rivet." >&2
   exit 1
 fi
 
-echo "Rivet desktop, dock, installer authentication, branding, and welcome experience configured."
+echo "Rivet desktop, Atmosphere, dock, installer authentication, branding, and welcome experience configured."
