@@ -18,7 +18,7 @@ WALLPAPER_DIR = Path("/usr/share/backgrounds/rivet")
 MODE_FILE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "rivet" / "atmosphere-mode"
 GUARD = "/usr/bin/rivet-wallpaper-guard"
 IMAGE_PROPERTY = re.compile(
-    r"^(/backdrop/screen\d+/monitor[^/]+/workspace\d+)/(last-image|last-single-image)$"
+    r"^(/backdrop/screen\d+/monitor[^/]+/workspace-?\d+)/(last-image|last-single-image)$"
 )
 
 
