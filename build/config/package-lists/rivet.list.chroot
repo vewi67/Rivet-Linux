@@ -21,6 +21,8 @@ gparted
 synaptic
 calamares
 calamares-settings-debian
+rsync
+squashfs-tools
 sudo
 curl
 wget

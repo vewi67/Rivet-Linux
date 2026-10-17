@@ -107,7 +107,7 @@ for package in \
   xfce4 xfce4-panel xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
-  calamares-settings-debian sudo python3-gi gir1.2-gtk-3.0; do
+  calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0; do
   require_package "$package"
 done
 
