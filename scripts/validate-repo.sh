@@ -75,7 +75,7 @@ require_package() {
 
 echo "==> Checking required packages..."
 for package in \
-  xfce4 xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
+  xfce4 xfce4-panel xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
   calamares-settings-debian sudo python3-gi gir1.2-gtk-3.0; do
@@ -110,6 +110,13 @@ grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
+# Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
+if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
+  echo "ERROR: ISO build workflow must not have a push trigger." >&2
+  exit 1
+fi
+grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
+grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
 
 echo "==> Checking required visual assets..."
 for asset in \
@@ -169,7 +176,13 @@ grep -Fq 'pgrep -x xfdesktop' "$BRANDING_HOOK"
 grep -Fq '/workspace[0-9]+/(last-image|last-single-image)' "$BRANDING_HOOK"
 grep -Fq 'xfdesktop --reload' "$BRANDING_HOOK"
 grep -Fq 'Rivet default wallpaper applied and verified.' "$BRANDING_HOOK"
-grep -Fq 'rivet-disable-xfce-panel' "$BRANDING_HOOK"
+# NetworkManager's graphical applet requires the status bar's system tray.
+grep -Fq 'value="systray"' "$BRANDING_HOOK"
+grep -Fq 'value="clock"' "$BRANDING_HOOK"
+if grep -Fq 'xfce4-panel --quit' "$BRANDING_HOOK"; then
+  echo "ERROR: XFCE panel is being shut down; NetworkManager's applet would have no system tray." >&2
+  exit 1
+fi
 grep -Fq 'xfce4-panel.xml' "$BRANDING_HOOK"
 grep -Fq 'RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"' "$BRANDING_HOOK"
 grep -Fq 'rivet-waves.jpeg' "$BRANDING_HOOK"
