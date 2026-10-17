@@ -1,0 +1,102 @@
+#!/bin/sh
+set -eu
+
+CHANNEL="xfce4-desktop"
+RIVET_WALLPAPER_DIR="${RIVET_WALLPAPER_DIR:-/usr/share/backgrounds/rivet}"
+MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/rivet/atmosphere-mode"
+
+# Store settings at XFCE's actual monitor/workspace prefix. xfdesktop's native
+# cycler reads these properties itself, so no polling timer or image renderer
+# is needed to rotate the wallpapers.
+set_if_changed() {
+  property="$1"
+  type="$2"
+  value="$3"
+  current="$(xfconf-query -c "$CHANNEL" -p "$property" 2>/dev/null || true)"
+  if [ "$current" != "$value" ]; then
+    xfconf-query -c "$CHANNEL" -p "$property" --create --type "$type" --set "$value" >/dev/null 2>&1
+  fi
+}
+
+get_image_properties() {
+  xfconf-query -c "$CHANNEL" -lv 2>/dev/null |
+    awk '$1 ~ /^\/backdrop\/screen[0-9]+\/monitor[^/]+\/workspace[0-9]+\/(last-image|last-single-image)$/ {print $1}' || true
+}
+
+configure_property() {
+  property="$1"
+  case "$property" in
+    */last-image) prefix="${property%/last-image}" ;;
+    */last-single-image) prefix="${property%/last-single-image}" ;;
+    *) return 0 ;;
+  esac
+
+  image="$(xfconf-query -c "$CHANNEL" -p "$property" 2>/dev/null || true)"
+  mode="$(cat "$MODE_FILE" 2>/dev/null || true)"
+
+  case "$mode" in
+    static)
+      enabled=false
+      ;;
+    ambient|"")
+      case "$image" in
+        "$RIVET_WALLPAPER_DIR"/rivet-*.jpeg)
+          if [ -s "$image" ]; then
+            enabled=true
+          else
+            enabled=false
+          fi
+          ;;
+        *)
+          enabled=false
+          ;;
+      esac
+      ;;
+    *)
+      # Unknown preferences fail safe to a static desktop.
+      enabled=false
+      ;;
+  esac
+
+  if [ "$enabled" = true ]; then
+    set_if_changed "$prefix/backdrop-cycle-period" uint 1
+    set_if_changed "$prefix/backdrop-cycle-timer" uint 30
+    set_if_changed "$prefix/backdrop-cycle-random-order" bool true
+    set_if_changed "$prefix/backdrop-cycle-enable" bool true
+  else
+    set_if_changed "$prefix/backdrop-cycle-enable" bool false
+  fi
+}
+
+scan_properties() {
+  properties="$(get_image_properties)"
+  for property in $properties; do
+    configure_property "$property"
+  done
+}
+
+# --once is used by the wallpaper initializer and the GUI control panel.
+if [ "${1:-}" = "--once" ]; then
+  scan_properties
+  exit 0
+fi
+
+# Wait for XFCE to establish its desktop session before the first scan.
+attempt=0
+while [ "$attempt" -lt 30 ]; do
+  if pgrep -x xfdesktop >/dev/null 2>&1; then
+    break
+  fi
+  attempt=$((attempt + 1))
+  sleep 1
+done
+
+scan_properties
+
+# Respect manual wallpaper changes. Rivet art keeps or starts the ambience
+# mode; a user-selected image outside the Rivet collection stops cycling.
+# xfconf-query's monitor is event-driven, so this does not poll in a loop.
+xfconf-query -c "$CHANNEL" -m 2>/dev/null |
+  while IFS= read -r _event; do
+    scan_properties
+  done
