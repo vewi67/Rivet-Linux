@@ -59,7 +59,7 @@ configure_property() {
   esac
 
   if [ "$enabled" = true ]; then
-    set_if_changed "$prefix/backdrop-cycle-period" uint 1
+    set_if_changed "$prefix/backdrop-cycle-period" int 1
     set_if_changed "$prefix/backdrop-cycle-timer" uint 30
     set_if_changed "$prefix/backdrop-cycle-random-order" bool true
     set_if_changed "$prefix/backdrop-cycle-enable" bool true
