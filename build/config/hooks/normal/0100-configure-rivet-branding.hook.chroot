@@ -148,7 +148,9 @@ X-GNOME-Autostart-enabled=true
 EOF
 cp /etc/xdg/autostart/rivet-wallpaper.desktop /etc/skel/.config/autostart/rivet-wallpaper.desktop
 
-# Remove XFCE's Debian panel configuration so Plank is the only dock.
+# Keep Plank as the app dock and provide a thin top status bar.
+# NetworkManager's nm-applet requires an XDG system tray to expose Wi-Fi networks.
+# This panel only hosts the system tray and clock; it does not duplicate Plank's dock.
 for panel_file in \
   "/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml" \
   "/etc/xdg/xfce4/panel/default.xml" \
@@ -158,30 +160,47 @@ for panel_file in \
 <?xml version="1.0" encoding="UTF-8"?>
 <channel name="xfce4-panel" version="1.0">
   <property name="configver" type="int" value="2"/>
-  <property name="panels" type="array"/>
-  <property name="plugins" type="empty"/>
+  <property name="panels" type="array">
+    <value type="int" value="1"/>
+    <property name="panel-1" type="empty">
+      <property name="position" type="string" value="p=6;x=0;y=0"/>
+      <property name="length" type="uint" value="100"/>
+      <property name="length-adjust" type="bool" value="true"/>
+      <property name="position-locked" type="bool" value="true"/>
+      <property name="size" type="uint" value="26"/>
+      <property name="icon-size" type="uint" value="16"/>
+      <property name="nrows" type="uint" value="1"/>
+      <property name="plugin-ids" type="array">
+        <value type="int" value="1"/>
+        <value type="int" value="2"/>
+      </property>
+      <property name="background-style" type="uint" value="0"/>
+      <property name="enter-opacity" type="uint" value="100"/>
+      <property name="leave-opacity" type="uint" value="100"/>
+      <property name="mode" type="uint" value="0"/>
+      <property name="autohide-behavior" type="uint" value="0"/>
+    </property>
+  </property>
+  <property name="plugins" type="empty">
+    <property name="plugin-1" type="string" value="systray">
+      <property name="show-frame" type="bool" value="false"/>
+      <property name="size-max" type="uint" value="22"/>
+    </property>
+    <property name="plugin-2" type="string" value="clock">
+      <property name="digital-format" type="string" value="%H:%M"/>
+      <property name="tooltip-format" type="string" value="%A %d %B %Y"/>
+    </property>
+  </property>
 </channel>
 EOF
 done
-cat > /usr/local/bin/rivet-disable-xfce-panel <<'EOF'
-#!/bin/sh
-sleep 3
-if command -v xfce4-panel >/dev/null 2>&1; then
-  xfce4-panel --quit >/dev/null 2>&1 || true
-fi
-EOF
-chmod 0755 /usr/local/bin/rivet-disable-xfce-panel
-cat > /etc/xdg/autostart/rivet-disable-xfce-panel.desktop <<'EOF'
-[Desktop Entry]
-Type=Application
-Name=Disable the default XFCE panel
-Comment=Use the Rivet dock instead of the Debian panel
-Exec=/usr/local/bin/rivet-disable-xfce-panel
-OnlyShowIn=XFCE;
-NoDisplay=true
-X-GNOME-Autostart-enabled=true
-EOF
-cp /etc/xdg/autostart/rivet-disable-xfce-panel.desktop /etc/skel/.config/autostart/rivet-disable-xfce-panel.desktop
+
+# Remove the old startup override that killed the entire XFCE panel.
+rm -f \
+  /usr/local/bin/rivet-disable-xfce-panel \
+  /etc/xdg/autostart/rivet-disable-xfce-panel.desktop \
+  /etc/skel/.config/autostart/rivet-disable-xfce-panel.desktop
+
 
 # Use the GTK greeter and the dedicated Rivet login wallpaper.
 mkdir -p /etc/lightdm/lightdm.conf.d /etc/lightdm
