@@ -147,8 +147,8 @@ def run_case(initial: dict[str, str], *, expect_waves: bool) -> dict[str, str]:
 
         final_state = json.loads(state_path.read_text(encoding="utf-8"))
         wave = str(wallpaper)
+        root = "/backdrop/screen0/monitorVirtual-1"
         if expect_waves:
-            root = "/backdrop/screen0/monitorVirtual-1"
             for key in (
                 f"{root}/image-path",
                 f"{root}/last-image",
