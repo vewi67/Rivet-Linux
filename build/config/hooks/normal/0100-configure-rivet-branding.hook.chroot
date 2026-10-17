@@ -134,7 +134,6 @@ else
   exit 1
 fi
 EOF
-EOF
 chmod 0755 /usr/local/bin/rivet-set-wallpaper
 mkdir -p /etc/xdg/autostart /etc/skel/.config/autostart
 cat > /etc/xdg/autostart/rivet-wallpaper.desktop <<'EOF'
