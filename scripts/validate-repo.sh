@@ -19,6 +19,7 @@ PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desk
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
+  scripts/test-wallpaper-defaults.py
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -62,7 +63,8 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER"
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" scripts/test-wallpaper-defaults.py
+python3 scripts/test-wallpaper-defaults.py
 
 echo "==> Checking package list..."
 mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$PACKAGE_LIST")
