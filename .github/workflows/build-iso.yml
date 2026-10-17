@@ -1,14 +1,17 @@
 name: Build Rivet ISO
 
 on:
+  # ISO builds are opt-in only. The default confirmation is NO.
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'build/**'
-      - 'scripts/validate-repo.sh'
-      - '.github/workflows/build-iso.yml'
+    inputs:
+      authorize_iso:
+        description: "Choose YES only when you explicitly authorize generating and publishing a new ISO."
+        required: true
+        type: choice
+        options:
+          - "NO"
+          - "YES"
+        default: "NO"
 
 permissions:
   contents: write
@@ -31,6 +34,7 @@ jobs:
 
   build:
     name: Build ISO
+    if: inputs.authorize_iso == 'YES'
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 45
