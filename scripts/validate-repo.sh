@@ -19,6 +19,7 @@ PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desk
 ATMOSPHERE_APP="build/config/includes.chroot/usr/bin/rivet-atmosphere"
 ATMOSPHERE_GUARD="build/config/includes.chroot/usr/bin/rivet-wallpaper-guard"
 ATMOSPHERE_DESKTOP="build/config/includes.chroot/usr/share/applications/rivet-atmosphere.desktop"
+INSTALLER_PIPELINE_CHECKER="build/config/includes.chroot/usr/lib/rivet/check-installer-pipeline.py"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
@@ -26,7 +27,7 @@ required_files=(
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
-  "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP"
+  "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -68,9 +69,10 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
+python3 "$INSTALLER_PIPELINE_CHECKER" --self-test
 
 echo "==> Checking package list..."
 mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' "$PACKAGE_LIST")
@@ -216,6 +218,11 @@ grep -Fq 'INSTALLER = "/usr/bin/rivet-installer"' "$WELCOME_APP"
 grep -Fq 'rivet-atmosphere' "$WELCOME_APP"
 grep -Fq 'Gtk.Button(label="Atmosphere")' "$WELCOME_APP"
 grep -Fq 'STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"' "$INSTALLER_HELPER"
+grep -Fq 'PIPELINE_CHECKER = "/usr/lib/rivet/check-installer-pipeline.py"' "$INSTALLER_HELPER"
+grep -Fq 'Installer pipeline preflight passed:' "$INSTALLER_HELPER"
+grep -Fq 'python3 "$INSTALLER_CHECKER" --root /' "$SLIDESHOW_HOOK"
+grep -Fq 'prompt-install: true' "$BRANDING_HOOK"
+grep -Fq 'disable-cancel-during-exec: true' "$BRANDING_HOOK"
 grep -Fq 'ROOT_CALAMARES_LOG = "/root/.cache/calamares/session.log"' "$INSTALLER_HELPER"
 grep -Fq 'WINDOW_CLASS = "calamares"' "$INSTALLER_HELPER"
 grep -Fq 'xprop' "$INSTALLER_HELPER"
