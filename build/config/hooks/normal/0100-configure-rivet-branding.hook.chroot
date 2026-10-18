@@ -6,6 +6,8 @@ RIVET_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg"
 RIVET_LOGIN_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
 RIVET_ICON="/usr/share/icons/hicolor/256x256/apps/rivet.png"
+CHIP_FIXS_ICON="/usr/share/icons/hicolor/256x256/apps/chip-fixs.png"
+CHIP_FIXS_MASCOT="/usr/share/rivet/chip/Gemini_Generated_Image_62dbtd62dbtd62db-removebg-preview.png"
 
 # Fail early if any required visual asset is absent or empty.
 for asset in \
@@ -411,6 +413,23 @@ fi
 # Install the Rivet icon for the desktop and welcome application.
 mkdir -p "$(dirname "$RIVET_ICON")"
 cp "$RIVET_LOGO" "$RIVET_ICON"
+
+if [ ! -s /usr/bin/chip-fixs ] || [ ! -s /usr/lib/chip-fixs/core.py ]; then
+  echo "ERROR: Chip Fixs application or diagnostic core is missing." >&2
+  exit 1
+fi
+if [ ! -s /usr/share/applications/chip-fixs.desktop ]; then
+  echo "ERROR: Chip Fixs desktop launcher is missing." >&2
+  exit 1
+fi
+if [ ! -s "$CHIP_FIXS_MASCOT" ]; then
+  echo "ERROR: Chip Fixs mascot image is missing: $CHIP_FIXS_MASCOT" >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/chip-fixs
+mkdir -p "$(dirname "$CHIP_FIXS_ICON")"
+cp "$CHIP_FIXS_MASCOT" "$CHIP_FIXS_ICON"
+
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 fi
@@ -460,7 +479,7 @@ PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Settings.dockitem;Atmosphere.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
 IconSize=48
 Position=3
 Alignment=3
@@ -502,6 +521,10 @@ EOF
 cat > "${PLANK_LAUNCHERS}/Atmosphere.dockitem" <<'EOF'
 [PlankDockItemPreferences]
 Launcher=file:///usr/share/applications/rivet-atmosphere.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Chip-Fixs.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/chip-fixs.desktop
 EOF
 
 if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
