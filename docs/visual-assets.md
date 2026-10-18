@@ -11,7 +11,7 @@ The four wallpaper files live in build/config/includes.chroot/usr/share/backgrou
 
 ## Boot identity
 
-The scripted Plymouth theme lives in `build/config/includes.chroot/usr/share/plymouth/themes/rivet/`. Its logo is staged at image-build time from the Rivet Calamares logo. Plymouth rotates the logo using cached code-generated frames, animates a layered blue energy haze beneath **“Let us Do the Magic”**, then transitions to **“Welcome to Rivet Linux”** near the end of boot. The live kernel command line uses `quiet splash`, and the boot-and-locale hook selects the theme and generates `en_US.UTF-8`. The behavior still needs runtime testing in UEFI and BIOS virtual machines; ISO #98 predates these changes.
+The scripted Plymouth theme lives in `build/config/includes.chroot/usr/share/plymouth/themes/rivet/`. Its logo is staged at image-build time from the Rivet Calamares logo. Plymouth rotates the logo using cached code-generated frames, animates a layered blue energy haze beneath **“Let us Do the Magic”**, then transitions to **“Welcome to Rivet Linux”** near the end of boot. The live kernel command line uses `quiet splash locales=en_US.UTF-8`, and the boot-and-locale hook selects the theme and generates `en_US.UTF-8`. The behavior still needs runtime testing in UEFI and BIOS virtual machines; ISO #98 predates these changes.
 
 ## Installer identity
 

@@ -33,7 +33,7 @@ lb_args=(
   --architectures amd64
   --archive-areas "main contrib non-free non-free-firmware"
   --binary-images iso-hybrid
-  --bootappend-live "boot=live components username=rivet quiet splash"
+  --bootappend-live "boot=live components username=rivet quiet splash locales=en_US.UTF-8"
   --debian-installer none
   --apt-recommends true
   --memtest none

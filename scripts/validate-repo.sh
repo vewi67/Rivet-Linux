@@ -140,7 +140,7 @@ for setting in \
     exit 1
   }
 done
-grep -Fq 'quiet splash' build/build.sh
+grep -Fq 'quiet splash locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'plymouth-set-default-theme -R rivet' "$BOOT_HOOK"

@@ -12,7 +12,7 @@ Rivet needs a distinct boot experience and consistent language across its own ut
 - Use Debian's Plymouth script theme for the Rivet boot identity.
 - Slowly rotate the existing Rivet logo, animate a layered blue energy haze under **“Let us Do the Magic”**, then fade to **“Welcome to Rivet Linux”** as boot approaches the graphical handoff.
 - Keep the animation in the Plymouth script. The Rivet logo is copied into the theme during image configuration.
-- Enable `quiet splash` on the live kernel command line, select the Rivet Plymouth theme, and regenerate initramfs through Plymouth's supported helper.
+- Enable `quiet splash locales=en_US.UTF-8` on the live kernel command line, select the Rivet Plymouth theme, and regenerate initramfs through Plymouth's supported helper.
 - Set the live session and default profile locale to `en_US.UTF-8`. Rivet-owned utilities and the Calamares slideshow ship in English for now. Calamares retains its locale selector, so a selected install locale can still change the installed system locale; additional Rivet UI translations are deferred.
 - Do not delay boot just to hold a branding screen. Exact timing and the final handoff must be tested on the generated ISO because Plymouth exits when the system hands over the display.
 
