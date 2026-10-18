@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import re
@@ -93,7 +94,7 @@ def format_bytes(value: int | float | None) -> str:
 
 def parse_lsblk_json(text: str) -> list[dict[str, Any]]:
     try:
-        payload = __import__("json").loads(text)
+        payload = json.loads(text)
     except (ValueError, TypeError):
         return []
     devices = payload.get("blockdevices", [])
@@ -182,17 +183,20 @@ def memory_summary() -> tuple[list[str], dict[str, int]]:
 
 def list_physical_disks() -> list[tuple[str, str]]:
     result = run_command(
-        ["lsblk", "-dnpo", "NAME,MODEL,SIZE,TYPE"],
+        ["lsblk", "-dnJpo", "NAME,MODEL,SIZE,TYPE"],
         timeout=4,
     )
-    disks: list[tuple[str, str]] = []
     if result.returncode != 0:
-        return disks
-    for line in result.stdout.splitlines():
-        columns = line.split(None, 3)
-        if len(columns) >= 4 and columns[3] == "disk" and columns[0].startswith("/dev/"):
-            label = " ".join(columns[:3])
-            disks.append((columns[0], label))
+        return []
+    disks: list[tuple[str, str]] = []
+    for item in parse_lsblk_json(result.stdout):
+        device = str(item.get("name") or "")
+        if item.get("type") != "disk" or not device.startswith("/dev/"):
+            continue
+        model = str(item.get("model") or "").strip()
+        size = str(item.get("size") or "").strip()
+        label = " ".join(part for part in (device, model, size) if part)
+        disks.append((device, label))
     return disks
 
 
