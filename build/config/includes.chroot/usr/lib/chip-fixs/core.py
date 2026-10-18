@@ -421,7 +421,7 @@ def run_diagnostics() -> list[dict[str, str | None]]:
         details = audit.stdout.strip() or audit.stderr.strip() or "O dpkg retornou um erro sem detalhes."
         results.append(_check(
             "dpkg", "Pacotes", "error", "O banco de pacotes precisa de atenção", details,
-            suggestion="Revise os detalhes antes de alterar pacotes. Comandos comuns de diagnóstico: dpkg --audit e apt-get check.",
+            suggestion="Revise os detalhes antes de alterar pacotes. Comandos comuns de diagnóstico: dpkg --audit e apt-get -s check.",
         ))
     else:
         results.append(_check("dpkg", "Pacotes", "ok", "Banco de pacotes dpkg", "Nenhuma configuração pendente foi informada pelo dpkg."))
@@ -432,11 +432,11 @@ def run_diagnostics() -> list[dict[str, str | None]]:
     elif apt_check.returncode != 0:
         results.append(_check(
             "apt", "Pacotes", "error", "A verificação de dependências encontrou um problema",
-            (apt_check.stdout + "\n" + apt_check.stderr).strip() or f"apt-get check retornou código {apt_check.returncode}.",
+            (apt_check.stdout + "\n" + apt_check.stderr).strip() or f"apt-get -s check retornou código {apt_check.returncode}.",
             suggestion="Não foram instalados, removidos ou atualizados pacotes. Revise as mensagens e faça uma simulação do reparo antes de autorizar mudanças.",
         ))
     else:
-        results.append(_check("apt", "Pacotes", "ok", "Dependências do APT", "apt-get check terminou sem relatar dependências quebradas."))
+        results.append(_check("apt", "Pacotes", "ok", "Dependências do APT", "apt-get -s check terminou sem relatar dependências quebradas."))
 
     try:
         usage = shutil.disk_usage("/")
@@ -606,8 +606,8 @@ def repair_action(action: str) -> tuple[bool, str]:
 
 def read_advanced_memory() -> tuple[bool, str]:
     """Lê o inventário SMBIOS da RAM apenas após a autorização do usuário."""
-    pkexec = shutil.which("pkexec")
-    dmidecode = shutil.which("dmidecode")
+    pkexec = find_command("pkexec")
+    dmidecode = find_command("dmidecode")
     if not pkexec or not dmidecode:
         return False, "É necessário ter pkexec e dmidecode instalados. Nenhuma alteração foi feita."
     result = run_command([pkexec, dmidecode, "--type", "memory"], timeout=15)
@@ -620,7 +620,7 @@ def read_smart_health(device: str) -> tuple[bool, str]:
     allowed_devices = {path for path, _label in list_physical_disks()}
     if device not in allowed_devices:
         return False, "Dispositivo não reconhecido pela lista atual de discos físicos. Nenhuma ação foi executada."
-    pkexec = shutil.which("pkexec")
+    pkexec = find_command("pkexec")
     smartctl = find_command("smartctl")
     if not pkexec or not smartctl:
         return False, "É necessário ter pkexec e smartmontools instalados. Nenhuma alteração foi feita."
