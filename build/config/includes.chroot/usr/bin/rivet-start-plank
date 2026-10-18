@@ -91,14 +91,16 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
 
 def main() -> int:
     settings = Path.home() / ".config/plank/dock1/settings"
+    live_session = is_live_session()
     try:
-        changed = update_dock_items(settings, is_live_session())
+        changed = update_dock_items(settings, live_session)
     except (OSError, ValueError) as error:
         print(f"Rivet could not configure the dock: {error}", file=sys.stderr)
         return 1
 
     if changed:
-        print(f"Configured Plank installer shortcut for {'live' if is_live_session() else 'installed'} mode.")
+        mode = "live" if live_session else "installed"
+        print(f"Configured Plank installer shortcut for {mode} mode.")
 
     if shutil.which("plank") is None:
         print("Rivet dock could not start: Plank is not installed.", file=sys.stderr)
