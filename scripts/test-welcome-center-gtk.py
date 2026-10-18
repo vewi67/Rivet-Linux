@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Smoke-test the Welcome to Rivet GTK interface under a virtual X display."""
 
+import importlib.machinery
 import importlib.util
 from pathlib import Path
 
@@ -20,11 +21,14 @@ def drain_events():
 
 
 def main():
-    spec = importlib.util.spec_from_file_location("rivet_welcome_center", APP_PATH)
-    if spec is None or spec.loader is None:
+    # The installed executable intentionally has no .py suffix, so create
+    # an explicit source loader rather than relying on extension discovery.
+    loader = importlib.machinery.SourceFileLoader("rivet_welcome_center", str(APP_PATH))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    if spec is None:
         raise AssertionError(f"Could not load Welcome to Rivet from {APP_PATH}")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    loader.exec_module(module)
 
     app = module.RivetWelcomeCenter()
     expected_pages = {"home", "settings", "tools", "about"}
