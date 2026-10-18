@@ -46,7 +46,8 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             calamares calamares-settings-debian \
             rsync squashfs-tools sudo pkexec \
-            x11-utils x11-xserver-utils python3
+            x11-utils x11-xserver-utils python3 \
+            python3-gi gir1.2-gtk-3.0 xvfb
 
       - name: Apply Rivet runtime settings and validate installed package files
         run: |
@@ -65,4 +66,5 @@ jobs:
 
           python3 /usr/lib/rivet/configure-calamares-password-policy.py \
             /etc/calamares/modules/users.conf
+          xvfb-run -a python3 scripts/test-welcome-center-gtk.py
           python3 /usr/lib/rivet/check-installer-pipeline.py --root /
