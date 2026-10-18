@@ -44,6 +44,7 @@ The Debian live-build configuration, Rivet visual identity, Calamares branding, 
 | Package management | APT + dpkg |
 | Welcome app | Python + GTK 3 |
 | Wallpaper atmosphere | XFCE native backdrop cycler + GTK 3 control |
+| System utility | Chip Fixs (Python + GTK 3) |
 | Mascot | Chip the beaver |
 
 ## Repository layout
