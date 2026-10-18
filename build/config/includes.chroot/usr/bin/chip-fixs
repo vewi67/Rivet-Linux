@@ -15,7 +15,7 @@ import core  # noqa: E402
 import gi  # noqa: E402
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk, GLib, Gtk  # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk  # noqa: E402
 
 CHIP_DIR = Path("/usr/share/rivet/chip")
 APP_NAME = "Chip Fixs"
@@ -138,7 +138,7 @@ class ChipFixs:
         images = sorted(CHIP_DIR.glob("*.png"))
         for image_path in (random.choice(images),) if images else ():
             try:
-                pixbuf = __import__("gi.repository", fromlist=["GdkPixbuf"]).GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
                     str(image_path), size, size, True
                 )
                 return Gtk.Image.new_from_pixbuf(pixbuf)
@@ -472,7 +472,7 @@ class ChipFixs:
             flags=Gtk.DialogFlags.MODAL,
             message_type=Gtk.MessageType.WARNING,
             buttons=Gtk.ButtonsType.YES_NO,
-            text="Autorizar reparo?",
+            message_format="Autorizar reparo?",
         )
         dialog.format_secondary_text(message + "\n\nProblema identificado: " + title)
         response = dialog.run()
@@ -588,7 +588,7 @@ class ChipFixs:
             flags=Gtk.DialogFlags.MODAL,
             message_type=Gtk.MessageType.WARNING,
             buttons=Gtk.ButtonsType.YES_NO,
-            text="Ler detalhes avançados da RAM?",
+            message_format="Ler detalhes avançados da RAM?",
         )
         dialog.format_secondary_text(
             "O Chip solicitará autorização administrativa para ler o inventário SMBIOS informado pelo firmware. "
@@ -622,7 +622,7 @@ class ChipFixs:
             flags=Gtk.DialogFlags.MODAL,
             message_type=Gtk.MessageType.WARNING,
             buttons=Gtk.ButtonsType.YES_NO,
-            text="Consultar a saúde do disco?",
+            message_format="Consultar a saúde do disco?",
         )
         dialog.format_secondary_text(
             f"O Chip solicitará autorização para consultar informações SMART de {device}. "
