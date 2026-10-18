@@ -21,7 +21,7 @@ Rivet aims to make everyday computing straightforward without taking control awa
 
 **Pre-alpha. Not ready for daily use.**
 
-The initial Debian live-build configuration, Rivet visual identity, Calamares branding, Chip welcome experience, and Rivet Atmosphere controls are being integrated. Atmosphere uses XFCE's native wallpaper cycler and has automated behavioral tests, but the visual result still needs to be checked in a real desktop session. The current priority is to boot an explicitly authorized ISO in a virtual machine and test installation and first login. Features are not considered complete until they have been tested in the generated system.
+The initial Debian live-build configuration, Rivet visual identity, Calamares branding, Chip welcome experience, and Rivet Atmosphere controls are being integrated. Atmosphere uses XFCE's native wallpaper cycler and has automated behavioral tests, but the visual result still needs to be checked in a real desktop session. The Calamares installation slideshow now contains a mouse-controlled Rivet Pong prototype. The game code is committed, but it still needs to be tested inside a generated ISO before it can be considered complete. The current priority is to boot an explicitly authorized ISO in a virtual machine and test installation and first login. Features are not considered complete until they have been tested in the generated system.
 
 ## Current architecture
 
