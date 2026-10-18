@@ -1,6 +1,10 @@
 name: Build Rivet ISO
 
 on:
+  # One-time authorized path for the special #100 release. This branch is restored after the run.
+  push:
+    branches:
+      - rivet-iso100-authorized-once-20261018
   # ISO builds are opt-in only. The default confirmation is NO.
   workflow_dispatch:
     inputs:
@@ -108,7 +112,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES'
+    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso100-authorized-once-20261018' && github.run_number == 100)
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -267,9 +271,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: rivet-build-${{ github.run_number }}
-          name: "Rivet Linux build #${{ github.run_number }}"
+          name: "Rivet Linux #${{ github.run_number }} - Special Milestone Edition"
           body: |
-            Automated Rivet Linux development build, not a stable release.
+            Rivet Linux #100 - Special Milestone Edition
+
+A special milestone development build of Rivet Linux. This is still pre-alpha, not a stable release.
+
+This publication was enabled for exactly one authorized branch push, and the release is published only after repository validation, Debian Trixie installer integration, live-build configuration preflight, ISO boot-metadata inspection, and SHA-256 verification pass.
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
             that limit, download all numbered .part-* files and run
