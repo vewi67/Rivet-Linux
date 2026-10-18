@@ -48,9 +48,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install the actual Debian Trixie installer stack
+      - name: Resolve the complete Rivet package set
         run: |
           apt-get update
+          mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' build/config/package-lists/rivet.list.chroot)
+          if [[ ${#packages[@]} -eq 0 ]]; then
+            echo "ERROR: Rivet package list is empty." >&2
+            exit 1
+          fi
+          apt-get -s --no-install-recommends install "${packages[@]}"
+
+      - name: Install the actual Debian Trixie installer stack
+        run: |
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             calamares calamares-settings-debian \
             rsync squashfs-tools sudo pkexec \
