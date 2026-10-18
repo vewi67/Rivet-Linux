@@ -42,6 +42,12 @@ Chip Fixs is packaged as a GTK 3 desktop application, with its diagnostic core s
 
 The repository validation workflow compiles the app and core and runs `scripts/test-chip-fixs.py`. These checks do not replace launching the app in an XFCE session and testing it inside a newly generated ISO. Do not mark Chip Fixs complete until that runtime test succeeds.
 
+## Latest generated ISO
+
+The latest build is **#98**, published in [GitHub Releases](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-98). The workflow completed repository validation, the Debian Trixie installer integration check, ISO format/El Torito boot-metadata inspection, and SHA-256 verification before publishing.
+
+The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook.
+
 ## Scope
 
-This produces a development/test image, not a release. Boot, installer, first-login, hardware, and upgrade testing are still required before the project can call the ISO usable.
+This is a development/test image, not a stable release. Build-time checks passing does not prove that the desktop or installer work after boot. Boot in UEFI and BIOS VMs, first login, wallpaper cycling, Chip Fixs UI and repair confirmation, Calamares installation, first boot after installation, networking, audio, and package updates still require runtime testing.
