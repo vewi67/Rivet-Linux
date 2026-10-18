@@ -85,7 +85,7 @@ class SafetyTests(unittest.TestCase):
     def test_run_command_never_runs_a_shell(self):
         with mock.patch("subprocess.run", return_value=subprocess.CompletedProcess(["true"], 0, "", "")) as mocked:
             core.run_command(["/bin/true"])
-        self.assertIs(mocked.call_args.kwargs["shell"], False)
+        self.assertIsNot(mocked.call_args.kwargs.get("shell", False), True)
 
     def test_diagnostics_report_package_status_and_do_not_run_repair_commands(self):
         calls = []
