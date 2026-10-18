@@ -38,6 +38,7 @@ htop
 pciutils
 usbutils
 python3-gi
+python3-pil
 gir1.2-gtk-3.0
 polkitd
 pkexec
