@@ -55,8 +55,15 @@ Initial software includes:
 - basic diagnostic and network tools
 - a small GTK welcome application
 - Rivet Atmosphere controls using XFCE's native wallpaper cycler
+- Chip Fixs, a GTK 3 diagnostic and hardware-inventory utility with a separately tested Python core
 
 Steam, Wine, and large development toolchains are not installed by default.
+
+## Chip Fixs system utility
+
+Chip Fixs is the original Rivet system utility. It collects local hardware and system information through established Debian tools and kernel interfaces, and runs a bounded diagnostic pass for common system problems. All diagnostics are read-only. The first implementation permits only explicitly confirmed PipeWire/WirePlumber and NetworkManager restarts; package transactions and unknown service repairs are not automatic. Advanced RAM/firmware and SMART disk-health queries request administrative authorization. See [ADR 0007](decisions/0007-chip-fixs.md) for the scope and safety boundaries.
+
+The interface and data-collection core are separate so core parsers and safety boundaries can be tested without GTK or real hardware.
 
 ## Architectural principles
 
