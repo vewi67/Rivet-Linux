@@ -14,6 +14,8 @@ WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_CENTER_APP="build/config/includes.chroot/usr/bin/rivet-welcome-center"
 WELCOME_MODE_TEST="scripts/test-welcome-mode.py"
 WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
+PASSWORD_POLICY_HELPER="build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py"
+PASSWORD_POLICY_TEST="scripts/test-calamares-password-policy.py"
 INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
@@ -34,13 +36,14 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST"
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
+  "$PASSWORD_POLICY_HELPER"
   "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
@@ -84,9 +87,10 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
+python3 "$PASSWORD_POLICY_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
 python3 scripts/test-chip-fixs.py
@@ -304,11 +308,13 @@ grep -Fq 'PIPELINE_CHECKER = "/usr/lib/rivet/check-installer-pipeline.py"' "$INS
 grep -Fq 'Installer pipeline preflight passed:' "$INSTALLER_HELPER"
 grep -Fq 'python3 "$INSTALLER_CHECKER" --root /' "$SLIDESHOW_HOOK"
 grep -Fq 'prompt-install: true' "$BRANDING_HOOK"
-grep -Fq 'passwordRequirements:' "$BRANDING_HOOK"
-grep -Fq 'minLength: 1' "$BRANDING_HOOK"
-grep -Fq 'maxLength: -1' "$BRANDING_HOOK"
-grep -Fq 'allowWeakPasswordsDefault' "$BRANDING_HOOK"
-grep -Fq 'Calamares password policy configured' "$BRANDING_HOOK"
+grep -Fq 'PASSWORD_POLICY_HELPER="/usr/lib/rivet/configure-calamares-password-policy.py"' "$BRANDING_HOOK"
+grep -Fq 'python3 "$PASSWORD_POLICY_HELPER" "$USERS_CONFIG"' "$BRANDING_HOOK"
+grep -Fq 'PASSWORD_REQUIREMENTS = """passwordRequirements:' "$PASSWORD_POLICY_HELPER"
+grep -Fq 'minLength: 1' "$PASSWORD_POLICY_HELPER"
+grep -Fq 'maxLength: -1' "$PASSWORD_POLICY_HELPER"
+grep -Fq 'allowWeakPasswords' "$PASSWORD_POLICY_HELPER"
+grep -Fq 'configure-calamares-password-policy.py' .github/workflows/validate.yml
 grep -Fq 'disable-cancel-during-exec: true' "$BRANDING_HOOK"
 grep -Fq 'ROOT_CALAMARES_LOG = "/root/.cache/calamares/session.log"' "$INSTALLER_HELPER"
 grep -Fq 'WINDOW_CLASS = "calamares"' "$INSTALLER_HELPER"
