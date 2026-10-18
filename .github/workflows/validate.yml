@@ -53,6 +53,9 @@ jobs:
           install -D -m 0644 \
             build/config/includes.chroot/usr/lib/rivet/check-installer-pipeline.py \
             /usr/lib/rivet/check-installer-pipeline.py
+          install -D -m 0644 \
+            build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py \
+            /usr/lib/rivet/configure-calamares-password-policy.py
 
           sed -i \
             -e 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' \
@@ -60,4 +63,6 @@ jobs:
             -e 's/^[[:space:]]*disable-cancel-during-exec:[[:space:]]*false[[:space:]]*$/disable-cancel-during-exec: true/' \
             /etc/calamares/settings.conf
 
+          python3 /usr/lib/rivet/configure-calamares-password-policy.py \
+            /etc/calamares/modules/users.conf
           python3 /usr/lib/rivet/check-installer-pipeline.py --root /
