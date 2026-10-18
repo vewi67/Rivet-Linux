@@ -23,7 +23,7 @@ Rivet ships its own `rivet-installer.desktop` entry with the Rivet name and icon
 
 Five Chip PNG poses live in build/config/includes.chroot/usr/share/rivet/chip/. Live-build copies them to /usr/share/rivet/chip/.
 
-The welcome app is installed at /usr/bin/rivet-welcome. It opens automatically in XFCE for a new user, introduces Rivet, and offers shortcuts to Thunar and XFCE settings. Choosing “Let's go” records a marker in the user's home directory, so it does not appear on every login. The “Welcome to Rivet Linux” application-menu entry can reopen it with --show-again.
+The welcome app is installed at /usr/bin/rivet-welcome. It opens automatically in XFCE until the user dismisses it. In a live session, it offers “Install Rivet”; on an installed system, that installer button is omitted and the text confirms Rivet is installed. Session detection uses the live boot flag and Debian live-media mount markers. Choosing “Let's go” or closing the window records a per-user marker, so it does not appear on every login. The “Welcome to Rivet Linux” application-menu entry can reopen the appropriate view with --show-again. The automated mode test covers live and installed detection.
 
 The Rivet logo is also installed into the hicolor icon theme for the welcome and installer launchers.
 
