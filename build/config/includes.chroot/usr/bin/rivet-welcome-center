@@ -128,15 +128,19 @@ def is_live_session(
     cmdline_path="/proc/cmdline",
     run_live_medium="/run/live/medium",
     lib_live_medium="/lib/live/mount/medium",
+    mount_check=None,
 ):
-    """Return True when the current system was booted from Debian live media."""
+    """Return True for live boot flags or active live-medium mounts."""
+    if mount_check is None:
+        mount_check = os.path.ismount
     try:
         cmdline = Path(cmdline_path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         cmdline = ""
     if "boot=live" in cmdline.split():
         return True
-    return os.path.exists(run_live_medium) or os.path.exists(lib_live_medium)
+    # Directory existence alone can be a leftover from a previous installation.
+    return mount_check(run_live_medium) or mount_check(lib_live_medium)
 
 
 def mark_welcome_seen():
