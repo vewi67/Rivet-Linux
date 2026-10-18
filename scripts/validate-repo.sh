@@ -74,6 +74,18 @@ if printf '%s\n' "$hook_index" | grep -qv '^100755 '; then
   exit 1
 fi
 
+echo "==> Checking executable modes for installed Rivet commands..."
+bin_index="$(git ls-files --stage -- 'build/config/includes.chroot/usr/bin/*')"
+if [[ -z "$bin_index" ]]; then
+  echo "ERROR: no installed Rivet commands are tracked under usr/bin." >&2
+  exit 1
+fi
+if printf '%s\n' "$bin_index" | grep -qv '^100755 '; then
+  echo "ERROR: every script installed under usr/bin must be tracked with Git mode 100755." >&2
+  printf '%s\n' "$bin_index" >&2
+  exit 1
+fi
+
 echo "==> Checking shell syntax..."
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
