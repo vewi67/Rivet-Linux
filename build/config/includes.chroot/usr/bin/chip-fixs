@@ -468,11 +468,8 @@ class ChipFixs:
         else:
             message = "O Chip vai tentar reiniciar os serviços PipeWire e WirePlumber da sua sessão. O áudio pode parar por alguns segundos. Continuar?"
         dialog = Gtk.MessageDialog(
-            transient_for=self.window,
-            flags=Gtk.DialogFlags.MODAL,
-            message_type=Gtk.MessageType.WARNING,
-            buttons=Gtk.ButtonsType.YES_NO,
-            message_format="Autorizar reparo?",
+            self.window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
+            Gtk.ButtonsType.YES_NO, "Autorizar reparo?"
         )
         dialog.format_secondary_text(message + "\n\nProblema identificado: " + title)
         response = dialog.run()
@@ -584,11 +581,8 @@ class ChipFixs:
 
     def advanced_memory(self, *_):
         dialog = Gtk.MessageDialog(
-            transient_for=self.window,
-            flags=Gtk.DialogFlags.MODAL,
-            message_type=Gtk.MessageType.WARNING,
-            buttons=Gtk.ButtonsType.YES_NO,
-            message_format="Ler detalhes avançados da RAM?",
+            self.window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
+            Gtk.ButtonsType.YES_NO, "Ler detalhes avançados da RAM?"
         )
         dialog.format_secondary_text(
             "O Chip solicitará autorização administrativa para ler o inventário SMBIOS informado pelo firmware. "
@@ -618,11 +612,8 @@ class ChipFixs:
             self.show_message("Nenhum disco selecionado", "Escolha um disco físico detectado pelo sistema.", Gtk.MessageType.INFO)
             return
         dialog = Gtk.MessageDialog(
-            transient_for=self.window,
-            flags=Gtk.DialogFlags.MODAL,
-            message_type=Gtk.MessageType.WARNING,
-            buttons=Gtk.ButtonsType.YES_NO,
-            message_format="Consultar a saúde do disco?",
+            self.window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
+            Gtk.ButtonsType.YES_NO, "Consultar a saúde do disco?"
         )
         dialog.format_secondary_text(
             f"O Chip solicitará autorização para consultar informações SMART de {device}. "
@@ -667,11 +658,8 @@ class ChipFixs:
 
     def show_message(self, title, message, message_type):
         dialog = Gtk.MessageDialog(
-            transient_for=self.window,
-            flags=Gtk.DialogFlags.MODAL,
-            message_type=message_type,
-            buttons=Gtk.ButtonsType.CLOSE,
-            text=title,
+            self.window, Gtk.DialogFlags.MODAL, message_type,
+            Gtk.ButtonsType.CLOSE, title
         )
         dialog.format_secondary_text(message)
         dialog.run()
