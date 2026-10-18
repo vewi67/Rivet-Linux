@@ -40,22 +40,20 @@ def main():
 
         cmdline.write_text("BOOT_IMAGE=/vmlinuz quiet splash\n", encoding="utf-8")
         run_live.mkdir(parents=True)
-        assert detect(str(cmdline), str(run_live), str(lib_live)), (
-            "/run/live/medium must identify a live session when the cmdline flag is absent"
-        )
-
-        run_live.rmdir()
         lib_live.mkdir(parents=True)
-        assert detect(str(cmdline), str(run_live), str(lib_live)), (
-            "/lib/live/mount/medium must identify a live session"
+
+        # Leftover mount-point directories alone must not imply a live boot.
+        assert not detect(str(cmdline), str(run_live), str(lib_live), lambda _path: False), (
+            "empty live mount-point directories must not classify an installed system as live"
+        )
+        assert detect(str(cmdline), str(run_live), str(lib_live), lambda path: path == str(run_live)), (
+            "an active /run live-medium mount should identify a live session"
+        )
+        assert detect(str(cmdline), str(run_live), str(lib_live), lambda path: path == str(lib_live)), (
+            "an active /lib live-medium mount should identify a live session"
         )
 
-        lib_live.rmdir()
-        assert not detect(str(cmdline), str(run_live), str(lib_live)), (
-            "an installed system with no live markers must not be classified as live"
-        )
-
-        assert not detect(str(root / "missing-cmdline"), str(run_live), str(lib_live)), (
+        assert not detect(str(root / "missing-cmdline"), str(run_live), str(lib_live), lambda _path: False), (
             "missing optional live markers must fail closed to installed mode"
         )
 
