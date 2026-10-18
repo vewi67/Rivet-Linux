@@ -35,7 +35,7 @@ def main():
         settings = Path(temporary) / "settings"
         settings.write_text(
             "[PlankDockPreferences]\n"
-            "DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;"
+            "DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;"
             "Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;\n"
             "IconSize=48\n"
             "\n[AnotherSection]\nKeepThis=unchanged\n",
@@ -49,7 +49,7 @@ def main():
         assert INSTALLER_ITEM not in installed_items
         assert installed_items == [
             "Firefox.dockitem", "Files.dockitem", "Welcome.dockitem",
-            "Chip-Fixs.dockitem", "Settings.dockitem",
+            "Software.dockitem", "Chip-Fixs.dockitem", "Settings.dockitem",
         ]
         installed_snapshot = settings.read_text(encoding="utf-8")
         assert "KeepThis=unchanged" in installed_snapshot
