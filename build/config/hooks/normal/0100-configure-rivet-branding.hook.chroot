@@ -7,7 +7,7 @@ RIVET_LOGIN_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
 RIVET_ICON="/usr/share/icons/hicolor/256x256/apps/rivet.png"
 CHIP_FIXS_ICON="/usr/share/icons/hicolor/256x256/apps/chip-fixs.png"
-CHIP_FIXS_MASCOT="/usr/share/rivet/chip/Gemini_Generated_Image_62dbtd62dbtd62db-removebg-preview.png"
+CHIP_FIXS_LOGO="/usr/share/rivet/chip-fixs/logo.png"
 
 # Fail early if any required visual asset is absent or empty.
 for asset in \
@@ -422,13 +422,14 @@ if [ ! -s /usr/share/applications/chip-fixs.desktop ]; then
   echo "ERROR: Chip Fixs desktop launcher is missing." >&2
   exit 1
 fi
-if [ ! -s "$CHIP_FIXS_MASCOT" ]; then
-  echo "ERROR: Chip Fixs mascot image is missing: $CHIP_FIXS_MASCOT" >&2
+if [ ! -s "$CHIP_FIXS_LOGO" ]; then
+  echo "ERROR: Chip Fixs logo is missing: $CHIP_FIXS_LOGO" >&2
   exit 1
 fi
 chmod 0755 /usr/bin/chip-fixs
 mkdir -p "$(dirname "$CHIP_FIXS_ICON")"
-cp "$CHIP_FIXS_MASCOT" "$CHIP_FIXS_ICON"
+cp "$CHIP_FIXS_LOGO" "$CHIP_FIXS_ICON"
+chmod 0644 "$CHIP_FIXS_ICON"
 
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
   gtk-update-icon-cache -f -t /usr/share/icons/hicolor

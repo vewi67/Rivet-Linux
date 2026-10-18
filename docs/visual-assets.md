@@ -25,7 +25,7 @@ The Rivet logo is also installed into the hicolor icon theme for the welcome and
 
 ## Chip Fixs
 
-Chip Fixs is installed as `/usr/bin/chip-fixs`, with its data-collection and diagnostic core at `/usr/lib/chip-fixs/core.py`. Its menu launcher is `chip-fixs.desktop`, and the hicolor icon is created from a Chip mascot PNG during image configuration. The launcher is available from the application menu, the Plank dock, and the welcome window.
+Chip Fixs is installed as `/usr/bin/chip-fixs`, with its data-collection and diagnostic core at `/usr/lib/chip-fixs/core.py`. Its official logo is stored at `assets/chip-fixs/logo.png` and mirrored at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, which live-build copies into the system. During image configuration, the branding hook installs this image as `/usr/share/icons/hicolor/256x256/apps/chip-fixs.png` and refreshes the hicolor icon cache. The same `chip-fixs` icon name is used by the GTK window and desktop launcher, so the menu and Plank use the custom artwork too. Repository validation checks the PNG dimensions and ensures the source and staged copies are identical.
 
 The application offers two main actions: **Fix System** runs bounded diagnostics and provides only a small allow-list of confirmed repair actions; **System Info** shows local hardware and system details by category. Advanced SMBIOS memory and SMART disk queries ask for administrator authorization. Diagnostics do not upload reports or automatically change files or packages.
 

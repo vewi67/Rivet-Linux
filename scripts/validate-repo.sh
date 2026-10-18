@@ -23,6 +23,8 @@ INSTALLER_PIPELINE_CHECKER="build/config/includes.chroot/usr/lib/rivet/check-ins
 CHIP_FIXS_APP="build/config/includes.chroot/usr/bin/chip-fixs"
 CHIP_FIXS_CORE="build/config/includes.chroot/usr/lib/chip-fixs/core.py"
 CHIP_FIXS_DESKTOP="build/config/includes.chroot/usr/share/applications/chip-fixs.desktop"
+CHIP_FIXS_LOGO_SOURCE="assets/chip-fixs/logo.png"
+CHIP_FIXS_LOGO_INCLUDE="build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
@@ -32,6 +34,7 @@ required_files=(
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
+  "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -208,6 +211,31 @@ for asset in \
   }
 done
 
+echo "==> Checking Chip Fixs logo files..."
+for asset in "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE"; do
+  [[ -s "$asset" ]] || {
+    echo "ERROR: missing or empty Chip Fixs logo: $asset" >&2
+    exit 1
+  }
+done
+if ! cmp -s "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE"; then
+  echo "ERROR: source and live-build copies of the Chip Fixs logo differ." >&2
+  exit 1
+fi
+python3 - "$CHIP_FIXS_LOGO_SOURCE" <<'PY'
+import struct
+import sys
+from pathlib import Path
+
+data = Path(sys.argv[1]).read_bytes()
+if len(data) < 24 or data[:8] != b"\\x89PNG\\r\\n\\x1a\\n" or data[12:16] != b"IHDR":
+    raise SystemExit("ERROR: Chip Fixs logo is not a valid PNG with an IHDR header.")
+width, height = struct.unpack(">II", data[16:24])
+if width != height or width < 256 or height < 256:
+    raise SystemExit(f"ERROR: Chip Fixs logo must be square and at least 256x256; found {width}x{height}.")
+print(f"Chip Fixs logo PNG validated: {width}x{height}.")
+PY
+
 echo "==> Checking Chip and desktop integration..."
 chip_count="$(find "$CHIP_DIR" -maxdepth 1 -type f -name '*.png' | wc -l)"
 if [[ "$chip_count" -lt 5 ]]; then
@@ -253,9 +281,9 @@ grep -Fq 'repair_action' "$CHIP_FIXS_CORE"
 grep -Fq 'read_advanced_memory' "$CHIP_FIXS_CORE"
 grep -Fq 'read_smart_health' "$CHIP_FIXS_CORE"
 grep -Fq 'CHIP_FIXS_ICON=' "$BRANDING_HOOK"
-grep -Fq 'CHIP_FIXS_MASCOT=' "$BRANDING_HOOK"
+grep -Fq 'CHIP_FIXS_LOGO=' "$BRANDING_HOOK"
 grep -Fq 'chmod 0755 /usr/bin/chip-fixs' "$BRANDING_HOOK"
-grep -Fq 'cp "$CHIP_FIXS_MASCOT" "$CHIP_FIXS_ICON"' "$BRANDING_HOOK"
+grep -Fq 'cp "$CHIP_FIXS_LOGO" "$CHIP_FIXS_ICON"' "$BRANDING_HOOK"
 grep -Fq 'Chip-Fixs.dockitem' "$BRANDING_HOOK"
 grep -Fq 'Launcher=file:///usr/share/applications/chip-fixs.desktop' "$BRANDING_HOOK"
 grep -Fq 'launch_app, ["chip-fixs"]' "$WELCOME_APP"

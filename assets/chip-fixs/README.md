@@ -1,16 +1,15 @@
 # Chip Fixs logo
 
-Place the official Chip Fixs logo in this folder as:
+The official artwork is stored as `assets/chip-fixs/logo.png`. The current image is a square 500 × 500 pixel PNG.
 
-`assets/chip-fixs/logo.png`
+## Integration
 
-## Recommended format
+The same image is staged at:
 
-- **Dimensions:** 512 × 512 pixels
-- **Format:** PNG
-- **Background:** transparent
-- **Canvas:** square, with comfortable padding around the artwork
+`build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`
 
-This folder is the source location for the logo artwork. Adding the file here does not yet change the icon shown by Chip Fixs in Rivet; the build integration will be updated separately after the final logo is provided.
+Live-build includes the staged copy in Rivet. The branding hook installs it into the hicolor icon theme at `/usr/share/icons/hicolor/256x256/apps/chip-fixs.png`. The GTK window, application menu, and Plank launcher all use the `chip-fixs` icon name.
 
-Please keep the filename `logo.png` so it can be wired into the app and system launchers consistently.
+Keep the source and staged files identical when replacing the artwork. Run `bash scripts/validate-repo.sh`; the repository validator checks that both files match and that the logo is a square PNG at least 256 × 256 pixels.
+
+A transparent background is recommended for best appearance across dark and light themes.
