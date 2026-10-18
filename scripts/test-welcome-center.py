@@ -45,6 +45,7 @@ def main():
 
     titles = []
     categories = set()
+    commands_by_title = {}
     for category, entries in groups:
         categories.add(category)
         assert entries, f"Settings category {category!r} must not be empty."
@@ -54,8 +55,12 @@ def main():
             assert title and description and icon and command, f"Incomplete settings entry: {entry!r}"
             assert isinstance(command, tuple) and command[0], f"Invalid command for {title!r}"
             titles.append(title.casefold())
+            commands_by_title[title] = command
 
     assert len(titles) == len(set(titles)), "Settings card titles must be unique."
+    assert commands_by_title["Panels & Layout"] == ("xfce4-panel", "--preferences=1"), (
+        "The panel settings launcher must pass a valid panel number to xfce4-panel."
+    )
     assert len(titles) >= 24, "The System settings page must include a broad set of at least 24 setting cards."
     assert {"Personalization", "Devices & Input", "Connectivity", "Apps & System", "Rivet"} <= categories
     expected = {
