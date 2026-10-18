@@ -23,6 +23,12 @@ The welcome app is installed at /usr/bin/rivet-welcome. It opens automatically i
 
 The Rivet logo is also installed into the hicolor icon theme for the welcome and installer launchers.
 
+## Chip Fixs
+
+Chip Fixs is installed as `/usr/bin/chip-fixs`, with its data-collection and diagnostic core at `/usr/lib/chip-fixs/core.py`. Its menu launcher is `chip-fixs.desktop`, and the hicolor icon is created from a Chip mascot PNG during image configuration. The launcher is available from the application menu, the Plank dock, and the welcome window.
+
+The application offers two main actions: **Fix System** runs bounded diagnostics and provides only a small allow-list of confirmed repair actions; **System Info** shows local hardware and system details by category. Advanced SMBIOS memory and SMART disk queries ask for administrator authorization. Diagnostics do not upload reports or automatically change files or packages.
+
 ## Rivet Atmosphere
 
 Rivet Atmosphere gives the wallpaper collection a quiet, optional rhythm without adding a custom animation engine or a continuously polling process.
