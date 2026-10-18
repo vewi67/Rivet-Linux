@@ -1,4 +1,6 @@
 xfce4
+xfce4-notifyd
+xfce4-power-manager
 xfce4-panel
 xfce4-terminal
 thunar
@@ -12,8 +14,10 @@ lightdm-gtk-greeter
 xserver-xorg
 network-manager
 network-manager-gnome
+blueman
 pipewire
 pipewire-pulse
+pavucontrol
 wireplumber
 mate-polkit
 firefox-esr
