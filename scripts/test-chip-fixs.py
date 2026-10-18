@@ -94,7 +94,7 @@ class SafetyTests(unittest.TestCase):
             calls.append(list(args))
             if args == ["dpkg", "--audit"]:
                 return subprocess.CompletedProcess(args, 0, "", "")
-            if args == ["apt-get", "check"]:
+            if args == ["apt-get", "-s", "check"]:
                 return subprocess.CompletedProcess(args, 0, "", "")
             if args == ["systemctl", "is-active", "NetworkManager.service"]:
                 return subprocess.CompletedProcess(args, 0, "active\n", "")
