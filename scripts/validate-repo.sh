@@ -14,6 +14,7 @@ WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
 WELCOME_CENTER_APP="build/config/includes.chroot/usr/bin/rivet-welcome-center"
 WELCOME_MODE_TEST="scripts/test-welcome-mode.py"
 WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
+WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
 PASSWORD_POLICY_HELPER="build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py"
 PASSWORD_POLICY_TEST="scripts/test-calamares-password-policy.py"
 INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
@@ -36,7 +37,7 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -87,7 +88,7 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$PASSWORD_POLICY_TEST"
