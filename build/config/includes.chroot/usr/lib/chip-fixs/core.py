@@ -49,6 +49,18 @@ def run_command(args: list[str], timeout: int = 5) -> subprocess.CompletedProces
         return subprocess.CompletedProcess(args, 126, "", str(error))
 
 
+def find_command(name: str) -> str | None:
+    """Find system utilities even in desktop sessions whose PATH omits /usr/sbin."""
+    found = shutil.which(name)
+    if found:
+        return found
+    for directory in ("/usr/bin", "/usr/sbin", "/bin", "/sbin"):
+        candidate = Path(directory) / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return None
+
+
 def read_text(path: str | Path, default: str = "") -> str:
     try:
         return Path(path).read_text(encoding="utf-8", errors="replace").strip()
@@ -222,7 +234,7 @@ def collect_system_info() -> OrderedDict[str, str]:
     memory_lines, _mem = memory_summary()
     memory_lines.append("")
     memory_lines.append("Detalhes por pente de RAM")
-    dmidecode = shutil.which("dmidecode")
+    dmidecode = find_command("dmidecode")
     if dmidecode:
         dmi_memory = run_command([dmidecode, "--type", "memory"], timeout=6)
         if dmi_memory.returncode == 0 and dmi_memory.stdout.strip():
@@ -414,7 +426,7 @@ def run_diagnostics() -> list[dict[str, str | None]]:
     else:
         results.append(_check("dpkg", "Pacotes", "ok", "Banco de pacotes dpkg", "Nenhuma configuração pendente foi informada pelo dpkg."))
 
-    apt_check = run_command(["apt-get", "check"], timeout=25)
+    apt_check = run_command(["apt-get", "-s", "check"], timeout=25)
     if apt_check.returncode == 127:
         results.append(_check("apt", "Pacotes", "unknown", "Verificação de dependências indisponível", apt_check.stderr))
     elif apt_check.returncode != 0:
@@ -510,6 +522,62 @@ def run_diagnostics() -> list[dict[str, str | None]]:
 
     return results
 
+    # Check whether a graphics controller is visible to PCI enumeration.
+    graphics = run_command(["lspci", "-nnk"], timeout=6)
+    if graphics.returncode == 127:
+        results.append(_check("graphics", "Gráficos", "unknown", "Verificação gráfica indisponível", graphics.stderr))
+    elif graphics.returncode != 0:
+        results.append(_check("graphics", "Gráficos", "warning", "A consulta aos controladores gráficos falhou", graphics.stderr.strip() or f"lspci retornou código {graphics.returncode}."))
+    elif re.search(r"VGA compatible controller|3D controller|Display controller", graphics.stdout, re.I):
+        results.append(_check("graphics", "Gráficos", "ok", "Controlador gráfico detectado", "O barramento PCI informa pelo menos um controlador gráfico. Isso não substitui o teste do driver e da aceleração 3D."))
+    else:
+        results.append(_check("graphics", "Gráficos", "unknown", "Controlador gráfico não confirmado", "Nenhum controlador gráfico foi identificado na saída do lspci. Isso pode ser normal em máquinas sem vídeo PCI ou ambientes virtuais."))
+
+    # Read kernel thermal zones when the platform exposes them. Missing sensors
+    # are not treated as proof that the computer is overheating or broken.
+    thermal_readings: list[tuple[str, float]] = []
+    for zone in sorted(Path("/sys/class/thermal").glob("thermal_zone*")):
+        raw_temp = read_text(zone / "temp")
+        zone_name = read_text(zone / "type", zone.name)
+        try:
+            if raw_temp:
+                thermal_readings.append((zone_name, int(raw_temp) / 1000.0))
+        except ValueError:
+            continue
+    if thermal_readings:
+        hottest_name, hottest_temp = max(thermal_readings, key=lambda pair: pair[1])
+        summary = "; ".join(f"{name}: {temp:.1f} °C" for name, temp in thermal_readings[:8])
+        if hottest_temp >= 95:
+            results.append(_check("temperature", "Temperatura", "critical", "Foi detectada uma temperatura muito alta", summary + ". Reduza a carga de trabalho e verifique a ventilação; Chip Fixs não altera as ventoinhas nem desliga o computador."))
+        elif hottest_temp >= 85:
+            results.append(_check("temperature", "Temperatura", "warning", "Foi detectada uma temperatura elevada", summary + ". A interpretação depende do componente e do sensor."))
+        else:
+            results.append(_check("temperature", "Temperatura", "ok", "Sensores térmicos do kernel", summary))
+    else:
+        results.append(_check("temperature", "Temperatura", "unknown", "Temperaturas não disponíveis", "O kernel não expôs zonas térmicas legíveis. Isso não prova que exista um problema de resfriamento."))
+
+    updates = run_command(["apt", "list", "--upgradable"], timeout=12)
+    if updates.returncode == 0:
+        candidates = [
+            line.strip() for line in updates.stdout.splitlines()
+            if line.strip() and not line.startswith("Listing...") and "/" in line and not line.startswith("WARNING:")
+        ]
+        if candidates:
+            results.append(_check("updates", "Pacotes", "warning", f"{len(candidates)} pacote(s) podem ter atualização disponível", "A lista usa o cache local e pode estar desatualizada. O Chip não instala atualizações automaticamente."))
+        else:
+            results.append(_check("updates", "Pacotes", "ok", "Cache local de atualizações", "Nenhum pacote atualizável foi informado pelo cache local. O resultado não verifica se as listas de pacotes estão atualizadas."))
+    else:
+        results.append(_check("updates", "Pacotes", "unknown", "Estado das atualizações não confirmado", updates.stderr.strip() or "O APT não conseguiu consultar seu cache local."))
+
+    journal = run_command(["journalctl", "-b", "-p", "err", "--no-pager", "-n", "50", "-q"], timeout=8)
+    if journal.returncode == 0:
+        error_lines = [line for line in journal.stdout.splitlines() if line.strip()]
+        if error_lines:
+            results.append(_check("journal-errors", "Registros do sistema", "warning", f"{len(error_lines)} registro(s) de nível erro no log recente", "O log pode conter mensagens antigas, transitórias ou específicas do hardware. O Chip não modifica o journal nem tenta reparar causas desconhecidas automaticamente."))
+        else:
+            results.append(_check("journal-errors", "Registros do sistema", "ok", "Erros recentes no journal", "Não foram retornadas mensagens de nível erro no trecho recente do boot atual."))
+    else:
+        results.append(_check("journal-errors", "Registros do sistema", "unknown", "Leitura do journal indisponível", "Não foi possível ler o journal do boot atual; isso pode depender das permissões da conta."))
 
 def repair_action(action: str) -> tuple[bool, str]:
     """Executa apenas ações de reparo de uma lista fechada."""
@@ -522,8 +590,8 @@ def repair_action(action: str) -> tuple[bool, str]:
         return False, detail or f"systemctl retornou código {result.returncode}."
 
     if action == "network":
-        pkexec = shutil.which("pkexec")
-        systemctl = shutil.which("systemctl")
+        pkexec = find_command("pkexec")
+        systemctl = find_command("systemctl")
         if not pkexec or not systemctl:
             return False, "Não foi encontrado pkexec ou systemctl. Nenhuma alteração foi feita."
         # Ação fixa e visível. Nenhum comando vem de entrada do usuário.
@@ -553,7 +621,7 @@ def read_smart_health(device: str) -> tuple[bool, str]:
     if device not in allowed_devices:
         return False, "Dispositivo não reconhecido pela lista atual de discos físicos. Nenhuma ação foi executada."
     pkexec = shutil.which("pkexec")
-    smartctl = shutil.which("smartctl")
+    smartctl = find_command("smartctl")
     if not pkexec or not smartctl:
         return False, "É necessário ter pkexec e smartmontools instalados. Nenhuma alteração foi feita."
     result = run_command([pkexec, smartctl, "-H", device], timeout=20)
