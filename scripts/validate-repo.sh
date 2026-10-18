@@ -15,6 +15,8 @@ WELCOME_CENTER_APP="build/config/includes.chroot/usr/bin/rivet-welcome-center"
 WELCOME_MODE_TEST="scripts/test-welcome-mode.py"
 WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
 WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
+DOCK_HELPER="build/config/includes.chroot/usr/bin/rivet-start-plank"
+DOCK_TEST="scripts/test-rivet-dock-mode.py"
 PASSWORD_POLICY_HELPER="build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py"
 PASSWORD_POLICY_TEST="scripts/test-calamares-password-policy.py"
 INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
@@ -37,9 +39,9 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh
-  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER"
+  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
@@ -88,9 +90,10 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
+python3 "$DOCK_TEST"
 python3 "$PASSWORD_POLICY_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
@@ -278,6 +281,9 @@ fi
 
 grep -Fq 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
 grep -Fq 'chmod 0755 /usr/bin/rivet-welcome-center' "$BRANDING_HOOK"
+grep -Fq 'chmod 0755 /usr/bin/rivet-start-plank' "$BRANDING_HOOK"
+grep -Fq 'def update_dock_items(' "$DOCK_HELPER"
+grep -Fq 'INSTALLER_ITEM = "Install-Rivet.dockitem"' "$DOCK_HELPER"
 grep -Fq 'Welcome.dockitem' "$BRANDING_HOOK"
 grep -Fq 'Launcher=file:///usr/share/applications/rivet-welcome.desktop' "$BRANDING_HOOK"
 grep -Fq 'Welcome to Rivet' "$WELCOME_CENTER_APP"
@@ -292,6 +298,7 @@ grep -Fq 'Chip Fixs' "$WELCOME_CENTER_APP"
 grep -Fq 'rivet-welcome-center' "$WELCOME_APP"
 grep -Fq 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
 grep -Fq 'Exec=/usr/bin/rivet-welcome --show-again' "$WELCOME_LAUNCHER"
+grep -Fq 'NoDisplay=true' "$RIVET_INSTALLER_LAUNCHER"
 grep -Fq 'Name=Welcome to Rivet' "$WELCOME_LAUNCHER"
 grep -Fq 'Icon=rivet' "$WELCOME_LAUNCHER"
 grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
@@ -349,7 +356,7 @@ grep -Fq 'smartmontools' "$PACKAGE_LIST"
 grep -Fq 'lm-sensors' "$PACKAGE_LIST"
 grep -Fq 'mesa-utils' "$PACKAGE_LIST"
 
-grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
+grep -Fq 'Exec=/usr/bin/rivet-start-plank' "$PLANK_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"
 grep -Fq 'plank' "$BRANDING_HOOK"
 grep -Fq 'mate-polkit' "$PACKAGE_LIST"
