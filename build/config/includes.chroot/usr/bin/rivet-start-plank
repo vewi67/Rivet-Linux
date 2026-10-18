@@ -1,0 +1,112 @@
+#!/usr/bin/python3
+"""Start Plank with an installer dock item only in Rivet's live session."""
+
+import os
+from pathlib import Path
+import shutil
+import sys
+
+INSTALLER_ITEM = "Install-Rivet.dockitem"
+
+
+def is_live_session(
+    cmdline_path="/proc/cmdline",
+    run_live_medium="/run/live/medium",
+    lib_live_medium="/lib/live/mount/medium",
+    mount_check=None,
+):
+    """Detect live boots without treating leftover mount-point directories as live."""
+    if mount_check is None:
+        mount_check = os.path.ismount
+    try:
+        cmdline = Path(cmdline_path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        cmdline = ""
+    if "boot=live" in cmdline.split():
+        return True
+    return mount_check(run_live_medium) or mount_check(lib_live_medium)
+
+
+def update_dock_items(settings_path: Path, live_session: bool) -> bool:
+    """Add the installer dock item only in live mode, preserving other settings."""
+    if not settings_path.is_file():
+        return False
+
+    text = settings_path.read_text(encoding="utf-8")
+    lines = text.splitlines(keepends=True)
+    section_start = next(
+        (index for index, line in enumerate(lines) if line.strip() == "[PlankDockPreferences]"),
+        None,
+    )
+    if section_start is None:
+        raise ValueError(f"missing [PlankDockPreferences] section in {settings_path}")
+
+    section_end = len(lines)
+    for index in range(section_start + 1, len(lines)):
+        if lines[index].lstrip().startswith("["):
+            section_end = index
+            break
+
+    setting_index = next(
+        (
+            index for index in range(section_start + 1, section_end)
+            if lines[index].startswith("DockItems=")
+        ),
+        None,
+    )
+    if setting_index is None:
+        raise ValueError(f"missing DockItems setting in {settings_path}")
+
+    line = lines[setting_index]
+    original_value = line.rstrip("\r\n").split("=", 1)[1]
+    had_trailing_separator = original_value.endswith(";")
+    items = [item for item in original_value.split(";") if item]
+
+    # Remove duplicates of our conditional item, leaving every other dock item alone.
+    items = [item for item in items if item != INSTALLER_ITEM]
+    if live_session:
+        welcome_index = next(
+            (index for index, item in enumerate(items) if item == "Welcome.dockitem"),
+            None,
+        )
+        if welcome_index is None:
+            items.append(INSTALLER_ITEM)
+        else:
+            items.insert(welcome_index + 1, INSTALLER_ITEM)
+
+    value = ";".join(items)
+    if had_trailing_separator:
+        value += ";"
+    lines[setting_index] = f"DockItems={value}" + ("\r\n" if line.endswith("\r\n") else "\n" if line.endswith("\n") else "")
+
+    updated = "".join(lines)
+    if updated == text:
+        return False
+
+    temporary = settings_path.with_name(settings_path.name + ".rivet-tmp")
+    temporary.write_text(updated, encoding="utf-8")
+    temporary.replace(settings_path)
+    return True
+
+
+def main() -> int:
+    settings = Path.home() / ".config/plank/dock1/settings"
+    try:
+        changed = update_dock_items(settings, is_live_session())
+    except (OSError, ValueError) as error:
+        print(f"Rivet could not configure the dock: {error}", file=sys.stderr)
+        return 1
+
+    if changed:
+        print(f"Configured Plank installer shortcut for {'live' if is_live_session() else 'installed'} mode.")
+
+    if shutil.which("plank") is None:
+        print("Rivet dock could not start: Plank is not installed.", file=sys.stderr)
+        return 127
+
+    os.execvp("plank", ["plank"])
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
