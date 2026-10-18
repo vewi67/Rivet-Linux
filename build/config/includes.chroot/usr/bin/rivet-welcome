@@ -23,15 +23,20 @@ def is_live_session(
     cmdline_path="/proc/cmdline",
     run_live_medium="/run/live/medium",
     lib_live_medium="/lib/live/mount/medium",
+    mount_check=None,
 ):
-    """Distinguish Debian live media from an installed Rivet system."""
+    """Distinguish Debian live media from leftover directory names."""
+    if mount_check is None:
+        mount_check = os.path.ismount
     try:
         cmdline = Path(cmdline_path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         cmdline = ""
     if "boot=live" in cmdline.split():
         return True
-    return os.path.exists(run_live_medium) or os.path.exists(lib_live_medium)
+    # Merely finding these paths is not sufficient: an installed system may
+    # retain empty mount-point directories after live-boot packages are removed.
+    return mount_check(run_live_medium) or mount_check(lib_live_medium)
 
 
 class RivetWelcome(Gtk.Window):
