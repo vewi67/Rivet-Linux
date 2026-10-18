@@ -269,16 +269,16 @@ def check_root(root):
             problems.append("users.conf defaultGroups must include sudo.")
 
         requirements = re.search(
-            r"(?ms)^passwordRequirements:[ \\t]*\\n(.*?)(?=^[A-Za-z][A-Za-z0-9_-]*:)",
+            r"(?ms)^passwordRequirements:[ \t]*\n(.*?)(?=^[A-Za-z][A-Za-z0-9_-]*:)",
             users_config,
         )
         if not requirements:
             problems.append("users.conf must define passwordRequirements.")
         else:
             password_policy = requirements.group(1)
-            if not re.search(r"(?m)^\\s+minLength:[ \\t]*1(?:[ \\t]*#.*)?$", password_policy):
+            if not re.search(r"(?m)^\s+minLength:[ \t]*1(?:[ \t]*#.*)?$", password_policy):
                 problems.append("users.conf must allow any non-empty password (minLength: 1).")
-            if not re.search(r"(?m)^\\s+maxLength:[ \\t]*-1(?:[ \\t]*#.*)?$", password_policy):
+            if not re.search(r"(?m)^\s+maxLength:[ \t]*-1(?:[ \t]*#.*)?$", password_policy):
                 problems.append("users.conf must not impose a maximum password length.")
             for setting_text in ("- minlen=0", "- minclass=0"):
                 if setting_text not in password_policy:
