@@ -380,6 +380,48 @@ Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
 
+# Configure Rivet's graphical software store with Debian packages and Flatpak.
+# The remote definition is read system-wide, without network access during image construction.
+if ! command -v gnome-software >/dev/null 2>&1; then
+  echo "ERROR: GNOME Software is missing from the Rivet image." >&2
+  exit 1
+fi
+if ! command -v flatpak >/dev/null 2>&1; then
+  echo "ERROR: Flatpak is missing from the Rivet image." >&2
+  exit 1
+fi
+SOFTWARE_LAUNCHER="/usr/share/applications/org.gnome.Software.desktop"
+RIVET_SOFTWARE_LAUNCHER="/usr/share/applications/rivet-software.desktop"
+if [ ! -s "$SOFTWARE_LAUNCHER" ]; then
+  echo "ERROR: GNOME Software desktop launcher is missing: $SOFTWARE_LAUNCHER" >&2
+  exit 1
+fi
+cat > "$RIVET_SOFTWARE_LAUNCHER" <<'EOF'
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Rivet Software
+Comment=Discover, install and update applications
+Exec=gnome-software --mode=overview
+Icon=org.gnome.Software
+Terminal=false
+Categories=System;PackageManager;
+StartupNotify=true
+EOF
+if ! grep -Fxq 'NoDisplay=true' "$SOFTWARE_LAUNCHER"; then
+  sed -i '/^\[Desktop Entry\]/aNoDisplay=true' "$SOFTWARE_LAUNCHER"
+fi
+mkdir -p /etc/flatpak/remotes.d
+cat > /etc/flatpak/remotes.d/flathub.flatpakrepo <<'EOF'
+[Flatpak Repo]
+Title=Flathub
+Url=https://dl.flathub.org/repo/
+Homepage=https://flathub.org/
+Comment=Applications for Linux
+Description=Flathub is a place to get and distribute applications for Linux.
+SuggestRemoteName=flathub
+EOF
+
 # Keep Debian's own launcher logic for display authorization and temporary fstab handling.
 # Point Calamares at Rivet branding while preserving Debian's tested module sequence.
 CALAMARES_SETTINGS="/etc/calamares/settings.conf"
@@ -530,7 +572,7 @@ PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
 IconSize=48
 Position=3
 Alignment=3
@@ -552,6 +594,10 @@ EOF
 cat > "${PLANK_LAUNCHERS}/Welcome.dockitem" <<'EOF'
 [PlankDockItemPreferences]
 Launcher=file:///usr/share/applications/rivet-welcome.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Software.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-software.desktop
 EOF
 cat > "${PLANK_LAUNCHERS}/Install-Rivet.dockitem" <<'EOF'
 [PlankDockItemPreferences]
