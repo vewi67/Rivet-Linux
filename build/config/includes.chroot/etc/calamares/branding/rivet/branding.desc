@@ -20,7 +20,7 @@ navigation: widget
 
 images:
     productLogo: "rivet.logo.png"
-    productIcon: "rivet.logo.png"
+    productIcon: "rivet.icon.png"
     productWelcome: "rivet.logo.png"
 
 style: {}
