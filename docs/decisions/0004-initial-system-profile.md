@@ -46,7 +46,9 @@ The first ISO should contain only software needed for a usable desktop.
 - core XFCE utilities
 - required file and storage utilities
 - GParted
-- Synaptic
+- GNOME Software with Debian package and Flatpak plugins (see ADR 0006)
+- Flatpak applications through the configured Flathub remote (see ADR 0006)
+- Synaptic as an advanced graphical package manager
 - basic diagnostic and networking tools
 
 ### Not included by default
