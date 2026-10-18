@@ -25,6 +25,9 @@ CHIP_FIXS_CORE="build/config/includes.chroot/usr/lib/chip-fixs/core.py"
 CHIP_FIXS_DESKTOP="build/config/includes.chroot/usr/share/applications/chip-fixs.desktop"
 CHIP_FIXS_LOGO_SOURCE="assets/chip-fixs/logo.png"
 CHIP_FIXS_LOGO_INCLUDE="build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png"
+BOOT_HOOK="build/config/hooks/normal/0200-configure-rivet-boot-and-locale.hook.chroot"
+PLYMOUTH_THEME="build/config/includes.chroot/usr/share/plymouth/themes/rivet/rivet.plymouth"
+PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/rivet.script"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
@@ -35,10 +38,11 @@ required_files=(
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
+  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
-  docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md docs/decisions/0007-chip-fixs.md
+  docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md docs/decisions/0007-chip-fixs.md docs/decisions/0008-boot-theme-and-english-first.md
 )
 
 echo "==> Checking required files..."
@@ -54,6 +58,7 @@ bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
 sh -n "$ATMOSPHERE_GUARD"
+sh -n "$BOOT_HOOK"
 bash -n scripts/validate-repo.sh
 
 echo "==> Extracting and checking the generated wallpaper startup script..."
@@ -115,7 +120,7 @@ for package in \
   xfce4 xfce4-panel xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
-  calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils; do
+  calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
   require_package "$package"
 done
 
@@ -134,6 +139,24 @@ for setting in \
     echo "ERROR: build identity setting missing: $setting" >&2
     exit 1
   }
+done
+grep -Fq 'quiet splash' build/build.sh
+grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
+grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
+grep -Fq 'plymouth-set-default-theme -R rivet' "$BOOT_HOOK"
+grep -Fxq 'Name=Rivet Linux' "$PLYMOUTH_THEME"
+grep -Fxq 'ModuleName=script' "$PLYMOUTH_THEME"
+grep -Fq 'ScriptFile=/usr/share/plymouth/themes/rivet/rivet.script' "$PLYMOUTH_THEME"
+grep -Fq 'logo.base_image.Rotate((2 * Math.Pi * index) / logo.frame_count)' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Plymouth.SetRefreshFunction(refresh_callback)' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Plymouth.SetBootProgressFunction(progress_callback)' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Let us Do the Magic' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Welcome to Rivet Linux' "$PLYMOUTH_SCRIPT"
+for legacy_ui_text in 'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' 'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!'; do
+  if grep -Fq "$legacy_ui_text" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$BRANDING_SLIDESHOW"; then
+    echo "ERROR: Portuguese UI string remains in the English-first interface: $legacy_ui_text" >&2
+    exit 1
+  fi
 done
 grep -Fxq '    productName: Rivet Linux' "$BRANDING_DESC"
 grep -Fxq '    shortProductName: Rivet' "$BRANDING_DESC"

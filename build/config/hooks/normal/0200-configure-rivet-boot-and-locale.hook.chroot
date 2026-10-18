@@ -1,0 +1,40 @@
+#!/bin/sh
+set -eu
+
+THEME_DIR="/usr/share/plymouth/themes/rivet"
+RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
+
+if [ ! -s "$RIVET_LOGO" ]; then
+  echo "ERROR: Rivet logo is missing: $RIVET_LOGO" >&2
+  exit 1
+fi
+mkdir -p "$THEME_DIR"
+install -m 0644 "$RIVET_LOGO" "$THEME_DIR/logo.png"
+
+# English is the default language for the live session and new profiles.
+if [ ! -s /etc/locale.gen ]; then
+  echo "ERROR: /etc/locale.gen is missing; the locales package must be installed." >&2
+  exit 1
+fi
+if ! grep -Eq '^[[:space:]]*en_US\.UTF-8 UTF-8$' /etc/locale.gen; then
+  if grep -Eq '^#[[:space:]]*en_US\.UTF-8 UTF-8$' /etc/locale.gen; then
+    sed -i 's/^#[[:space:]]*en_US\.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/' /etc/locale.gen
+  else
+    printf '%s\n' 'en_US.UTF-8 UTF-8' >> /etc/locale.gen
+  fi
+fi
+locale-gen en_US.UTF-8
+update-locale LANG=en_US.UTF-8 LC_MESSAGES=en_US.UTF-8
+
+if [ -f /etc/default/grub ]; then
+  if grep -q '^GRUB_CMDLINE_LINUX_DEFAULT=' /etc/default/grub; then
+    current="$(sed -n 's/^GRUB_CMDLINE_LINUX_DEFAULT="\([^"]*\)".*/\1/p' /etc/default/grub)"
+    case " $current " in *" quiet "*) ;; *) current="${current:+$current }quiet" ;; esac
+    case " $current " in *" splash "*) ;; *) current="${current:+$current }splash" ;; esac
+    sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$current\"|" /etc/default/grub
+  else
+    printf '%s\n' 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"' >> /etc/default/grub
+  fi
+fi
+
+plymouth-set-default-theme -R rivet

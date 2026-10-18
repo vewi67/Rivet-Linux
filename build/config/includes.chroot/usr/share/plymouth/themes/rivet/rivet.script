@@ -1,0 +1,147 @@
+# Rivet Linux boot identity, rendered by Plymouth's script engine.
+# Precompute rotations so each refresh stays lightweight.
+
+Window.SetBackgroundTopColor(0.008, 0.016, 0.032);
+Window.SetBackgroundBottomColor(0.004, 0.028, 0.060);
+
+phase = "boot";
+boot_progress = 0;
+refresh_ticks = 0;
+glow_clock = 0;
+phase_time = 0;
+
+logo.frame_count = 36;
+logo.base_image = Image("logo.png").Scale(232, 232);
+logo.images = [];
+for (index = 0; index < logo.frame_count; index++)
+{
+    logo.images[index] = logo.base_image.Rotate((2 * Math.Pi * index) / logo.frame_count);
+}
+logo.frame = 0;
+logo.image = logo.images[0];
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetOpacity(1);
+
+# Layered blue text and a shifting halo create an energy haze, not literal smoke.
+tagline.haze_wide_image = Image.Text("Let us Do the Magic", 0.08, 0.30, 1.0).Scale(560, 58);
+tagline.haze_wide_sprite = Sprite(tagline.haze_wide_image);
+tagline.haze_mid_image = Image.Text("Let us Do the Magic", 0.10, 0.48, 1.0).Scale(510, 48);
+tagline.haze_mid_sprite = Sprite(tagline.haze_mid_image);
+tagline.image = Image.Text("Let us Do the Magic", 0.83, 0.96, 1.0).Scale(450, 42);
+tagline.sprite = Sprite(tagline.image);
+
+welcome.image = Image.Text("Welcome to Rivet Linux", 0.92, 0.98, 1.0).Scale(500, 46);
+welcome.sprite = Sprite(welcome.image);
+welcome.sprite.SetOpacity(0);
+
+fun refresh_callback ()
+{
+    if (phase == "boot")
+    {
+        refresh_ticks++;
+        glow_clock += 0.075;
+        if (refresh_ticks >= 5)
+        {
+            refresh_ticks = 0;
+            logo.frame = (logo.frame + 1) % logo.frame_count;
+            logo.image = logo.images[logo.frame];
+            logo.sprite.SetImage(logo.image);
+        }
+
+        logo.sprite.SetPosition(
+            Window.GetX() + Window.GetWidth() / 2 - logo.image.GetWidth() / 2,
+            Window.GetY() + Window.GetHeight() * 0.34 - logo.image.GetHeight() / 2,
+            2
+        );
+
+        center_x = Window.GetX() + Window.GetWidth() / 2;
+        tagline_y = Window.GetY() + Window.GetHeight() * 0.70;
+        glow = 0.07 + (Math.Sin(glow_clock) + 1) * 0.045;
+        tagline.haze_wide_sprite.SetPosition(
+            center_x - tagline.haze_wide_image.GetWidth() / 2 + Math.Sin(glow_clock * 0.55) * 9,
+            tagline_y - 7 + Math.Sin(glow_clock * 0.7) * 4,
+            1
+        );
+        tagline.haze_wide_sprite.SetOpacity(glow);
+        tagline.haze_mid_sprite.SetPosition(
+            center_x - tagline.haze_mid_image.GetWidth() / 2 + Math.Sin(glow_clock * 0.8) * 5,
+            tagline_y + Math.Cos(glow_clock * 0.65) * 3,
+            2
+        );
+        tagline.haze_mid_sprite.SetOpacity(glow + 0.03);
+        tagline.sprite.SetPosition(center_x - tagline.image.GetWidth() / 2, tagline_y + 2, 3);
+        tagline.sprite.SetOpacity(1);
+
+        # Start the handoff animation near the end; stay on Welcome until Plymouth exits.
+        if (boot_progress >= 0.965)
+        {
+            phase = "transition";
+            phase_time = 0;
+        }
+    }
+    else if (phase == "transition")
+    {
+        phase_time += 0.033;
+        if (phase_time < 0.62)
+        {
+            fade = 1 - phase_time / 0.62;
+            welcome_opacity = 0;
+        }
+        else
+        {
+            fade = 0;
+            if (phase_time < 1.08)
+                welcome_opacity = (phase_time - 0.62) / 0.46;
+            else
+                welcome_opacity = 1;
+        }
+        logo.sprite.SetOpacity(fade);
+        tagline.haze_wide_sprite.SetOpacity(fade * 0.10);
+        tagline.haze_mid_sprite.SetOpacity(fade * 0.13);
+        tagline.sprite.SetOpacity(fade);
+        welcome.sprite.SetPosition(
+            Window.GetX() + Window.GetWidth() / 2 - welcome.image.GetWidth() / 2,
+            Window.GetY() + Window.GetHeight() * 0.70 - welcome.image.GetHeight() / 2,
+            4
+        );
+        welcome.sprite.SetOpacity(welcome_opacity);
+        if (phase_time >= 1.08)
+            phase = "welcome";
+    }
+    else
+    {
+        welcome.sprite.SetPosition(
+            Window.GetX() + Window.GetWidth() / 2 - welcome.image.GetWidth() / 2,
+            Window.GetY() + Window.GetHeight() * 0.70 - welcome.image.GetHeight() / 2,
+            4
+        );
+        welcome.sprite.SetOpacity(1);
+    }
+}
+
+fun progress_callback (duration, progress)
+{
+    boot_progress = progress;
+}
+
+fun quit_callback ()
+{
+    # Some boot paths skip the final progress tick; preserve the welcome mark at handoff.
+    if (phase == "boot" || phase == "transition")
+    {
+        logo.sprite.SetOpacity(0);
+        tagline.haze_wide_sprite.SetOpacity(0);
+        tagline.haze_mid_sprite.SetOpacity(0);
+        tagline.sprite.SetOpacity(0);
+        welcome.sprite.SetPosition(
+            Window.GetX() + Window.GetWidth() / 2 - welcome.image.GetWidth() / 2,
+            Window.GetY() + Window.GetHeight() * 0.70 - welcome.image.GetHeight() / 2,
+            4
+        );
+        welcome.sprite.SetOpacity(1);
+    }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+Plymouth.SetBootProgressFunction(progress_callback);
+Plymouth.SetQuitFunction(quit_callback);

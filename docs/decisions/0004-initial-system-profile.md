@@ -62,9 +62,7 @@ Users can install these later.
 
 ## Language and locale
 
-The installer should offer Brazilian Portuguese and English without assuming every user is Brazilian.
-
-The installed session follows the language selected during installation.
+The live session and default profile use English (United States), `en_US.UTF-8`. Rivet-owned utilities and the Calamares slideshow are authored in English for the current pre-alpha stage. Calamares keeps its locale selector, so an installer choice can still affect the installed system locale; additional Rivet UI translations are deferred to a later milestone.
 
 ## Updates
 

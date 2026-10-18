@@ -23,6 +23,7 @@ The initial architecture is defined. The immediate goal is a reproducible, testa
 - Initramfs: initramfs-tools
 - Bootloader: GRUB
 - Default filesystem: ext4
+- Default locale: English (United States), `en_US.UTF-8`; Rivet-authored UI ships in English for now
 
 ## Build and installation
 

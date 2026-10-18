@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Testes unitários sem GTK, privilégios administrativos ou alterações no sistema."""
+"""Unit tests without GTK, administrator privileges, or system changes."""
 
 import importlib.util
 import os
@@ -18,7 +18,7 @@ SPEC.loader.exec_module(core)
 class ParsingTests(unittest.TestCase):
     def test_parse_os_release_with_quotes_and_comments(self):
         values = core.parse_os_release(
-            '# comentário\nNAME="Rivet Linux"\nID=rivet\nVERSION_ID=1\nEMPTY=\n'
+            '# comment\nNAME="Rivet Linux"\nID=rivet\nVERSION_ID=1\nEMPTY=\n'
         )
         self.assertEqual(values["NAME"], "Rivet Linux")
         self.assertEqual(values["ID"], "rivet")
@@ -35,7 +35,7 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(core.format_bytes(0), "0 B")
         self.assertEqual(core.format_bytes(1024), "1.00 KiB")
         self.assertEqual(core.format_bytes(1024**3), "1.00 GiB")
-        self.assertEqual(core.format_bytes(None), "Não disponível")
+        self.assertEqual(core.format_bytes(None), "Not available")
 
     def test_parse_lscpu(self):
         parsed = core.parse_lscpu("Architecture: x86_64\nCPU(s): 8\nModel name: Test CPU\n")
@@ -75,7 +75,7 @@ class SafetyTests(unittest.TestCase):
         with mock.patch.object(core, "run_command") as command:
             success, message = core.repair_action("format-disk")
         self.assertFalse(success)
-        self.assertIn("Nenhuma alteração", message)
+        self.assertIn("No changes", message)
         command.assert_not_called()
 
     def test_smart_check_refuses_a_device_outside_the_discovered_list(self):
@@ -83,7 +83,7 @@ class SafetyTests(unittest.TestCase):
             with mock.patch.object(core, "run_command") as command:
                 success, message = core.read_smart_health("/dev/sdb")
         self.assertFalse(success)
-        self.assertIn("não reconhecido", message.lower())
+        self.assertIn("not recognized", message.lower())
         command.assert_not_called()
 
     def test_run_command_never_runs_a_shell(self):

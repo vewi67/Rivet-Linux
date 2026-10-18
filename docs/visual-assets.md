@@ -9,6 +9,10 @@ The four wallpaper files live in build/config/includes.chroot/usr/share/backgrou
 - rivet-chip.jpeg — Chip wallpaper.
 - rivet-prism.jpeg — LightDM login background.
 
+## Boot identity
+
+The scripted Plymouth theme lives in `build/config/includes.chroot/usr/share/plymouth/themes/rivet/`. Its logo is staged at image-build time from the Rivet Calamares logo. Plymouth rotates the logo using cached code-generated frames, animates a layered blue energy haze beneath **“Let us Do the Magic”**, then transitions to **“Welcome to Rivet Linux”** near the end of boot. The live kernel command line uses `quiet splash`, and the boot-and-locale hook selects the theme and generates `en_US.UTF-8`. The behavior still needs runtime testing in UEFI and BIOS virtual machines; ISO #98 predates these changes.
+
 ## Installer identity
 
 The Calamares logo, static branding descriptor (`branding.desc`), and slideshow (`show.qml`) live in build/config/includes.chroot/etc/calamares/branding/rivet/. A small image-time hook changes only the `branding` key in `/etc/calamares/settings.conf` from Debian to Rivet, preserving Debian's complete installer module sequence and module configuration. A separate validation hook checks the branding files without generating or rewriting them.

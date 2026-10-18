@@ -46,6 +46,8 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Implement the first-login welcome window
 - [x] Add a way to reopen the welcome window
 - [x] Add Rivet-branded application launchers
+- [x] Define the animated Plymouth boot identity and English-first default locale
+- [ ] Verify splash animation, welcome transition, and installed locale in UEFI/BIOS VMs
 - [x] Implement the Chip Fixs interface and diagnostic core prototype
 - [x] Add local hardware inventory and explicitly authorized advanced reads
 - [x] Add confirmation-gated recovery actions for selected network/audio service issues

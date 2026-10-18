@@ -12,8 +12,8 @@ Presentation {
 
     Slide {
         id: gameSlide
-        title: qsTr("Instalando o Rivet Linux")
-        notes: qsTr("Rivet Pong: mova o mouse para controlar a raquete esquerda. O primeiro a chegar a cinco pontos vence.")
+        title: qsTr("Installing Rivet Linux")
+        notes: qsTr("Rivet Pong: move the mouse to control the left paddle. The first to reach five points wins.")
 
         Rectangle {
             id: rivetPongField
@@ -172,7 +172,7 @@ Presentation {
                 anchors.right: parent.right
                 anchors.rightMargin: 14
                 y: 13
-                text: qsTr("PRIMEIRO A %1").arg(rivetPongField.targetScore)
+                text: qsTr("FIRST TO %1").arg(rivetPongField.targetScore)
                 color: "#a9c5d0"
                 font.pixelSize: Math.max(10, rivetPongField.height * 0.032)
             }
@@ -250,9 +250,9 @@ Presentation {
                         width: parent.width * 0.86
                         text: rivetPongField.gameFinished
                               ? (rivetPongField.playerScore >= rivetPongField.targetScore
-                                 ? qsTr("VOCÊ VENCEU!\nClique para jogar de novo")
-                                 : qsTr("A MÁQUINA VENCEU!\nClique para tentar de novo"))
-                              : qsTr("MOVA O MOUSE PARA CONTROLAR A RAQUETE ESQUERDA\nCLIQUE PARA COMEÇAR\nPrimeiro a cinco pontos vence")
+                                 ? qsTr("YOU WIN!\nClick to play again")
+                                 : qsTr("THE COMPUTER WINS!\nClick to try again"))
+                              : qsTr("MOVE THE MOUSE TO CONTROL THE LEFT PADDLE\nCLICK TO START\nFirst to five points wins")
                         color: "#e9fff8"
                         font.bold: true
                         font.pixelSize: Math.max(13, court.height * 0.055)

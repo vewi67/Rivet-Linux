@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Rivet Linux
+Description=Rivet Linux animated blue boot identity
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/rivet
+ScriptFile=/usr/share/plymouth/themes/rivet/rivet.script

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Diagnósticos somente de leitura e coleta local de informações do Chip Fixs."""
+"""Read-only diagnostics and local collection of Chip Fixs system information."""
 
 from __future__ import annotations
 
@@ -39,12 +39,12 @@ def run_command(args: list[str], timeout: int = 5) -> subprocess.CompletedProces
             env=env,
         )
     except FileNotFoundError:
-        return subprocess.CompletedProcess(args, 127, "", f"Comando não encontrado: {args[0]}")
+        return subprocess.CompletedProcess(args, 127, "", f"Command not found: {args[0]}")
     except subprocess.TimeoutExpired as error:
         output = error.stdout or ""
         if isinstance(output, bytes):
             output = output.decode("utf-8", "replace")
-        return subprocess.CompletedProcess(args, 124, output, f"Tempo limite excedido: {args[0]}")
+        return subprocess.CompletedProcess(args, 124, output, f"Timed out: {args[0]}")
     except OSError as error:
         return subprocess.CompletedProcess(args, 126, "", str(error))
 
@@ -90,7 +90,7 @@ def parse_meminfo(text: str) -> dict[str, int]:
 
 def format_bytes(value: int | float | None) -> str:
     if value is None:
-        return "Não disponível"
+        return "Not available"
     amount = max(0.0, float(value))
     for unit in ("B", "KiB", "MiB", "GiB", "TiB", "PiB"):
         if amount < 1024 or unit == "PiB":
@@ -123,25 +123,25 @@ def read_os_and_board() -> dict[str, str]:
     os_data = parse_os_release(read_text("/etc/os-release"))
     dmi_root = Path("/sys/devices/virtual/dmi/id")
     dmi_fields = {
-        "Fabricante do computador": "sys_vendor",
-        "Modelo do computador": "product_name",
-        "Versão do computador": "product_version",
-        "Fabricante da placa-mãe": "board_vendor",
-        "Modelo da placa-mãe": "board_name",
-        "Versão da placa-mãe": "board_version",
-        "Fabricante do firmware/BIOS": "bios_vendor",
-        "Versão do firmware/BIOS": "bios_version",
-        "Data do firmware/BIOS": "bios_date",
-        "Fabricante do chassi": "chassis_vendor",
+        "System manufacturer": "sys_vendor",
+        "System model": "product_name",
+        "System version": "product_version",
+        "Motherboard manufacturer": "board_vendor",
+        "Motherboard model": "board_name",
+        "Motherboard version": "board_version",
+        "Firmware/BIOS manufacturer": "bios_vendor",
+        "Firmware/BIOS version": "bios_version",
+        "Firmware/BIOS date": "bios_date",
+        "Chassis manufacturer": "chassis_vendor",
     }
     result = {
-        "Sistema operacional": os_data.get("PRETTY_NAME", "Desconhecido"),
-        "ID da distribuição": os_data.get("ID", "Desconhecido"),
-        "Versão da distribuição": os_data.get("VERSION_ID", "Desconhecida"),
+        "Operating system": os_data.get("PRETTY_NAME", "Unknown"),
+        "Distribution ID": os_data.get("ID", "Unknown"),
+        "Distribution version": os_data.get("VERSION_ID", "Unknown"),
         "Kernel": platform.release(),
         "Arquitetura": platform.machine(),
-        "Nome do computador": platform.node() or "Desconhecido",
-        "Versão do Chip Fixs": APP_VERSION,
+        "Computer name": platform.node() or "Unknown",
+        "Chip Fixs version": APP_VERSION,
     }
     uptime_raw = read_text("/proc/uptime")
     if uptime_raw:
@@ -150,15 +150,15 @@ def read_os_and_board() -> dict[str, str]:
             days, remainder = divmod(seconds, 86400)
             hours, remainder = divmod(remainder, 3600)
             minutes = remainder // 60
-            result["Tempo ligado"] = f"{days} dia(s), {hours} h, {minutes} min"
+            result["Uptime"] = f"{days} dia(s), {hours} h, {minutes} min"
         except (ValueError, IndexError):
-            result["Tempo ligado"] = "Não disponível"
+            result["Uptime"] = "Not available"
     else:
-        result["Tempo ligado"] = "Não disponível"
+        result["Uptime"] = "Not available"
 
-    result["Tipo de sessão gráfica"] = os.environ.get("XDG_SESSION_TYPE", "Não informado")
-    result["Ambiente gráfico"] = os.environ.get("XDG_CURRENT_DESKTOP", "Não informado")
-    result["Inicialização UEFI"] = "Sim" if Path("/sys/firmware/efi").exists() else "Não / BIOS legado"
+    result["Graphical session type"] = os.environ.get("XDG_SESSION_TYPE", "Not reported")
+    result["Desktop environment"] = os.environ.get("XDG_CURRENT_DESKTOP", "Not reported")
+    result["UEFI boot"] = "Yes" if Path("/sys/firmware/efi").exists() else "No / Legacy BIOS"
     for label, filename in dmi_fields.items():
         value = read_text(dmi_root / filename)
         if value:
@@ -177,14 +177,14 @@ def memory_summary() -> tuple[list[str], dict[str, int]]:
         used = max(0, total - (available or 0))
         values.extend(
             [
-                f"Memória RAM instalada: {format_bytes(total)}",
-                f"Memória em uso (estimativa): {format_bytes(used)}",
-                f"Memória disponível: {format_bytes(available)}",
-                f"Uso de RAM: {((used / total) * 100):.1f}%" if total else "Uso de RAM: não disponível",
+                f"Installed RAM: {format_bytes(total)}",
+                f"RAM in use (estimate): {format_bytes(used)}",
+                f"Available memory: {format_bytes(available)}",
+                f"RAM usage: {((used / total) * 100):.1f}%" if total else "RAM usage: not available",
             ]
         )
     else:
-        values.append("Não foi possível ler /proc/meminfo.")
+        values.append("Could not read /proc/meminfo.")
     values.append(f"Swap total: {format_bytes(swap_total)}")
     values.append(f"Swap em uso: {format_bytes(max(0, swap_total - swap_free))}")
     return values, mem
@@ -213,27 +213,27 @@ def list_physical_disks() -> list[tuple[str, str]]:
 
 
 def collect_system_info() -> OrderedDict[str, str]:
-    """Coleta informações locais. Não envia dados nem modifica a configuração."""
+    """Collects local information. It does not send data or change configuration."""
     info: OrderedDict[str, str] = OrderedDict()
 
     overview = read_os_and_board()
-    info["Resumo e placa-mãe"] = "\n".join(f"{key}: {value}" for key, value in overview.items())
+    info["Overview and motherboard"] = "\n".join(f"{key}: {value}" for key, value in overview.items())
 
     cpu = run_command(["lscpu"], timeout=5)
     if cpu.returncode == 0 and cpu.stdout.strip():
         cpu_text = cpu.stdout.strip()
     else:
-        model = "Não identificado"
+        model = "Not identified"
         for line in read_text("/proc/cpuinfo").splitlines():
             if line.lower().startswith("model name") and ":" in line:
                 model = line.split(":", 1)[1].strip()
                 break
-        cpu_text = f"Modelo: {model}\nProcessadores lógicos: {os.cpu_count() or 'Não disponível'}"
+        cpu_text = f"Model: {model}\nLogical processors: {os.cpu_count() or 'Not available'}"
     info["Processador"] = cpu_text
 
     memory_lines, _mem = memory_summary()
     memory_lines.append("")
-    memory_lines.append("Detalhes por pente de RAM")
+    memory_lines.append("Per-module RAM details")
     dmidecode = find_command("dmidecode")
     if dmidecode:
         dmi_memory = run_command([dmidecode, "--type", "memory"], timeout=6)
@@ -241,12 +241,12 @@ def collect_system_info() -> OrderedDict[str, str]:
             memory_lines.append(dmi_memory.stdout.strip())
         else:
             memory_lines.append(
-                "O firmware pode fornecer fabricante, velocidade e capacidade de cada pente. "
-                "Use “Detalhes avançados da RAM” para solicitar autorização administrativa."
+                "Firmware may expose the manufacturer, speed, and capacity of each memory module. "
+                "Use “Advanced RAM details” to request administrator authorization."
             )
     else:
-        memory_lines.append("O dmidecode não está instalado nesta imagem.")
-    info["Memória RAM e swap"] = "\n".join(memory_lines)
+        memory_lines.append("dmidecode is not installed in this image.")
+    info["RAM and swap"] = "\n".join(memory_lines)
 
     gpu = run_command(["lspci", "-nnk"], timeout=6)
     if gpu.returncode == 0:
@@ -255,70 +255,70 @@ def collect_system_info() -> OrderedDict[str, str]:
             block.strip() for block in blocks
             if re.search(r"VGA compatible controller|3D controller|Display controller", block, re.I)
         ]
-        gpu_text = "\n\n".join(display_blocks) if display_blocks else "Nenhum controlador gráfico identificado por lspci."
+        gpu_text = "\n\n".join(display_blocks) if display_blocks else "No graphics controller was identified by lspci."
     else:
-        gpu_text = gpu.stderr.strip() or "O lspci não está disponível."
+        gpu_text = gpu.stderr.strip() or "lspci is not available."
     glx = run_command(["glxinfo", "-B"], timeout=6)
     if glx.returncode == 0 and glx.stdout.strip():
         gpu_text += "\n\nOpenGL e renderizador ativo\n" + glx.stdout.strip()
     else:
-        gpu_text += "\n\nOpenGL: glxinfo não disponível ou a sessão gráfica não expõe esse recurso."
+        gpu_text += "\n\nOpenGL: glxinfo is unavailable or the current graphical session does not expose this feature."
     xrandr = run_command(["xrandr", "--query"], timeout=4)
-    gpu_text += "\n\nMonitores e resoluções\n" + (
+    gpu_text += "\n\nDisplays and resolutions\n" + (
         xrandr.stdout.strip() if xrandr.returncode == 0 and xrandr.stdout.strip()
-        else "Não foi possível consultar o XRandR nesta sessão."
+        else "Could not query XRandR in this session."
     )
-    info["Placa de vídeo e monitores"] = gpu_text
+    info["Graphics and displays"] = gpu_text
 
     lsblk = run_command(
         ["lsblk", "-e", "7", "-o", "NAME,MODEL,SIZE,TYPE,FSTYPE,MOUNTPOINTS,ROTA,TRAN"],
         timeout=6,
     )
     df = run_command(["df", "-hT", "-x", "tmpfs", "-x", "devtmpfs"], timeout=5)
-    storage = lsblk.stdout.strip() if lsblk.returncode == 0 else (lsblk.stderr.strip() or "lsblk não disponível.")
+    storage = lsblk.stdout.strip() if lsblk.returncode == 0 else (lsblk.stderr.strip() or "lsblk is not available.")
     storage += "\n\nUso dos sistemas de arquivos\n"
-    storage += df.stdout.strip() if df.returncode == 0 else (df.stderr.strip() or "df não disponível.")
+    storage += df.stdout.strip() if df.returncode == 0 else (df.stderr.strip() or "df is not available.")
     storage += (
-        "\n\nSaúde SMART: selecione um disco e use o botão de verificação. "
-        "O teste solicita autorização administrativa e apenas lê dados de saúde do disco."
+        "\n\nSMART health: select a disk and use the check button. "
+        "This test requests administrator authorization and only reads disk health data."
     )
-    info["Discos, partições e espaço"] = storage
+    info["Disks, partitions, and space"] = storage
 
     network = run_command(
         ["nmcli", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"],
         timeout=6,
     )
     ip = run_command(["ip", "-brief", "address"], timeout=4)
-    info["Rede e interfaces"] = (
+    info["Network and interfaces"] = (
         "NetworkManager\n"
-        + (network.stdout.strip() if network.returncode == 0 else (network.stderr.strip() or "nmcli não disponível."))
-        + "\n\nEndereços e interfaces\n"
-        + (ip.stdout.strip() if ip.returncode == 0 else (ip.stderr.strip() or "ip não disponível."))
+        + (network.stdout.strip() if network.returncode == 0 else (network.stderr.strip() or "nmcli is not available."))
+        + "\n\nAddresses and interfaces\n"
+        + (ip.stdout.strip() if ip.returncode == 0 else (ip.stderr.strip() or "ip is not available."))
     )
 
     pactl = run_command(["pactl", "info"], timeout=4)
     sinks = run_command(["pactl", "list", "short", "sinks"], timeout=4)
     sources = run_command(["pactl", "list", "short", "sources"], timeout=4)
-    audio = pactl.stdout.strip() if pactl.returncode == 0 else (pactl.stderr.strip() or "pactl não disponível.")
-    audio += "\n\nSaídas de áudio\n" + (
-        sinks.stdout.strip() if sinks.returncode == 0 else (sinks.stderr.strip() or "Não disponível.")
+    audio = pactl.stdout.strip() if pactl.returncode == 0 else (pactl.stderr.strip() or "pactl is not available.")
+    audio += "\n\nAudio outputs\n" + (
+        sinks.stdout.strip() if sinks.returncode == 0 else (sinks.stderr.strip() or "Not available.")
     )
-    audio += "\n\nEntradas de áudio\n" + (
-        sources.stdout.strip() if sources.returncode == 0 else (sources.stderr.strip() or "Não disponível.")
+    audio += "\n\nAudio inputs\n" + (
+        sources.stdout.strip() if sources.returncode == 0 else (sources.stderr.strip() or "Not available.")
     )
     for service in ("pipewire.service", "pipewire-pulse.service", "wireplumber.service"):
         state = run_command(["systemctl", "--user", "is-active", service], timeout=3)
         if state.returncode in (0, 3, 4):
-            audio += f"\n{service}: {(state.stdout or state.stderr).strip() or 'desconhecido'}"
-    info["Áudio"] = audio
+            audio += f"\n{service}: {(state.stdout or state.stderr).strip() or 'unknown'}"
+    info["Audio"] = audio
 
     pci = run_command(["lspci", "-nnk"], timeout=6)
     usb = run_command(["lsusb"], timeout=5)
-    info["Dispositivos PCI e USB"] = (
+    info["PCI and USB devices"] = (
         "Dispositivos PCI\n"
-        + (pci.stdout.strip() if pci.returncode == 0 else (pci.stderr.strip() or "lspci não disponível."))
+        + (pci.stdout.strip() if pci.returncode == 0 else (pci.stderr.strip() or "lspci is not available."))
         + "\n\nDispositivos USB\n"
-        + (usb.stdout.strip() if usb.returncode == 0 else (usb.stderr.strip() or "lsusb não disponível."))
+        + (usb.stdout.strip() if usb.returncode == 0 else (usb.stderr.strip() or "lsusb is not available."))
     )
 
     power_lines: list[str] = []
@@ -330,24 +330,24 @@ def collect_system_info() -> OrderedDict[str, str]:
                 continue
             power_lines.append(f"{supply.name} ({kind})")
             for key, filename in (
-                ("Fabricante", "manufacturer"),
-                ("Modelo", "model_name"),
-                ("Estado", "status"),
-                ("Carga", "capacity"),
-                ("Tecnologia", "technology"),
-                ("Tensão (µV)", "voltage_now"),
-                ("Corrente (µA)", "current_now"),
+                ("Manufacturer", "manufacturer"),
+                ("Model", "model_name"),
+                ("State", "status"),
+                ("Charge", "capacity"),
+                ("Technology", "technology"),
+                ("Voltage (µV)", "voltage_now"),
+                ("Current (µA)", "current_now"),
             ):
                 value = read_text(supply / filename)
                 if value:
                     power_lines.append(f"  {key}: {value}")
     if not power_lines:
-        power_lines.append("Nenhuma bateria ou fonte de energia identificada em /sys/class/power_supply.")
+        power_lines.append("No battery or power supply was identified in /sys/class/power_supply.")
     sensors = run_command(["sensors"], timeout=5)
     if sensors.returncode == 0 and sensors.stdout.strip():
-        power_lines.extend(["", "Sensores de temperatura e tensão", sensors.stdout.strip()])
+        power_lines.extend(["", "Temperature and voltage sensors", sensors.stdout.strip()])
     else:
-        power_lines.extend(["", "Sensores", "O comando sensors não encontrou dados disponíveis. Alguns dispositivos não expõem temperaturas."])
+        power_lines.extend(["", "Sensores", "The sensors command returned no data. Some devices do not expose temperature readings."])
     thermal: list[str] = []
     for zone in sorted(Path("/sys/class/thermal").glob("thermal_zone*")):
         temp = read_text(zone / "temp")
@@ -355,33 +355,33 @@ def collect_system_info() -> OrderedDict[str, str]:
         if temp.isdigit():
             thermal.append(f"{zone_type}: {int(temp) / 1000:.1f} °C")
     if thermal:
-        power_lines.extend(["", "Zonas térmicas do kernel", *thermal])
-    info["Bateria, energia e sensores"] = "\n".join(power_lines)
+        power_lines.extend(["", "Kernel thermal zones", *thermal])
+    info["Battery, power, and sensors"] = "\n".join(power_lines)
 
     failed = run_command(["systemctl", "--failed", "--no-legend", "--plain"], timeout=6)
     audit = run_command(["dpkg", "--audit"], timeout=10)
     updates = run_command(["apt", "list", "--upgradable"], timeout=12)
     timedate = run_command(["timedatectl", "status"], timeout=4)
     maintenance = [
-        "Serviços do sistema com falha",
+        "Failed system services",
         failed.stdout.strip() if failed.returncode == 0 and failed.stdout.strip() else (
-            "Nenhum serviço com falha informado pelo systemd." if failed.returncode == 0
-            else (failed.stderr.strip() or "Não disponível.")
+            "systemd reported no failed services." if failed.returncode == 0
+            else (failed.stderr.strip() or "Not available.")
         ),
         "",
-        "Auditoria do banco de pacotes dpkg",
+        "dpkg package database audit",
         audit.stdout.strip() if audit.returncode == 0 and audit.stdout.strip() else (
-            "Nenhum problema informado pelo dpkg." if audit.returncode == 0
-            else (audit.stderr.strip() or "Não disponível.")
+            "dpkg reported no problems." if audit.returncode == 0
+            else (audit.stderr.strip() or "Not available.")
         ),
         "",
-        "Pacotes com atualização disponível (cache local; pode estar desatualizado)",
-        updates.stdout.strip() if updates.returncode == 0 else (updates.stderr.strip() or "Não disponível."),
+        "Packages with available updates (local cache; may be outdated)",
+        updates.stdout.strip() if updates.returncode == 0 else (updates.stderr.strip() or "Not available."),
         "",
-        "Data e sincronização do relógio",
-        timedate.stdout.strip() if timedate.returncode == 0 else (timedate.stderr.strip() or "Não disponível."),
+        "Date and clock synchronization",
+        timedate.stdout.strip() if timedate.returncode == 0 else (timedate.stderr.strip() or "Not available."),
     ]
-    info["Serviços, pacotes e relógio"] = "\n".join(maintenance)
+    info["Services, packages, and clock"] = "\n".join(maintenance)
 
     return info
 
@@ -411,71 +411,71 @@ def _check(
 
 
 def run_diagnostics() -> list[dict[str, str | None]]:
-    """Executa verificações de leitura; reparos ficam sempre atrás de confirmação."""
+    """Runs read-only checks; repairs always require confirmation."""
     results: list[dict[str, str | None]] = []
 
     audit = run_command(["dpkg", "--audit"], timeout=12)
     if audit.returncode == 127:
-        results.append(_check("dpkg", "Pacotes", "unknown", "Auditoria de pacotes indisponível", audit.stderr))
+        results.append(_check("dpkg", "Packages", "unknown", "Package audit unavailable", audit.stderr))
     elif audit.returncode != 0 or audit.stdout.strip():
-        details = audit.stdout.strip() or audit.stderr.strip() or "O dpkg retornou um erro sem detalhes."
+        details = audit.stdout.strip() or audit.stderr.strip() or "dpkg returned an error without details."
         results.append(_check(
-            "dpkg", "Pacotes", "error", "O banco de pacotes precisa de atenção", details,
-            suggestion="Revise os detalhes antes de alterar pacotes. Comandos comuns de diagnóstico: dpkg --audit e apt-get -s check.",
+            "dpkg", "Packages", "error", "The package database needs attention", details,
+            suggestion="Review the details before changing packages. Common diagnostic commands: dpkg --audit and apt-get -s check.",
         ))
     else:
-        results.append(_check("dpkg", "Pacotes", "ok", "Banco de pacotes dpkg", "Nenhuma configuração pendente foi informada pelo dpkg."))
+        results.append(_check("dpkg", "Packages", "ok", "dpkg package database", "dpkg reported no pending configuration."))
 
     apt_check = run_command(["apt-get", "-s", "check"], timeout=25)
     if apt_check.returncode == 127:
-        results.append(_check("apt", "Pacotes", "unknown", "Verificação de dependências indisponível", apt_check.stderr))
+        results.append(_check("apt", "Packages", "unknown", "Dependency check unavailable", apt_check.stderr))
     elif apt_check.returncode != 0:
         results.append(_check(
-            "apt", "Pacotes", "error", "A verificação de dependências encontrou um problema",
-            (apt_check.stdout + "\n" + apt_check.stderr).strip() or f"apt-get -s check retornou código {apt_check.returncode}.",
-            suggestion="Não foram instalados, removidos ou atualizados pacotes. Revise as mensagens e faça uma simulação do reparo antes de autorizar mudanças.",
+            "apt", "Packages", "error", "The dependency check found a problem",
+            (apt_check.stdout + "\n" + apt_check.stderr).strip() or f"apt-get -s check returned code {apt_check.returncode}.",
+            suggestion="No packages were installed, removed, or updated. Review the messages and simulate a repair before authorizing changes.",
         ))
     else:
-        results.append(_check("apt", "Pacotes", "ok", "Dependências do APT", "apt-get -s check terminou sem relatar dependências quebradas."))
+        results.append(_check("apt", "Packages", "ok", "APT dependencies", "apt-get -s check finished without reporting broken dependencies."))
 
     try:
         usage = shutil.disk_usage("/")
         percent = usage.used / usage.total * 100 if usage.total else 0
         detail = f"Raiz (/): {format_bytes(usage.used)} usados de {format_bytes(usage.total)} ({percent:.1f}%)."
         if percent >= 97:
-            results.append(_check("disk-space", "Armazenamento", "critical", "O sistema de arquivos raiz está quase cheio", detail + " O Chip não apagará arquivos pessoais automaticamente."))
+            results.append(_check("disk-space", "Storage", "critical", "The root filesystem is almost full", detail + " Chip will not delete personal files automatically."))
         elif percent >= 90:
-            results.append(_check("disk-space", "Armazenamento", "warning", "Pouco espaço livre na raiz", detail + " Revise os arquivos antes de liberar espaço."))
+            results.append(_check("disk-space", "Storage", "warning", "Low free space on root filesystem", detail + " Review files before freeing space."))
         else:
-            results.append(_check("disk-space", "Armazenamento", "ok", "Espaço livre na raiz", detail))
+            results.append(_check("disk-space", "Storage", "ok", "Free space on root filesystem", detail))
     except OSError as error:
-        results.append(_check("disk-space", "Armazenamento", "unknown", "Não foi possível medir o espaço livre", str(error)))
+        results.append(_check("disk-space", "Storage", "unknown", "Could not measure free space", str(error)))
 
     mem = parse_meminfo(read_text("/proc/meminfo"))
     total = mem.get("MemTotal", 0)
     available = mem.get("MemAvailable", mem.get("MemFree", 0))
     if total <= 0:
-        results.append(_check("memory", "Memória", "unknown", "Estado da RAM indisponível", "O kernel não forneceu MemTotal em /proc/meminfo."))
+        results.append(_check("memory", "Memory", "unknown", "RAM status unavailable", "The kernel did not provide MemTotal in /proc/meminfo."))
     else:
         percent = available / total * 100
-        detail = f"{format_bytes(available)} de {format_bytes(total)} estão disponíveis ({percent:.1f}%)."
+        detail = f"{format_bytes(available)} de {format_bytes(total)} are available ({percent:.1f}%)."
         if percent < 5:
-            results.append(_check("memory", "Memória", "warning", "Pouca memória disponível", detail + " O Chip não encerrará programas automaticamente."))
+            results.append(_check("memory", "Memory", "warning", "Low available memory", detail + " Chip will not terminate programs automatically."))
         else:
-            results.append(_check("memory", "Memória", "ok", "Memória disponível", detail))
+            results.append(_check("memory", "Memory", "ok", "Available memory", detail))
 
     nm = run_command(["systemctl", "is-active", "NetworkManager.service"], timeout=4)
     network_state = (nm.stdout or nm.stderr).strip().lower()
     if nm.returncode == 127:
-        results.append(_check("network-manager", "Rede", "unknown", "Não foi possível consultar o NetworkManager", nm.stderr))
+        results.append(_check("network-manager", "Network", "unknown", "Could not query NetworkManager", nm.stderr))
     elif network_state != "active":
         results.append(_check(
-            "network-manager", "Rede", "warning", "O serviço NetworkManager não está ativo",
-            f"Estado informado: {network_state or 'desconhecido'}. Reiniciar o serviço pode interromper temporariamente a rede.",
+            "network-manager", "Network", "warning", "The NetworkManager service is not active",
+            f"Reported state: {network_state or 'unknown'}. Restarting the service may temporarily interrupt networking.",
             repair="network" if network_state in {"inactive", "failed"} else None,
         ))
     else:
-        results.append(_check("network-manager", "Rede", "ok", "Serviço de rede", "NetworkManager está ativo."))
+        results.append(_check("network-manager", "Network", "ok", "Network service", "NetworkManager is active."))
 
     if os.environ.get("DBUS_SESSION_BUS_ADDRESS") or os.environ.get("XDG_RUNTIME_DIR"):
         audio_states: list[tuple[str, str]] = []
@@ -483,53 +483,53 @@ def run_diagnostics() -> list[dict[str, str | None]]:
             state_result = run_command(["systemctl", "--user", "is-active", service], timeout=3)
             state = (state_result.stdout or state_result.stderr).strip().lower()
             if state_result.returncode in (0, 3, 4):
-                audio_states.append((service, state or "desconhecido"))
+                audio_states.append((service, state or "unknown"))
         inactive = [(name, state) for name, state in audio_states if state != "active"]
         if inactive:
             details = "\n".join(f"{name}: {state}" for name, state in inactive)
             results.append(_check(
-                "audio", "Áudio", "warning", "Um ou mais serviços de áudio não estão ativos", details + "\nReiniciar o áudio pode interromper sons que estejam tocando.",
+                "audio", "Audio", "warning", "One or more audio services are inactive", details + "\nRestarting audio may interrupt currently playing sound.",
                 repair="audio",
             ))
         elif audio_states:
-            results.append(_check("audio", "Áudio", "ok", "Serviços de áudio", "PipeWire, PipeWire Pulse e WirePlumber estão ativos."))
+            results.append(_check("audio", "Audio", "ok", "Audio services", "PipeWire, PipeWire Pulse, and WirePlumber are active."))
         else:
-            results.append(_check("audio", "Áudio", "unknown", "Estado do áudio não confirmado", "Não foi possível consultar os serviços de áudio da sessão atual."))
+            results.append(_check("audio", "Audio", "unknown", "Audio status not confirmed", "Could not query audio services in the current session."))
     else:
-        results.append(_check("audio", "Áudio", "unknown", "Áudio da sessão não consultado", "Não foi detectado um barramento de sessão de usuário. Abra o Chip Fixs dentro da sessão gráfica do usuário para verificar o áudio."))
+        results.append(_check("audio", "Audio", "unknown", "Session audio not checked", "No user session bus was detected. Open Chip Fixs in the graphical user session to check audio."))
 
     failed = run_command(["systemctl", "--failed", "--no-legend", "--plain"], timeout=6)
     failed_lines = [line.strip() for line in failed.stdout.splitlines() if line.strip()]
     if failed.returncode != 0:
-        results.append(_check("failed-units", "Serviços", "unknown", "Não foi possível consultar serviços com falha", failed.stderr.strip() or "systemctl --failed retornou erro."))
+        results.append(_check("failed-units", "Services", "unknown", "Could not query failed services", failed.stderr.strip() or "systemctl --failed returned an error."))
     elif failed_lines:
         results.append(_check(
-            "failed-units", "Serviços", "warning", f"{len(failed_lines)} unidade(s) do sistema com falha",
-            "\n".join(failed_lines[:12]) + ("\n… outros resultados omitidos." if len(failed_lines) > 12 else "") +
-            "\nUma unidade com falha pode ser opcional. O Chip não reiniciará serviços desconhecidos automaticamente.",
+            "failed-units", "Services", "warning", f"{len(failed_lines)} failed system unit(s)",
+            "\n".join(failed_lines[:12]) + ("\n… more results omitted." if len(failed_lines) > 12 else "") +
+            "\nA failed unit may be optional. Chip will not restart unknown services automatically.",
         ))
     else:
-        results.append(_check("failed-units", "Serviços", "ok", "Serviços do systemd", "Nenhuma unidade com falha foi informada pelo systemd."))
+        results.append(_check("failed-units", "Services", "ok", "Services do systemd", "systemd reported no failed units."))
 
     if Path("/usr/share/backgrounds/rivet").is_dir():
         missing = [path for path in RIVET_WALLPAPERS if not Path(path).is_file() or Path(path).stat().st_size == 0]
         if missing:
-            results.append(_check("rivet-files", "Rivet", "warning", "Um ou mais arquivos visuais do Rivet estão ausentes", "\n".join(missing)))
+            results.append(_check("rivet-files", "Rivet", "warning", "One or more Rivet visual assets are missing", "\n".join(missing)))
         else:
-            results.append(_check("rivet-files", "Rivet", "ok", "Arquivos visuais do Rivet", "Os quatro wallpapers esperados estão presentes."))
+            results.append(_check("rivet-files", "Rivet", "ok", "Arquivos visuais do Rivet", "All four expected wallpapers are present."))
     else:
-        results.append(_check("rivet-files", "Rivet", "unknown", "Arquivos do Rivet não encontrados", "Esta instalação não expõe /usr/share/backgrounds/rivet; talvez o programa esteja sendo executado fora do Rivet."))
+        results.append(_check("rivet-files", "Rivet", "unknown", "Rivet files not found", "This installation does not expose /usr/share/backgrounds/rivet; the app may be running outside Rivet."))
 
     # Check whether a graphics controller is visible to PCI enumeration.
     graphics = run_command(["lspci", "-nnk"], timeout=6)
     if graphics.returncode == 127:
-        results.append(_check("graphics", "Gráficos", "unknown", "Verificação gráfica indisponível", graphics.stderr))
+        results.append(_check("graphics", "Graphics", "unknown", "Graphics check unavailable", graphics.stderr))
     elif graphics.returncode != 0:
-        results.append(_check("graphics", "Gráficos", "warning", "A consulta aos controladores gráficos falhou", graphics.stderr.strip() or f"lspci retornou código {graphics.returncode}."))
+        results.append(_check("graphics", "Graphics", "warning", "The graphics controller query failed", graphics.stderr.strip() or f"lspci returned code {graphics.returncode}."))
     elif re.search(r"VGA compatible controller|3D controller|Display controller", graphics.stdout, re.I):
-        results.append(_check("graphics", "Gráficos", "ok", "Controlador gráfico detectado", "O barramento PCI informa pelo menos um controlador gráfico. Isso não substitui o teste do driver e da aceleração 3D."))
+        results.append(_check("graphics", "Graphics", "ok", "Graphics controller detected", "The PCI bus reports at least one graphics controller. This does not replace testing the driver and 3D acceleration."))
     else:
-        results.append(_check("graphics", "Gráficos", "unknown", "Controlador gráfico não confirmado", "Nenhum controlador gráfico foi identificado na saída do lspci. Isso pode ser normal em máquinas sem vídeo PCI ou ambientes virtuais."))
+        results.append(_check("graphics", "Graphics", "unknown", "Graphics controller not confirmed", "No graphics controller was identified in lspci output. This can be normal on machines without PCI graphics or in virtual environments."))
 
     # Read kernel thermal zones when the platform exposes them. Missing sensors
     # are not treated as proof that the computer is overheating or broken.
@@ -546,13 +546,13 @@ def run_diagnostics() -> list[dict[str, str | None]]:
         hottest_name, hottest_temp = max(thermal_readings, key=lambda pair: pair[1])
         summary = "; ".join(f"{name}: {temp:.1f} °C" for name, temp in thermal_readings[:8])
         if hottest_temp >= 95:
-            results.append(_check("temperature", "Temperatura", "critical", "Foi detectada uma temperatura muito alta", summary + ". Reduza a carga de trabalho e verifique a ventilação; Chip Fixs não altera as ventoinhas nem desliga o computador."))
+            results.append(_check("temperature", "Temperature", "critical", "A very high temperature was detected", summary + ". Reduce the workload and check ventilation; Chip Fixs does not control fans or shut down the computer."))
         elif hottest_temp >= 85:
-            results.append(_check("temperature", "Temperatura", "warning", "Foi detectada uma temperatura elevada", summary + ". A interpretação depende do componente e do sensor."))
+            results.append(_check("temperature", "Temperature", "warning", "An elevated temperature was detected", summary + ". Interpretation depends on the component and sensor."))
         else:
-            results.append(_check("temperature", "Temperatura", "ok", "Sensores térmicos do kernel", summary))
+            results.append(_check("temperature", "Temperature", "ok", "Kernel thermal sensors", summary))
     else:
-        results.append(_check("temperature", "Temperatura", "unknown", "Temperaturas não disponíveis", "O kernel não expôs zonas térmicas legíveis. Isso não prova que exista um problema de resfriamento."))
+        results.append(_check("temperature", "Temperature", "unknown", "Temperatures unavailable", "The kernel did not expose readable thermal zones. This does not prove a cooling problem exists."))
 
     updates = run_command(["apt", "list", "--upgradable"], timeout=12)
     if updates.returncode == 0:
@@ -561,71 +561,71 @@ def run_diagnostics() -> list[dict[str, str | None]]:
             if line.strip() and not line.startswith("Listing...") and "/" in line and not line.startswith("WARNING:")
         ]
         if candidates:
-            results.append(_check("updates", "Pacotes", "warning", f"{len(candidates)} pacote(s) podem ter atualização disponível", "A lista usa o cache local e pode estar desatualizada. O Chip não instala atualizações automaticamente."))
+            results.append(_check("updates", "Packages", "warning", f"{len(candidates)} package(s) may have updates available", "The list uses the local cache and may be outdated. Chip does not install updates automatically."))
         else:
-            results.append(_check("updates", "Pacotes", "ok", "Cache local de atualizações", "Nenhum pacote atualizável foi informado pelo cache local. O resultado não verifica se as listas de pacotes estão atualizadas."))
+            results.append(_check("updates", "Packages", "ok", "Local update cache", "The local cache reported no upgradable packages. This result does not check whether package lists are current."))
     else:
-        results.append(_check("updates", "Pacotes", "unknown", "Estado das atualizações não confirmado", updates.stderr.strip() or "O APT não conseguiu consultar seu cache local."))
+        results.append(_check("updates", "Packages", "unknown", "Update status not confirmed", updates.stderr.strip() or "APT could not query its local cache."))
 
     journal = run_command(["journalctl", "-b", "-p", "err", "--no-pager", "-n", "50", "-q"], timeout=8)
     if journal.returncode == 0:
         error_lines = [line for line in journal.stdout.splitlines() if line.strip()]
         if error_lines:
-            results.append(_check("journal-errors", "Registros do sistema", "warning", f"{len(error_lines)} registro(s) de nível erro no log recente", "O log pode conter mensagens antigas, transitórias ou específicas do hardware. O Chip não modifica o journal nem tenta reparar causas desconhecidas automaticamente."))
+            results.append(_check("journal-errors", "System logs", "warning", f"{len(error_lines)} error-level entry/entries in recent logs", "Logs may contain old, transient, or hardware-specific messages. Chip does not modify the journal or automatically attempt to repair unknown causes."))
         else:
-            results.append(_check("journal-errors", "Registros do sistema", "ok", "Erros recentes no journal", "Não foram retornadas mensagens de nível erro no trecho recente do boot atual."))
+            results.append(_check("journal-errors", "System logs", "ok", "Recent journal errors", "No error-level messages were returned for the recent part of the current boot."))
     else:
-        results.append(_check("journal-errors", "Registros do sistema", "unknown", "Leitura do journal indisponível", "Não foi possível ler o journal do boot atual; isso pode depender das permissões da conta."))
+        results.append(_check("journal-errors", "System logs", "unknown", "Journal reading unavailable", "Could not read the current boot journal; this may depend on account permissions."))
 
     return results
 
 
 def repair_action(action: str) -> tuple[bool, str]:
-    """Executa apenas ações de reparo de uma lista fechada."""
+    """Only performs repair actions from a fixed allow-list."""
     if action == "audio":
         command = ["systemctl", "--user", "restart", "pipewire.service", "pipewire-pulse.service", "wireplumber.service"]
         result = run_command(command, timeout=20)
         if result.returncode == 0:
-            return True, "Os serviços de áudio receberam o comando de reinicialização."
+            return True, "The audio services received the restart command."
         detail = (result.stdout + "\n" + result.stderr).strip()
-        return False, detail or f"systemctl retornou código {result.returncode}."
+        return False, detail or f"systemctl returned code {result.returncode}."
 
     if action == "network":
         pkexec = find_command("pkexec")
         systemctl = find_command("systemctl")
         if not pkexec or not systemctl:
-            return False, "Não foi encontrado pkexec ou systemctl. Nenhuma alteração foi feita."
-        # Ação fixa e visível. Nenhum comando vem de entrada do usuário.
+            return False, "pkexec or systemctl was not found. No changes were made."
+        # Fixed and visible action. No command comes from user input.
         result = run_command([pkexec, systemctl, "restart", "NetworkManager.service"], timeout=30)
         if result.returncode == 0:
-            return True, "O NetworkManager foi reiniciado. A conexão pode levar alguns segundos para voltar."
+            return True, "NetworkManager was restarted. The connection may take a few seconds to return."
         detail = (result.stdout + "\n" + result.stderr).strip()
-        return False, detail or f"A reinicialização foi cancelada ou falhou (código {result.returncode})."
+        return False, detail or f"The restart was cancelled or failed (code {result.returncode})."
 
-    return False, "Essa ação não faz parte da lista de reparos permitidos. Nenhuma alteração foi feita."
+    return False, "This action is not part of the allowed repair list. No changes were made."
 
 
 def read_advanced_memory() -> tuple[bool, str]:
-    """Lê o inventário SMBIOS da RAM apenas após a autorização do usuário."""
+    """Reads the RAM SMBIOS inventory only after the user authorizes it."""
     pkexec = find_command("pkexec")
     dmidecode = find_command("dmidecode")
     if not pkexec or not dmidecode:
-        return False, "É necessário ter pkexec e dmidecode instalados. Nenhuma alteração foi feita."
+        return False, "pkexec and dmidecode must be installed. No changes were made."
     result = run_command([pkexec, dmidecode, "--type", "memory"], timeout=15)
     output = (result.stdout + "\n" + result.stderr).strip()
-    return result.returncode == 0, output or f"dmidecode retornou código {result.returncode} sem detalhes."
+    return result.returncode == 0, output or f"dmidecode returned code {result.returncode} without details."
 
 
 def read_smart_health(device: str) -> tuple[bool, str]:
-    """Consulta a saúde SMART de um dispositivo escolhido pelo usuário."""
+    """Checks SMART health for a device selected by the user."""
     allowed_devices = {path for path, _label in list_physical_disks()}
     if device not in allowed_devices:
-        return False, "Dispositivo não reconhecido pela lista atual de discos físicos. Nenhuma ação foi executada."
+        return False, "Device is not recognized in the current physical disk list. No action was performed."
     pkexec = find_command("pkexec")
     smartctl = find_command("smartctl")
     if not pkexec or not smartctl:
-        return False, "É necessário ter pkexec e smartmontools instalados. Nenhuma alteração foi feita."
+        return False, "pkexec and smartmontools must be installed. No changes were made."
     result = run_command([pkexec, smartctl, "-H", device], timeout=20)
     output = (result.stdout + "\n" + result.stderr).strip()
-    # O smartctl usa códigos diferentes para advertências SMART. O texto continua sendo exibido.
-    return result.returncode == 0, output or f"smartctl retornou código {result.returncode}."
+    # smartctl uses different exit codes for SMART warnings. Its output is still displayed.
+    return result.returncode == 0, output or f"smartctl returned code {result.returncode}."

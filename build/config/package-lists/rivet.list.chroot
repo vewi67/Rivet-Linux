@@ -5,6 +5,8 @@ thunar
 thunar-archive-plugin
 thunar-volman
 plank
+plymouth
+plymouth-themes
 lightdm
 lightdm-gtk-greeter
 xserver-xorg
@@ -17,6 +19,7 @@ mate-polkit
 firefox-esr
 libreoffice-writer
 libreoffice-calc
+locales
 gparted
 synaptic
 calamares
