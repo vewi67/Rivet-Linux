@@ -181,7 +181,7 @@ for package in \
   network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr \
   gnome-software gnome-software-plugin-deb gnome-software-plugin-flatpak flatpak calamares \
-  calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
+  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
   require_package "$package"
 done
 
