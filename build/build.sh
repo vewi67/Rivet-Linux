@@ -26,7 +26,7 @@ BRANDING_HOOK="config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 }
 
 mkdir -p config/package-lists config/includes.chroot/etc/skel
-chmod 0755 "$BRANDING_HOOK"
+# Live-build hook files are tracked with executable Git permissions.
 
 lb_args=(
   --distribution trixie

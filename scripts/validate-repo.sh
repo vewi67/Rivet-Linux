@@ -62,6 +62,18 @@ for file in "${required_files[@]}"; do
   }
 done
 
+echo "==> Checking tracked executable modes for live-build hooks..."
+hook_index="$(git ls-files --stage -- 'build/config/hooks/normal/*.hook.chroot')"
+if [[ -z "$hook_index" ]]; then
+  echo "ERROR: no tracked live-build hooks were found." >&2
+  exit 1
+fi
+if printf '%s\n' "$hook_index" | grep -qv '^100755 '; then
+  echo "ERROR: every live-build hook must be tracked with Git mode 100755." >&2
+  printf '%s\n' "$hook_index" >&2
+  exit 1
+fi
+
 echo "==> Checking shell syntax..."
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
