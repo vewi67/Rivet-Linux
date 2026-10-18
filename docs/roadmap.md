@@ -38,6 +38,10 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [ ] Test installation to a virtual disk
 - [ ] Test first boot after installation
 - [ ] Test package updates
+- [x] Integrate GNOME Software with Debian package and Flatpak plugins
+- [x] Configure Flathub for system-wide Flatpak app discovery
+- [x] Add Rivet Software to the application menu, dock, and welcome settings hub
+- [ ] Test application search, installation, removal, and updates in a built ISO
 
 ## Phase 2: First Rivet experience
 
