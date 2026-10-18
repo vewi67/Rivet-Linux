@@ -35,7 +35,7 @@ required_files=(
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
-  docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md
+  docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md docs/decisions/0007-chip-fixs.md
 )
 
 echo "==> Checking required files..."
