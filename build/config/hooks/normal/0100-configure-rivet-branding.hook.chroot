@@ -519,6 +519,12 @@ if [ ! -s /usr/bin/rivet-welcome ]; then
 fi
 chmod 0755 /usr/bin/rivet-welcome
 
+if [ ! -s /usr/bin/rivet-welcome-center ]; then
+  echo "ERROR: installed Rivet welcome center is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-welcome-center
+
 # Keep the expected desktop integration present in the built image.
 if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
   echo "ERROR: Plank autostart entry is missing." >&2
@@ -531,7 +537,7 @@ PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
 IconSize=48
 Position=3
 Alignment=3
@@ -549,6 +555,10 @@ EOF
 cat > "${PLANK_LAUNCHERS}/Files.dockitem" <<'EOF'
 [PlankDockItemPreferences]
 Launcher=file:///usr/share/applications/thunar.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Welcome.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-welcome.desktop
 EOF
 cat > "${PLANK_LAUNCHERS}/Install-Rivet.dockitem" <<'EOF'
 [PlankDockItemPreferences]
