@@ -11,7 +11,9 @@ BRANDING_DESC="build/config/includes.chroot/etc/calamares/branding/rivet/brandin
 BRANDING_SLIDESHOW="build/config/includes.chroot/etc/calamares/branding/rivet/show.qml"
 CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
+WELCOME_CENTER_APP="build/config/includes.chroot/usr/bin/rivet-welcome-center"
 WELCOME_MODE_TEST="scripts/test-welcome-mode.py"
+WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
 INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
@@ -32,9 +34,9 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST"
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST"
   build/README.md build/build.sh
-  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
+  "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
@@ -82,8 +84,9 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
+python3 "$WELCOME_CENTER_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
 python3 scripts/test-chip-fixs.py
@@ -119,8 +122,8 @@ require_package() {
 
 echo "==> Checking required packages..."
 for package in \
-  xfce4 xfce4-panel xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
-  network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
+  xfce4 xfce4-panel xfce4-terminal xfce4-notifyd xfce4-power-manager thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
+  network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
   calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
   require_package "$package"
@@ -269,6 +272,19 @@ if [[ "$chip_count" -lt 5 ]]; then
 fi
 
 grep -Fq 'Exec=/usr/bin/rivet-welcome' "$WELCOME_AUTOSTART"
+grep -Fq 'chmod 0755 /usr/bin/rivet-welcome-center' "$BRANDING_HOOK"
+grep -Fq 'Welcome.dockitem' "$BRANDING_HOOK"
+grep -Fq 'Launcher=file:///usr/share/applications/rivet-welcome.desktop' "$BRANDING_HOOK"
+grep -Fq 'Welcome to Rivet' "$WELCOME_CENTER_APP"
+grep -Fq 'def is_live_session(' "$WELCOME_CENTER_APP"
+grep -Fq 'if is_live_session():' "$WELCOME_CENTER_APP"
+grep -Fq 'SETTINGS_GROUPS = (' "$WELCOME_CENTER_APP"
+grep -Fq 'Gtk.SearchEntry()' "$WELCOME_CENTER_APP"
+grep -Fq 'Gtk.StackSidebar()' "$WELCOME_CENTER_APP"
+grep -Fq 'System settings' "$WELCOME_CENTER_APP"
+grep -Fq 'Rivet Atmosphere' "$WELCOME_CENTER_APP"
+grep -Fq 'Chip Fixs' "$WELCOME_CENTER_APP"
+grep -Fq 'rivet-welcome-center' "$WELCOME_APP"
 grep -Fq 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
 grep -Fq 'Exec=/usr/bin/rivet-welcome --show-again' "$WELCOME_LAUNCHER"
 grep -Fq 'Icon=rivet' "$WELCOME_LAUNCHER"
