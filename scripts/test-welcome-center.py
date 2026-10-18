@@ -67,7 +67,7 @@ def main():
         "appearance & themes", "desktop & wallpaper", "display & monitors",
         "window manager tweaks", "keyboard", "mouse & touchpad", "power & battery",
         "accessibility", "file associations", "advanced settings", "sound", "network",
-        "bluetooth", "notifications", "software & updates", "rivet atmosphere",
+        "bluetooth", "notifications", "software store", "advanced package manager", "rivet atmosphere",
         "chip fixs",
     }
     assert expected <= set(titles), f"Missing settings cards: {sorted(expected - set(titles))}"
@@ -87,7 +87,7 @@ def main():
         (),
     )
     quick_tool_names = {entry[0] for entry in quick_tools}
-    assert {"Rivet Atmosphere", "Chip Fixs", "Software Manager", "Disks & Partitions", "File Manager", "Terminal"} <= quick_tool_names
+    assert {"Rivet Atmosphere", "Chip Fixs", "Software Store", "Disks & Partitions", "File Manager", "Terminal"} <= quick_tool_names
 
     with tempfile.TemporaryDirectory(prefix="rivet-welcome-center-") as temporary:
         root = Path(temporary)
