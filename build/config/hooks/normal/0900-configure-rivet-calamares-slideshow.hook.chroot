@@ -6,7 +6,7 @@ BRANDING_DESC="${BRANDING_DIR}/branding.desc"
 SLIDESHOW="${BRANDING_DIR}/show.qml"
 
 # The branding descriptor and slideshow are supplied as static, versioned files.
-# This hook validates them without rewriting Calamares' UI at build time.
+# Validate both the Calamares API settings and the built-in Rivet Pong game.
 if [ ! -s "$BRANDING_DESC" ]; then
   echo "ERROR: Rivet Calamares branding descriptor is missing: $BRANDING_DESC" >&2
   exit 1
@@ -20,7 +20,12 @@ grep -Fxq 'componentName: rivet' "$BRANDING_DESC"
 grep -Fxq 'slideshow: "show.qml"' "$BRANDING_DESC"
 grep -Fxq 'slideshowAPI: 2' "$BRANDING_DESC"
 grep -Fq 'Presentation {' "$SLIDESHOW"
-grep -Fq 'centeredText: qsTr("Installing Rivet Linux")' "$SLIDESHOW"
+grep -Fq 'title: qsTr("Instalando o Rivet Linux")' "$SLIDESHOW"
+grep -Fq 'id: rivetPongField' "$SLIDESHOW"
+grep -Fq 'mouseNavigation: false' "$SLIDESHOW"
+grep -Fq 'function advanceGame()' "$SLIDESHOW"
+grep -Fq 'property int targetScore: 5' "$SLIDESHOW"
+grep -Fq 'id: gameTimer' "$SLIDESHOW"
 
 # Refuse to produce an image with a branded but non-functional installer.
 # This checks the real Debian-provided sequence and its live-image/GRUB settings.
