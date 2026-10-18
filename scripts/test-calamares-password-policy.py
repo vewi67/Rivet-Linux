@@ -78,12 +78,30 @@ user:
         )
 
         missing_key = root / "missing-key.conf"
-        invalid = source.replace("allowWeakPasswordsDefault: false\n", "")
+        invalid = source.replace("allowWeakPasswords: false\\n", "").replace(
+            "allowWeakPasswordsDefault: false\\n", ""
+        )
         missing_key.write_text(invalid, encoding="utf-8")
-        before = missing_key.read_text(encoding="utf-8")
         result = run_helper(missing_key)
-        assert result.returncode != 0, "A missing required setting must fail visibly."
-        assert missing_key.read_text(encoding="utf-8") == before, (
+        assert result.returncode == 0, (
+            "Missing optional weak-password keys should be created, not rejected: "
+            + result.stderr
+        )
+        configured_missing = missing_key.read_text(encoding="utf-8")
+        assert re.search(r"(?m)^allowWeakPasswords: true$", configured_missing)
+        assert re.search(r"(?m)^allowWeakPasswordsDefault: true$", configured_missing)
+
+        invalid_policy = root / "missing-policy.conf"
+        no_policy = source.replace(
+            "passwordRequirements:\\n    minLength: 8\\n    maxLength: 64\\n"
+            "    libpwquality:\\n        - minlen=8\\n        - minclass=3\\n\\n",
+            "",
+        )
+        invalid_policy.write_text(no_policy, encoding="utf-8")
+        before = invalid_policy.read_text(encoding="utf-8")
+        result = run_helper(invalid_policy)
+        assert result.returncode != 0, "Missing passwordRequirements must fail visibly."
+        assert invalid_policy.read_text(encoding="utf-8") == before, (
             "A failed configuration must not partially rewrite users.conf."
         )
 
