@@ -520,8 +520,6 @@ def run_diagnostics() -> list[dict[str, str | None]]:
     else:
         results.append(_check("rivet-files", "Rivet", "unknown", "Arquivos do Rivet não encontrados", "Esta instalação não expõe /usr/share/backgrounds/rivet; talvez o programa esteja sendo executado fora do Rivet."))
 
-    return results
-
     # Check whether a graphics controller is visible to PCI enumeration.
     graphics = run_command(["lspci", "-nnk"], timeout=6)
     if graphics.returncode == 127:
@@ -578,6 +576,9 @@ def run_diagnostics() -> list[dict[str, str | None]]:
             results.append(_check("journal-errors", "Registros do sistema", "ok", "Erros recentes no journal", "Não foram retornadas mensagens de nível erro no trecho recente do boot atual."))
     else:
         results.append(_check("journal-errors", "Registros do sistema", "unknown", "Leitura do journal indisponível", "Não foi possível ler o journal do boot atual; isso pode depender das permissões da conta."))
+
+    return results
+
 
 def repair_action(action: str) -> tuple[bool, str]:
     """Executa apenas ações de reparo de uma lista fechada."""
