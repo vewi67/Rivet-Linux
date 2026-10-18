@@ -403,6 +403,57 @@ done
 sed -Ei 's/^[[:space:]]*prompt-install:[[:space:]]*.*/prompt-install: true/' "$CALAMARES_SETTINGS"
 sed -Ei 's/^[[:space:]]*disable-cancel-during-exec:[[:space:]]*.*/disable-cancel-during-exec: true/' "$CALAMARES_SETTINGS"
 
+# Make password policy intentionally permissive in Calamares.
+# Keep passwords non-empty for normal account authentication, but do not require
+# uppercase/lowercase letters, digits, symbols, or a minimum length beyond 1.
+# Calamares supports minLength/maxLength and optional libpwquality checks.
+USERS_CONFIG="/etc/calamares/modules/users.conf"
+if [ ! -s "$USERS_CONFIG" ]; then
+  echo "ERROR: Calamares users module configuration is missing: $USERS_CONFIG" >&2
+  exit 1
+fi
+python3 - "$USERS_CONFIG" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+replacement = """passwordRequirements:
+    minLength: 1
+    maxLength: -1
+    libpwquality:
+        - minlen=0
+        - minclass=0
+"""
+updated, count = re.subn(
+    r"(?ms)^passwordRequirements:[ \t]*\n.*?(?=^allowWeakPasswords:)",
+    replacement,
+    text,
+    count=1,
+)
+if count != 1:
+    raise SystemExit(
+        f"ERROR: expected one passwordRequirements block before allowWeakPasswords in {path}"
+    )
+
+for key, value in (
+    ("allowWeakPasswords", "true"),
+    ("allowWeakPasswordsDefault", "true"),
+):
+    updated, changed = re.subn(
+        rf"(?m)^{key}:[ \t]*[^#\r\n]*(?:[ \t]*#.*)?$",
+        f"{key}: {value}",
+        updated,
+        count=1,
+    )
+    if changed != 1:
+        raise SystemExit(f"ERROR: expected one {key} setting in {path}")
+
+path.write_text(updated, encoding="utf-8")
+print("Calamares password policy configured: any non-empty password is allowed.")
+PY
+
 mkdir -p /etc/calamares/branding/rivet
 BRANDING_DESC="/etc/calamares/branding/rivet/branding.desc"
 if [ ! -s "$BRANDING_DESC" ]; then
