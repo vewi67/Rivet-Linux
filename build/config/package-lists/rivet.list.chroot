@@ -36,3 +36,7 @@ polkitd
 pkexec
 x11-xserver-utils
 x11-utils
+dmidecode
+smartmontools
+lm-sensors
+mesa-utils
