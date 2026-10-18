@@ -250,7 +250,7 @@ grep -Fq '        shell: bash' .github/workflows/validate.yml
 grep -Fq '        shell: bash' .github/workflows/build-iso.yml
 grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/build-iso.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/build-iso.yml
-grep -Fq 'needs: [validate, installer-package-validation]' .github/workflows/build-iso.yml
+grep -Fq 'needs: [validate, installer-package-validation, live-build-configuration-validation]' .github/workflows/build-iso.yml
 grep -Fq 'xvfb-run -a python3 scripts/test-welcome-center-gtk.py' .github/workflows/build-iso.yml
 grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
