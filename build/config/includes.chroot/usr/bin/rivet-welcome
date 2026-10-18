@@ -103,6 +103,13 @@ class RivetWelcome(Gtk.Window):
         )
         buttons.pack_start(atmosphere_button, False, False, 0)
 
+        chip_fixs_button = Gtk.Button(label="Chip Fixs")
+        chip_fixs_button.get_style_context().add_class("suggested-action")
+        chip_fixs_button.connect(
+            "clicked", self.launch_app, ["chip-fixs"]
+        )
+        buttons.pack_start(chip_fixs_button, False, False, 0)
+
         done_button = Gtk.Button(label="Let's go")
         done_button.connect("clicked", self.on_done)
         buttons.pack_start(done_button, False, False, 0)
