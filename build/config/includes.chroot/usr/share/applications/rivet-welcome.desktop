@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=Welcome to Rivet Linux
-Comment=Explore your Rivet desktop
+Name=Welcome to Rivet
+Comment=Welcome to Rivet and configure your desktop
 Exec=/usr/bin/rivet-welcome --show-again
 Icon=rivet
 Terminal=false
