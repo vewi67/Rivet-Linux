@@ -51,7 +51,7 @@ required_files=(
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
-  docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md docs/decisions/0007-chip-fixs.md docs/decisions/0008-boot-theme-and-english-first.md
+  docs/philosophy.md docs/architecture.md docs/roadmap.md docs/visual-assets.md docs/decisions/0006-software-management.md docs/decisions/0007-chip-fixs.md docs/decisions/0008-boot-theme-and-english-first.md
 )
 
 echo "==> Checking required files..."
@@ -65,7 +65,29 @@ done
 echo "==> Checking shell syntax..."
 bash -n build/build.sh
 bash -n "$BRANDING_HOOK"
+sh -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
+echo "==> Checking branding-hook structure..."
+if [[ "$(grep -Fc 'CALAMARES_SETTINGS="/etc/calamares/settings.conf"' "$BRANDING_HOOK")" -ne 1 ]]; then
+  echo "ERROR: the branding hook must configure Calamares settings exactly once." >&2
+  exit 1
+fi
+if [[ "$(grep -Fc 'echo "Rivet desktop, Atmosphere, dock, installer authentication, branding, and welcome experience configured."' "$BRANDING_HOOK")" -ne 1 ]]; then
+  echo "ERROR: the branding hook must have exactly one final success message." >&2
+  exit 1
+fi
+grep -Fq "grep -Eq '^Url=https://dl\\.flathub\\.org/repo/?$'" "$BRANDING_HOOK" || {
+  echo "ERROR: Flathub URL validation is missing or incomplete." >&2
+  exit 1
+}
+grep -Fq "grep -Eq '^GPGKey=.+$'" "$BRANDING_HOOK" || {
+  echo "ERROR: Flathub signing-key validation is missing or incomplete." >&2
+  exit 1
+}
+if [[ "$(grep -Fc "grep -Eq '^GPGKey=.+$' /etc/flatpak/remotes.d/flathub.flatpakrepo; then" "$BRANDING_HOOK")" -ne 0 ]]; then
+  echo "ERROR: a detached Flathub validation fragment remains." >&2
+  exit 1
+fi
 sh -n "$ATMOSPHERE_GUARD"
 sh -n "$BOOT_HOOK"
 bash -n scripts/validate-repo.sh
@@ -132,7 +154,8 @@ echo "==> Checking required packages..."
 for package in \
   xfce4 xfce4-panel xfce4-terminal xfce4-notifyd xfce4-power-manager thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
-  mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
+  mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr \
+  gnome-software gnome-software-plugin-deb gnome-software-plugin-flatpak flatpak calamares \
   calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
   require_package "$package"
 done
@@ -187,9 +210,13 @@ grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
+grep -Fq 'name: Debian Trixie installer integration' .github/workflows/build-iso.yml
+grep -Fq 'needs: [validate, installer-package-validation]' .github/workflows/build-iso.yml
+grep -Fq 'xvfb-run -a python3 scripts/test-welcome-center-gtk.py' .github/workflows/build-iso.yml
 grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
+grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/build-iso.yml
 # Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
 if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
   echo "ERROR: ISO build workflow must not have a push trigger." >&2

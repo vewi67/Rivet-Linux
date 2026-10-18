@@ -32,10 +32,55 @@ jobs:
       - name: Validate repository
         run: bash scripts/validate-repo.sh
 
+  installer-package-validation:
+    name: Debian Trixie installer integration
+    runs-on: ubuntu-24.04
+    container: debian:trixie
+    timeout-minutes: 20
+
+    steps:
+      - name: Install checkout tooling
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install the actual Debian Trixie installer stack
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            calamares calamares-settings-debian \
+            rsync squashfs-tools sudo pkexec \
+            x11-utils x11-xserver-utils python3 \
+            python3-gi gir1.2-gtk-3.0 xvfb xauth
+
+      - name: Apply Rivet runtime settings and validate installed package files
+        run: |
+          install -D -m 0644 \
+            build/config/includes.chroot/usr/lib/rivet/check-installer-pipeline.py \
+            /usr/lib/rivet/check-installer-pipeline.py
+          install -D -m 0644 \
+            build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py \
+            /usr/lib/rivet/configure-calamares-password-policy.py
+
+          sed -i \
+            -e 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' \
+            -e 's/^[[:space:]]*prompt-install:[[:space:]]*false[[:space:]]*$/prompt-install: true/' \
+            -e 's/^[[:space:]]*disable-cancel-during-exec:[[:space:]]*false[[:space:]]*$/disable-cancel-during-exec: true/' \
+            /etc/calamares/settings.conf
+
+          python3 /usr/lib/rivet/configure-calamares-password-policy.py \
+            /etc/calamares/modules/users.conf
+          xvfb-run -a python3 scripts/test-welcome-center-gtk.py
+          python3 /usr/lib/rivet/check-installer-pipeline.py --root /
+
   build:
     name: Build ISO
     if: inputs.authorize_iso == 'YES'
-    needs: validate
+    needs: [validate, installer-package-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 

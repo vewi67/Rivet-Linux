@@ -39,8 +39,12 @@ def main():
     drain_events()
     assert app.window.get_visible(), "Welcome to Rivet window did not become visible."
     assert app.stack.get_visible_child_name() == "home", "The home page should be the initial page."
-    assert app.settings_count.get_text() == "24 settings and tools", (
-        f"Unexpected initial settings count: {app.settings_count.get_text()!r}"
+    expected_count = len(app.setting_items)
+    assert expected_count > 0, "The settings catalog must not be empty."
+    expected_label = f"{expected_count} settings and tools"
+    assert app.settings_count.get_text() == expected_label, (
+        f"Unexpected initial settings count: {app.settings_count.get_text()!r}; "
+        f"expected {expected_label!r}"
     )
 
     app.search.set_text("Bluetooth")
@@ -57,7 +61,7 @@ def main():
 
     app.search.set_text("")
     drain_events()
-    assert app.settings_count.get_text() == "24 settings and tools", (
+    assert app.settings_count.get_text() == expected_label, (
         "Clearing search should restore the full settings catalog."
     )
 
