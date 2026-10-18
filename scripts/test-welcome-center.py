@@ -56,6 +56,7 @@ def main():
             titles.append(title.casefold())
 
     assert len(titles) == len(set(titles)), "Settings card titles must be unique."
+    assert len(titles) >= 24, "The System settings page must include a broad set of at least 24 setting cards."
     assert {"Personalization", "Devices & Input", "Connectivity", "Apps & System", "Rivet"} <= categories
     expected = {
         "appearance & themes", "desktop & wallpaper", "display & monitors",
@@ -70,6 +71,18 @@ def main():
     assert "Gtk.SearchEntry()" in source, "The settings page should have searchable settings."
     assert "Gtk.StackSidebar()" in source, "The app should provide its category navigation."
     assert "mark_welcome_seen()" in source, "Dismissing the app should persist the first-run choice."
+
+    quick_tools = next(
+        (
+            ast.literal_eval(node.value)
+            for node in tree.body
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "QUICK_TOOLS" for target in node.targets)
+        ),
+        (),
+    )
+    quick_tool_names = {entry[0] for entry in quick_tools}
+    assert {"Rivet Atmosphere", "Chip Fixs", "Software Manager", "Disks & Partitions", "File Manager", "Terminal"} <= quick_tool_names
 
     with tempfile.TemporaryDirectory(prefix="rivet-welcome-center-") as temporary:
         root = Path(temporary)
