@@ -45,7 +45,7 @@ def configure(path: Path) -> None:
 
     for key in ("allowWeakPasswords", "allowWeakPasswordsDefault"):
         pattern = re.compile(
-            rf"(?m)^{re.escape(key)}:[ \\t]*(?:true|false)[ \\t]*(?:#.*)?$"
+            rf"(?m)^{re.escape(key)}:[ \t]*(?:true|false)[ \t]*(?:#.*)?$"
         )
         matches = list(pattern.finditer(updated))
         if len(matches) > 1:
@@ -58,7 +58,7 @@ def configure(path: Path) -> None:
         else:
             # Debian's packaged users.conf may omit these optional keys.
             # Set them explicitly so the installer does not apply stricter defaults.
-            updated = updated.rstrip() + f"\\n{key}: true\\n"
+            updated = updated.rstrip() + f"\n{key}: true\n"
 
     path.write_text(updated, encoding="utf-8")
     print(f"Calamares password policy configured for {path}: any non-empty password is allowed.")
