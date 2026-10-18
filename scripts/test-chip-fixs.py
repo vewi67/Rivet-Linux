@@ -67,6 +67,10 @@ class ParsingTests(unittest.TestCase):
 
 
 class SafetyTests(unittest.TestCase):
+    def test_privileged_tool_lookup_ignores_user_path(self):
+        with mock.patch.object(core.shutil, "which", return_value="/tmp/fake-systemctl"):
+            self.assertIsNone(core.find_command("this-command-does-not-exist"))
+
     def test_unknown_repair_is_refused_without_running_commands(self):
         with mock.patch.object(core, "run_command") as command:
             success, message = core.repair_action("format-disk")
