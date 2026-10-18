@@ -20,14 +20,18 @@ ATMOSPHERE_APP="build/config/includes.chroot/usr/bin/rivet-atmosphere"
 ATMOSPHERE_GUARD="build/config/includes.chroot/usr/bin/rivet-wallpaper-guard"
 ATMOSPHERE_DESKTOP="build/config/includes.chroot/usr/share/applications/rivet-atmosphere.desktop"
 INSTALLER_PIPELINE_CHECKER="build/config/includes.chroot/usr/lib/rivet/check-installer-pipeline.py"
+CHIP_FIXS_APP="build/config/includes.chroot/usr/bin/chip-fixs"
+CHIP_FIXS_CORE="build/config/includes.chroot/usr/lib/chip-fixs/core.py"
+CHIP_FIXS_DESKTOP="build/config/includes.chroot/usr/share/applications/chip-fixs.desktop"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
+  "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -69,9 +73,10 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
+python3 scripts/test-chip-fixs.py
 python3 "$INSTALLER_PIPELINE_CHECKER" --self-test
 
 echo "==> Checking package list..."
@@ -107,7 +112,7 @@ for package in \
   xfce4 xfce4-panel xfce4-terminal thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome pipewire pipewire-pulse wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr calamares \
-  calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0; do
+  calamares-settings-debian rsync squashfs-tools sudo python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils; do
   require_package "$package"
 done
 
@@ -236,6 +241,28 @@ grep -Fq 'Existing session.log is unchanged; omitting it to avoid stale diagnost
 grep -Fq 'cmdline' "$INSTALLER_HELPER"
 grep -Fq 'GTK diagnostic UI unavailable' "$INSTALLER_HELPER"
 grep -Fq 'not considered proof that the installer window opened' "$INSTALLER_HELPER"
+
+echo "==> Checking Chip Fixs integration and safety surface..."
+grep -Fq 'Name=Chip Fixs' "$CHIP_FIXS_DESKTOP"
+grep -Fq 'Exec=/usr/bin/chip-fixs' "$CHIP_FIXS_DESKTOP"
+grep -Fq 'Icon=chip-fixs' "$CHIP_FIXS_DESKTOP"
+grep -Fq 'Fix System' "$CHIP_FIXS_APP"
+grep -Fq 'System Info' "$CHIP_FIXS_APP"
+grep -Fq 'run_diagnostics' "$CHIP_FIXS_CORE"
+grep -Fq 'repair_action' "$CHIP_FIXS_CORE"
+grep -Fq 'read_advanced_memory' "$CHIP_FIXS_CORE"
+grep -Fq 'read_smart_health' "$CHIP_FIXS_CORE"
+grep -Fq 'CHIP_FIXS_ICON=' "$BRANDING_HOOK"
+grep -Fq 'CHIP_FIXS_MASCOT=' "$BRANDING_HOOK"
+grep -Fq 'chmod 0755 /usr/bin/chip-fixs' "$BRANDING_HOOK"
+grep -Fq 'cp "$CHIP_FIXS_MASCOT" "$CHIP_FIXS_ICON"' "$BRANDING_HOOK"
+grep -Fq 'Chip-Fixs.dockitem' "$BRANDING_HOOK"
+grep -Fq 'Launcher=file:///usr/share/applications/chip-fixs.desktop' "$BRANDING_HOOK"
+grep -Fq 'launch_app, ["chip-fixs"]' "$WELCOME_APP"
+grep -Fq 'dmidecode' "$PACKAGE_LIST"
+grep -Fq 'smartmontools' "$PACKAGE_LIST"
+grep -Fq 'lm-sensors' "$PACKAGE_LIST"
+grep -Fq 'mesa-utils' "$PACKAGE_LIST"
 
 grep -Fq 'Exec=plank' "$PLANK_AUTOSTART"
 grep -Fq 'OnlyShowIn=XFCE;' "$PLANK_AUTOSTART"
