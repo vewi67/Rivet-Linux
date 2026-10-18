@@ -46,7 +46,10 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Implement the first-login welcome window
 - [x] Add a way to reopen the welcome window
 - [x] Add Rivet-branded application launchers
-- [ ] Test the welcome window in a built ISO
+- [x] Implement the Chip Fixs interface and diagnostic core prototype
+- [x] Add local hardware inventory and explicitly authorized advanced reads
+- [x] Add confirmation-gated recovery actions for selected network/audio service issues
+- [ ] Test Chip Fixs and the welcome window in a built ISO
 - [ ] Refine XFCE defaults after VM testing
 - [ ] Improve user documentation
 - [ ] Test on real hardware
@@ -55,11 +58,13 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 
 Create only tools that solve problems found during real use.
 
-- [ ] Identify real problems
-- [ ] Design small solutions
-- [ ] Implement them
-- [ ] Add tests
-- [ ] Integrate them into the image
+- [x] Identify a real need: system diagnosis and hardware inventory
+- [x] Define and document the Chip Fixs scope and repair boundaries
+- [x] Implement the first GTK interface and read-only diagnostic core
+- [x] Add unit and safety-boundary tests
+- [x] Add package selection, desktop menu, dock, and welcome-app integration
+- [ ] Verify diagnostics and repairs in a generated ISO
+- [ ] Exercise each available repair path in a disposable VM
 
 ## Phase 4: Public pre-alpha
 
