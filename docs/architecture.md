@@ -51,7 +51,9 @@ Initial software includes:
 - Firefox ESR
 - LibreOffice Writer and Calc
 - GParted
-- Synaptic
+- GNOME Software with Debian package and Flatpak plugins
+- Flatpak applications from the configured official Flathub remote
+- Synaptic as an advanced graphical package manager
 - core XFCE utilities
 - basic diagnostic and network tools
 - a GTK welcome experience with a live-session installer view and an installed-system settings hub

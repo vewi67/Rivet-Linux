@@ -44,9 +44,9 @@ The repository validation workflow compiles the app and core and runs `scripts/t
 
 ## Latest generated ISO
 
-The latest build is **#98**, published in [GitHub Releases](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-98). The workflow completed repository validation, the Debian Trixie installer integration check, ISO format/El Torito boot-metadata inspection, and SHA-256 verification before publishing.
+The latest published image is **#99**, published in [GitHub Releases](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-99). The current source has changed since that image: the installed settings hub, software-store integration, and installer-related fixes are not included. No replacement ISO is published automatically; the manual build workflow requires explicit authorization with `YES` and both repository and Debian Trixie installer validation jobs to pass before building.
 
-The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The repository also now contains an English-first locale hook and a scripted Plymouth theme; these changes are **not included** in ISO #98 and need a newly authorized build plus VM verification.
+The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The repository also now contains an English-first locale hook and a scripted Plymouth theme; these changes are **not included** in ISO #99 and need a newly authorized build plus VM verification.
 
 ## Scope
 

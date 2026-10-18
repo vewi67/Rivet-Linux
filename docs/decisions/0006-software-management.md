@@ -1,53 +1,34 @@
 # ADR 0006: Software Management and Updates
 
 - **Status:** Accepted
-- **Date:** 2026-10-07
+- **Date:** 2026-10-18
 
 ## Package management
 
-Rivet uses **APT + dpkg**, inherited from Debian.
+Rivet uses **APT + dpkg**, inherited from Debian. There is no custom package manager.
 
-There is no custom package manager in the first version.
+## Graphical interface
 
-## Interface
+The default image includes GNOME Software as the user-facing application store, with plugins for Debian packages and Flatpak. Synaptic remains available as an advanced graphical package manager, and APT remains available in the terminal.
 
-The first ISO provides:
+The store is an interface to existing package-management systems, not a new package format or custom package manager.
 
-- APT for terminal users;
-- Synaptic as a simple graphical package manager.
+## Flatpak and Flathub
 
-A custom tool may be created later only if a real usability problem is found that these tools do not solve well.
+Flatpak and the GNOME Software Flatpak plugin are installed by default. The build configures the official Flathub repository descriptor under `/etc/flatpak/remotes.d/` so Flatpak applications can be discovered through the store.
 
-## Flatpak
+The image build fetches the official descriptor from Flathub and validates its repository URL and presence of its signing key. A build must fail visibly if the descriptor cannot be retrieved or does not pass validation. Flathub is a third-party application source for Flatpak; Rivet does not add third-party APT repositories by default.
 
-Flatpak is not required and is not installed by default in the first ISO.
-
-The Debian repositories are the priority because this avoids duplicating software update systems and software sources.
-
-Flatpak may be offered later as a documented option.
+Users should review an application's publisher and permissions before installing it. Package updates remain handled by the relevant package-management system through the software store or command-line tools.
 
 ## Updates
 
-Rivet uses the official Debian updates for Trixie.
-
-There is no custom update service at this stage.
-
-Security updates and bug fixes remain on the normal Debian update path.
-
-## Third-party repositories
-
-The ISO does not add third-party repositories by default.
-
-Users may add external repositories themselves.
+Rivet uses the official Debian updates for Trixie. Flatpak applications use the configured Flatpak remote. There is no custom update service.
 
 ## Shell
 
-The default shell is **Bash**, following Debian.
-
-The terminal is not removed or hidden from the interface.
+The default shell is **Bash**, following Debian. The terminal is not removed or hidden from the interface.
 
 ## Policy
 
-Rivet should have few software sources, and they should be clear and predictable.
-
-**A known, trusted tool is preferable to an unnecessary custom layer.**
+Rivet should keep software sources limited and clearly documented. Prefer established package-management tools over unnecessary custom layers.
