@@ -11,6 +11,7 @@ BRANDING_DESC="build/config/includes.chroot/etc/calamares/branding/rivet/brandin
 BRANDING_SLIDESHOW="build/config/includes.chroot/etc/calamares/branding/rivet/show.qml"
 CHIP_DIR="build/config/includes.chroot/usr/share/rivet/chip"
 WELCOME_APP="build/config/includes.chroot/usr/bin/rivet-welcome"
+WELCOME_MODE_TEST="scripts/test-welcome-mode.py"
 INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
@@ -31,7 +32,7 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST"
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -81,7 +82,8 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+python3 "$WELCOME_MODE_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
 python3 scripts/test-chip-fixs.py
@@ -271,6 +273,9 @@ grep -Fq 'OnlyShowIn=XFCE;' "$WELCOME_AUTOSTART"
 grep -Fq 'Exec=/usr/bin/rivet-welcome --show-again' "$WELCOME_LAUNCHER"
 grep -Fq 'Icon=rivet' "$WELCOME_LAUNCHER"
 grep -Fq 'Welcome to Rivet Linux' "$WELCOME_APP"
+grep -Fq 'def is_live_session(' "$WELCOME_APP"
+grep -Fq 'if self.live_session:' "$WELCOME_APP"
+grep -Fq 'Rivet is installed and ready.' "$WELCOME_APP"
 grep -Fq 'CHIP_DIR = "/usr/share/rivet/chip"' "$WELCOME_APP"
 grep -Fq -- '--show-again' "$WELCOME_APP"
 grep -Fq 'Install Rivet' "$WELCOME_APP"
