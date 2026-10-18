@@ -112,7 +112,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso100-authorized-once-20261018' && github.run_number == 100)
+    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso100-authorized-once-20261018' && github.run_number == 101)
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -270,15 +270,15 @@ jobs:
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rivet-build-${{ github.run_number }}
-          name: "Rivet Linux #${{ github.run_number }} - Special Milestone Edition"
+          tag_name: rivet-build-100
+          name: "Rivet Linux #100 - Special Milestone Edition"
           body: |
             Rivet Linux #100 - Special Milestone Edition
-
-A special milestone development build of Rivet Linux. This is still pre-alpha, not a stable release.
-
-This publication was enabled for exactly one authorized branch push, and the release is published only after repository validation, Debian Trixie installer integration, live-build configuration preflight, ISO boot-metadata inspection, and SHA-256 verification pass.
-
+            
+            A special milestone development build of Rivet Linux. This is still pre-alpha, not a stable release.
+            
+            This publication was enabled for exactly one authorized branch push, and the release is published only after repository validation, Debian Trixie installer integration, live-build configuration preflight, ISO boot-metadata inspection, and SHA-256 verification pass.
+            
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
             that limit, download all numbered .part-* files and run
             reassemble-rivet-iso.sh in the same directory to reconstruct and
