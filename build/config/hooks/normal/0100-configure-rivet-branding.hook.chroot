@@ -481,6 +481,12 @@ if [ ! -s /usr/bin/rivet-welcome ]; then
 fi
 chmod 0755 /usr/bin/rivet-welcome
 
+if [ ! -s /usr/bin/rivet-start-plank ]; then
+  echo "ERROR: Rivet Plank session helper is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-start-plank
+
 if [ ! -s /usr/bin/rivet-welcome-center ]; then
   echo "ERROR: installed Rivet welcome center is missing." >&2
   exit 1
@@ -499,7 +505,7 @@ PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
 IconSize=48
 Position=3
 Alignment=3
