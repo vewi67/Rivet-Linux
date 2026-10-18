@@ -228,7 +228,7 @@ import sys
 from pathlib import Path
 
 data = Path(sys.argv[1]).read_bytes()
-if len(data) < 24 or data[:8] != b"\\x89PNG\\r\\n\\x1a\\n" or data[12:16] != b"IHDR":
+if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
     raise SystemExit("ERROR: Chip Fixs logo is not a valid PNG with an IHDR header.")
 width, height = struct.unpack(">II", data[16:24])
 if width != height or width < 256 or height < 256:
