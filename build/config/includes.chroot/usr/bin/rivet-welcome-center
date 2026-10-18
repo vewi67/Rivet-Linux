@@ -56,7 +56,7 @@ SETTINGS_GROUPS = (
         ("Display & Monitors", "Adjust resolution, monitor layout and display settings.",
          "video-display", ("xfce4-display-settings",)),
         ("Panels & Layout", "Configure the XFCE panel, launchers and desktop layout.",
-         "preferences-desktop-panel", ("xfce4-panel", "--preferences")),
+         "preferences-desktop-panel", ("xfce4-panel", "--preferences=1")),
         ("Window Manager", "Change window borders, focus and window behavior.",
          "preferences-system-windows", ("xfwm4-settings",)),
         ("Window Manager Tweaks", "Fine-tune window focus, compositing and title-bar behavior.",
