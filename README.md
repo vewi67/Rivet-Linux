@@ -21,7 +21,7 @@ Rivet aims to make everyday computing straightforward without taking control awa
 
 **Pre-alpha. Not ready for daily use.**
 
-The Debian live-build configuration, Rivet visual identity, Calamares branding, Chip welcome experience, Rivet Atmosphere controls, and Chip Fixs prototype are integrated into the development configuration. The Calamares slideshow contains a mouse-controlled Rivet Pong prototype. Chip Fixs includes a GTK interface, separate diagnostic core, hardware inventory, bounded system checks, confirmation-gated service repairs, and its custom icon. **Latest published image: development ISO build #99** ([GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-99)). That image includes the animated Plymouth boot identity and English-first live-session defaults, but it predates the newest installed-system Welcome to Rivet settings center, conditional live-only installer dock behavior, and Calamares password-policy helper. The current source has passed repository validation and Debian Trixie installer-package integration, including a GTK smoke test under Xvfb. The new source still needs a fresh ISO and runtime checks in a VM: UEFI and BIOS boot, networking, audio, Calamares branding, installation to a virtual disk, first installed boot, account login and password behavior, and package updates. Features are not considered complete until they have been tested in the generated system.
+The Debian live-build configuration, Rivet visual identity, Calamares branding, Chip welcome experience, Rivet Atmosphere controls, GNOME Software store with Debian package and Flatpak integration, and Chip Fixs prototype are integrated into the development configuration. The Calamares slideshow contains a mouse-controlled Rivet Pong prototype. Chip Fixs includes a GTK interface, separate diagnostic core, hardware inventory, bounded system checks, confirmation-gated service repairs, and its custom icon. **Latest published image: development ISO build #99** ([GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-99)). That image includes the animated Plymouth boot identity and English-first live-session defaults, but it predates the newest installed-system Welcome to Rivet settings center, conditional live-only installer dock behavior, and Calamares password-policy helper. The current source has passed repository validation and Debian Trixie installer-package integration, including a GTK smoke test under Xvfb. The new source still needs a fresh ISO and runtime checks in a VM: UEFI and BIOS boot, networking, audio, Calamares branding, installation to a virtual disk, first installed boot, account login and password behavior, and package updates. Features are not considered complete until they have been tested in the generated system.
 
 ## Current architecture
 
@@ -41,7 +41,7 @@ The Debian live-build configuration, Rivet visual identity, Calamares branding, 
 | Default filesystem | ext4 |
 | ISO builder | Debian live-build |
 | Installer | Calamares |
-| Package management | APT + dpkg |
+| Package management | APT + dpkg + GNOME Software + Flatpak/Flathub |
 | Welcome experience | Python + GTK 3 live welcome and installed settings hub |
 | Wallpaper atmosphere | XFCE native backdrop cycler + GTK 3 control |
 | System utility | Chip Fixs (Python + GTK 3) |
