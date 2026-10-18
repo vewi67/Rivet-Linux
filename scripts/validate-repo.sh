@@ -39,7 +39,7 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-build-script.py scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -136,11 +136,12 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
 python3 "$PASSWORD_POLICY_TEST"
+python3 scripts/test-build-script.py
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
 python3 scripts/test-chip-fixs.py
@@ -203,6 +204,10 @@ done
 grep -Fq 'lb clean' build/build.sh
 grep -Fq 'rm -f config/binary config/bootstrap config/chroot config/common config/source build.log' build/build.sh
 grep -Fq 'old_images=(live-image-*.hybrid.iso)' build/build.sh
+grep -Fq 'CONFIGURE_ONLY' build/build.sh
+grep -Fq 'if [[ "$CONFIGURE_ONLY" != true ]]; then' build/build.sh
+grep -Fq 'preserves existing ISO/checksum' scripts/test-build-script.py
+grep -Fq 'python3 scripts/test-build-script.py' scripts/validate-repo.sh
 grep -Fq 'quiet splash locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
