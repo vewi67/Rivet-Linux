@@ -21,6 +21,10 @@ pavucontrol
 wireplumber
 mate-polkit
 firefox-esr
+gnome-software
+gnome-software-plugin-deb
+gnome-software-plugin-flatpak
+flatpak
 libreoffice-writer
 libreoffice-calc
 locales
