@@ -78,8 +78,8 @@ user:
         )
 
         missing_key = root / "missing-key.conf"
-        invalid = source.replace("allowWeakPasswords: false\\n", "").replace(
-            "allowWeakPasswordsDefault: false\\n", ""
+        invalid = source.replace("allowWeakPasswords: false\n", "").replace(
+            "allowWeakPasswordsDefault: false\n", ""
         )
         missing_key.write_text(invalid, encoding="utf-8")
         result = run_helper(missing_key)
@@ -93,8 +93,8 @@ user:
 
         invalid_policy = root / "missing-policy.conf"
         no_policy = source.replace(
-            "passwordRequirements:\\n    minLength: 8\\n    maxLength: 64\\n"
-            "    libpwquality:\\n        - minlen=8\\n        - minclass=3\\n\\n",
+            "passwordRequirements:\n    minLength: 8\n    maxLength: 64\n"
+            "    libpwquality:\n        - minlen=8\n        - minclass=3\n\n",
             "",
         )
         invalid_policy.write_text(no_policy, encoding="utf-8")
