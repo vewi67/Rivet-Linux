@@ -3,6 +3,7 @@
 
 import glob
 import os
+from pathlib import Path
 import random
 import shutil
 import subprocess
@@ -18,9 +19,25 @@ MARKER = os.path.expanduser("~/.config/rivet/welcome-seen")
 INSTALLER = "/usr/bin/rivet-installer"
 
 
+def is_live_session(
+    cmdline_path="/proc/cmdline",
+    run_live_medium="/run/live/medium",
+    lib_live_medium="/lib/live/mount/medium",
+):
+    """Distinguish Debian live media from an installed Rivet system."""
+    try:
+        cmdline = Path(cmdline_path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        cmdline = ""
+    if "boot=live" in cmdline.split():
+        return True
+    return os.path.exists(run_live_medium) or os.path.exists(lib_live_medium)
+
+
 class RivetWelcome(Gtk.Window):
     def __init__(self):
         super().__init__(title="Welcome to Rivet Linux")
+        self.live_session = is_live_session()
         self.set_default_size(680, 480)
         self.set_resizable(False)
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -54,16 +71,24 @@ class RivetWelcome(Gtk.Window):
         outer.pack_start(title, False, False, 0)
 
         tagline = Gtk.Label()
-        tagline.set_markup('<span size="large">Your computer. Your rules.</span>')
+        if self.live_session:
+            tagline.set_markup('<span size="large">Try Rivet. Make it yours.</span>')
+        else:
+            tagline.set_markup('<span size="large">Your computer. Your rules.</span>')
         tagline.set_halign(Gtk.Align.CENTER)
         outer.pack_start(tagline, False, False, 0)
 
-        description = Gtk.Label(
-            label=(
-                "A lightweight system built to be explored, used, and changed. "
-                "Set the mood with Rivet Atmosphere, which can gently rotate our wallpapers."
+        if self.live_session:
+            description_text = (
+                "You are running Rivet from a live session. Explore the desktop, "
+                "or install Rivet to your computer when you are ready."
             )
-        )
+        else:
+            description_text = (
+                "Rivet is installed and ready. Explore your desktop and open "
+                "the tools below."
+            )
+        description = Gtk.Label(label=description_text)
         description.set_line_wrap(True)
         description.set_max_width_chars(62)
         description.set_justify(Gtk.Justification.CENTER)
@@ -80,10 +105,11 @@ class RivetWelcome(Gtk.Window):
         buttons.set_halign(Gtk.Align.CENTER)
         outer.pack_start(buttons, False, False, 8)
 
-        install_button = Gtk.Button(label="Install Rivet")
-        install_button.get_style_context().add_class("suggested-action")
-        install_button.connect("clicked", self.launch_installer)
-        buttons.pack_start(install_button, False, False, 0)
+        if self.live_session:
+            install_button = Gtk.Button(label="Install Rivet")
+            install_button.get_style_context().add_class("suggested-action")
+            install_button.connect("clicked", self.launch_installer)
+            buttons.pack_start(install_button, False, False, 0)
 
         files_button = Gtk.Button(label="Open files")
         files_button.connect(
