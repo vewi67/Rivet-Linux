@@ -5,6 +5,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT_DIR/build"
 cd "$BUILD_DIR"
 
+CONFIGURE_ONLY=false
+if [[ $# -gt 1 ]] || { [[ $# -eq 1 && "$1" != "--configure-only" ]]; }; then
+  echo "Usage: bash build/build.sh [--configure-only]" >&2
+  exit 2
+fi
+if [[ "${1:-}" == "--configure-only" ]]; then
+  CONFIGURE_ONLY=true
+fi
+
 for command_name in lb xorriso file sha256sum; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "ERROR: required command '$command_name' is not installed." >&2
@@ -60,6 +69,11 @@ lb_args=(
 
 echo "==> Configuring Rivet Linux for Debian Trixie (amd64)..."
 lb config "${lb_args[@]}"
+
+if [[ "$CONFIGURE_ONLY" == true ]]; then
+  echo "==> Live-build configuration preflight completed; ISO build skipped."
+  exit 0
+fi
 
 echo "==> Building Rivet Linux..."
 lb build

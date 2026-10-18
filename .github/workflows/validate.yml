@@ -24,6 +24,25 @@ jobs:
       - name: Validate repository
         run: bash scripts/validate-repo.sh
 
+  live-build-configuration-validation:
+    name: Live-build configuration preflight
+    runs-on: ubuntu-24.04
+    container: debian:trixie
+    timeout-minutes: 15
+
+    steps:
+      - name: Install live-build tooling
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates git live-build xorriso file coreutils
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure live-build without building an ISO
+        run: bash build/build.sh --configure-only
+
   installer-package-validation:
     name: Debian Trixie installer integration
     runs-on: ubuntu-24.04

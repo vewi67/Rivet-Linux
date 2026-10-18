@@ -28,7 +28,7 @@ The build script clears previous live-build stages when present, removes only ge
 
 ## GitHub Actions
 
-The Build Rivet ISO workflow validates the repository first, builds in a clean Debian Trixie container, checks the generated ISO and checksum, and publishes the files directly to a GitHub Release. It does not use short-lived Actions artifacts.
+The Build Rivet ISO workflow requires static repository validation, a Debian Trixie installer integration test, and a live-build configuration preflight before building in a clean Debian Trixie container. It then checks the generated ISO and checksum and publishes the files directly to a GitHub Release. The configuration preflight runs `bash build/build.sh --configure-only`, which executes `lb config` and stops before `lb build`. It does not use short-lived Actions artifacts.
 
 GitHub limits each release asset to less than 2 GiB. If the generated ISO is larger, the workflow splits it into numbered parts below that limit and publishes a reassembly script plus the SHA-256 file. Download all parts into one directory and run `bash reassemble-rivet-iso.sh`; the script joins the parts and verifies the checksum.
 

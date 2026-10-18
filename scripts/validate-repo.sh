@@ -237,6 +237,12 @@ grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
+grep -Fq 'name: Live-build configuration preflight' .github/workflows/validate.yml
+grep -Fq 'name: Live-build configuration preflight' .github/workflows/build-iso.yml
+grep -Fq 'needs: [validate, installer-package-validation, live-build-configuration-validation]' .github/workflows/build-iso.yml
+grep -Fq 'Live-build configuration preflight completed; ISO build skipped.' build/build.sh
+grep -Fq 'bash build/build.sh --configure-only' .github/workflows/validate.yml
+grep -Fq 'bash build/build.sh --configure-only' .github/workflows/build-iso.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/validate.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/build-iso.yml
 grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/validate.yml
