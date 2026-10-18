@@ -13,6 +13,12 @@ on:
           - "YES"
         default: "NO"
 
+  # Explicit one-time build request branch for the ISO authorized on 2026-10-18.
+  # This trigger is removed after this run; normal pushes never build ISOs.
+  push:
+    branches:
+      - rivet-iso-authorized-once-20261018
+
 permissions:
   contents: write
 
@@ -34,7 +40,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES'
+    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso-authorized-once-20261018')
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 45
