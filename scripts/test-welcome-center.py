@@ -59,7 +59,8 @@ def main():
     assert {"Personalization", "Devices & Input", "Connectivity", "Apps & System", "Rivet"} <= categories
     expected = {
         "appearance & themes", "desktop & wallpaper", "display & monitors",
-        "keyboard", "mouse & touchpad", "power & battery", "sound", "network",
+        "window manager tweaks", "keyboard", "mouse & touchpad", "power & battery",
+        "accessibility", "file associations", "advanced settings", "sound", "network",
         "bluetooth", "notifications", "software & updates", "rivet atmosphere",
         "chip fixs",
     }
