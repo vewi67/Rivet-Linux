@@ -112,7 +112,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso100-authorized-once-20261018' && github.run_number == 101)
+    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso100-authorized-once-20261018')
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45

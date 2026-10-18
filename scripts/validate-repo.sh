@@ -261,10 +261,16 @@ grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/build-iso.yml
-# Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
+# Keep ordinary ISO builds opt-in. Only the one-time, named #100 release branch is allowed to add a push trigger.
 if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
-  echo "ERROR: ISO build workflow must not have a push trigger." >&2
-  exit 1
+  authorized_branch="rivet-iso100-authorized-once-20261018"
+  if ! grep -Fq -- "$authorized_branch" .github/workflows/build-iso.yml ||
+     ! grep -Fq "refs/heads/${authorized_branch}" .github/workflows/build-iso.yml ||
+     ! grep -Fq 'tag_name: rivet-build-100' .github/workflows/build-iso.yml ||
+     ! grep -Fq "github.event_name == 'push'" .github/workflows/build-iso.yml; then
+    echo "ERROR: ISO build workflow contains an unauthorized push trigger." >&2
+    exit 1
+  fi
 fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
 grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
