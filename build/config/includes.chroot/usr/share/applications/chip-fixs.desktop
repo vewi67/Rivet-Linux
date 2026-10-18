@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Chip Fixs
+GenericName=System Diagnosis and Information
+Comment=Diagnose system problems and inspect computer hardware
+Exec=/usr/bin/chip-fixs
+Icon=chip-fixs
+Terminal=false
+StartupNotify=true
+Categories=System;Settings;Utility;
+Keywords=diagnostics;hardware;system;memory;cpu;gpu;repair;
