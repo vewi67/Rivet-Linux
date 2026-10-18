@@ -5,6 +5,7 @@ RIVET_WALLPAPER_DIR="/usr/share/backgrounds/rivet"
 RIVET_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-waves.jpeg"
 RIVET_LOGIN_WALLPAPER="${RIVET_WALLPAPER_DIR}/rivet-prism.jpeg"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
+RIVET_ICON_SOURCE="/etc/calamares/branding/rivet/rivet.icon.png"
 RIVET_ICON="/usr/share/icons/hicolor/256x256/apps/rivet.png"
 CHIP_FIXS_ICON="/usr/share/icons/hicolor/256x256/apps/chip-fixs.png"
 CHIP_FIXS_LOGO="/usr/share/rivet/chip-fixs/logo.png"
@@ -423,9 +424,33 @@ if [ ! -s "$BRANDING_DESC" ]; then
   exit 1
 fi
 
-# Install the Rivet icon for the desktop and welcome application.
+# Build a true square icon from the full logo. The source logo is landscape;
+# copying it directly into a 256x256 icon slot leaves the mark small/off-center.
+# Trim transparent margins, scale the visible artwork, then center it on a
+# transparent square canvas. Keep the full wordmark for Calamares/Plymouth.
+python3 - "$RIVET_LOGO" "$RIVET_ICON_SOURCE" <<'PY'
+from PIL import Image
+
+source, destination = __import__("sys").argv[1:3]
+image = Image.open(source).convert("RGBA")
+
+alpha = image.getchannel("A")
+bounds = alpha.getbbox()
+if bounds:
+    image = image.crop(bounds)
+
+image.thumbnail((220, 220), Image.Resampling.LANCZOS)
+canvas = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+x = (256 - image.width) // 2
+y = (256 - image.height) // 2
+canvas.alpha_composite(image, (x, y))
+canvas.save(destination, format="PNG")
+PY
+
+# Use the same square icon for the desktop/app icon theme.
 mkdir -p "$(dirname "$RIVET_ICON")"
-cp "$RIVET_LOGO" "$RIVET_ICON"
+cp "$RIVET_ICON_SOURCE" "$RIVET_ICON"
+chmod 0644 "$RIVET_ICON_SOURCE" "$RIVET_ICON"
 
 if [ ! -s /usr/bin/chip-fixs ] || [ ! -s /usr/lib/chip-fixs/core.py ]; then
   echo "ERROR: Chip Fixs application or diagnostic core is missing." >&2
