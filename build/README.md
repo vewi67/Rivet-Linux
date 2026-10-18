@@ -24,7 +24,7 @@ Expected output:
     build/live-image-amd64.hybrid.iso
     build/live-image-amd64.hybrid.iso.sha256
 
-The exact ISO filename is determined by live-build. Build state is managed by live-build; the script does not delete the tracked configuration directory.
+The build script clears previous live-build stages when present, removes only generated live-build configuration values and stale ISO/checksum outputs, and retains the tracked package lists, hooks, chroot includes, and package cache. It then regenerates a fresh configuration from the versioned build arguments.
 
 ## GitHub Actions
 

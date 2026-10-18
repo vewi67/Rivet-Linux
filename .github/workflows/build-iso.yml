@@ -49,6 +49,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Resolve the complete Rivet package set
+        shell: bash
         run: |
           apt-get update
           mapfile -t packages < <(sed '/^[[:space:]]*$/d; /^[[:space:]]*#/d' build/config/package-lists/rivet.list.chroot)

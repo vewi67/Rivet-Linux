@@ -26,7 +26,21 @@ BRANDING_HOOK="config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 }
 
 mkdir -p config/package-lists config/includes.chroot/etc/skel
-# Live-build hook files are tracked with executable Git permissions.
+
+# Start from clean live-build stages and regenerate derived configuration.
+# Preserve tracked customization inputs and the package cache.
+if [[ -f config/common || -d .build || -d chroot || -d binary || -d source ]]; then
+  echo "==> Cleaning previous live-build state..."
+  lb clean
+fi
+rm -f config/binary config/bootstrap config/chroot config/common config/source build.log
+
+# Never let an old ISO or checksum masquerade as the current build's output.
+shopt -s nullglob
+old_images=(live-image-*.hybrid.iso)
+for old_image in "${old_images[@]}"; do
+  rm -f -- "$old_image" "$old_image.sha256"
+done
 
 lb_args=(
   --distribution trixie

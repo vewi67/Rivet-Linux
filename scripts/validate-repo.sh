@@ -200,6 +200,9 @@ for setting in \
     exit 1
   }
 done
+grep -Fq 'lb clean' build/build.sh
+grep -Fq 'rm -f config/binary config/bootstrap config/chroot config/common config/source build.log' build/build.sh
+grep -Fq 'old_images=(live-image-*.hybrid.iso)' build/build.sh
 grep -Fq 'quiet splash locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
@@ -237,6 +240,8 @@ grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/validate.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/build-iso.yml
 grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/validate.yml
+grep -Fq '        shell: bash' .github/workflows/validate.yml
+grep -Fq '        shell: bash' .github/workflows/build-iso.yml
 grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/build-iso.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/build-iso.yml
 grep -Fq 'needs: [validate, installer-package-validation]' .github/workflows/build-iso.yml
