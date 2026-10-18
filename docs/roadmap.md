@@ -28,7 +28,7 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add repository validation
 - [x] Add ISO format and boot-metadata checks
 - [x] Generate a SHA-256 checksum during builds
-- [x] Complete a fresh ISO build and publish its ISO and SHA-256 checksum (build #98: [GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-98))
+- [x] Complete a fresh ISO build and publish its ISO and SHA-256 checksum (latest published image: build #99, [GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-99)); the current welcome-center and installer-policy changes were made afterward and are not yet in a released ISO
 - [ ] Test boot in a VM using UEFI
 - [ ] Test legacy BIOS boot
 - [ ] Test XFCE and default wallpaper
@@ -46,6 +46,9 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Implement the first-login welcome window
 - [x] Add a way to reopen the welcome window
 - [x] Add Rivet-branded application launchers
+- [x] Add the installed-system Welcome to Rivet settings center with Chip
+- [x] Separate the live installer welcome from the installed settings hub
+- [x] Add automated checks for the welcome UI, launch mode and live-only installer dock item
 - [x] Define the animated Plymouth boot identity and English-first default locale
 - [ ] Verify splash animation, welcome transition, and installed locale in UEFI/BIOS VMs
 - [x] Implement the Chip Fixs interface and diagnostic core prototype
