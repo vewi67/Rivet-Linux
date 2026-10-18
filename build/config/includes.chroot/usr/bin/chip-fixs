@@ -1,0 +1,690 @@
+#!/usr/bin/python3
+"""Chip Fixs: diagnóstico transparente e informações locais do computador."""
+
+from __future__ import annotations
+
+import os
+import random
+import sys
+import threading
+from pathlib import Path
+
+sys.path.insert(0, "/usr/lib/chip-fixs")
+import core  # noqa: E402
+
+import gi  # noqa: E402
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gdk, GLib, Gtk  # noqa: E402
+
+CHIP_DIR = Path("/usr/share/rivet/chip")
+APP_NAME = "Chip Fixs"
+
+CSS = b"""
+window#chip-fixs-window { background-color: @theme_bg_color; }
+headerbar#chip-header { padding: 8px 14px; }
+.hero-title { font-size: 27px; font-weight: bold; }
+.hero-subtitle { font-size: 14px; }
+.chip-card { border-radius: 14px; padding: 18px; }
+.action-title { font-size: 19px; font-weight: bold; }
+.action-description { font-size: 13px; }
+.chip-primary { padding: 15px 24px; font-size: 16px; font-weight: bold; }
+.result-card { padding: 12px; border-radius: 10px; }
+.result-ok { background-color: alpha(#20a875, 0.13); }
+.result-warning { background-color: alpha(#e6a23c, 0.15); }
+.result-error { background-color: alpha(#df5555, 0.14); }
+.result-critical { background-color: alpha(#df3333, 0.19); }
+.result-unknown { background-color: alpha(@theme_fg_color, 0.06); }
+.status-ok { color: #17865f; font-weight: bold; }
+.status-warning { color: #bb7d17; font-weight: bold; }
+.status-error, .status-critical { color: #c43d3d; font-weight: bold; }
+.status-unknown { color: @theme_unfocused_fg_color; font-weight: bold; }
+.info-toolbar { padding: 8px 0; }
+"""
+
+STATUS = {
+    "ok": ("✓", "OK"),
+    "warning": ("!", "ATENÇÃO"),
+    "error": ("×", "PROBLEMA"),
+    "critical": ("!", "CRÍTICO"),
+    "unknown": ("?", "NÃO CONFIRMADO"),
+}
+
+
+def start_worker(function, callback):
+    def work():
+        try:
+            result = function()
+            GLib.idle_add(callback, result, None)
+        except Exception as error:  # Keep the UI alive and expose the failure.
+            GLib.idle_add(callback, None, str(error))
+
+    threading.Thread(target=work, daemon=True).start()
+
+
+class ChipFixs:
+    def __init__(self):
+        self.window = Gtk.Window(title=APP_NAME)
+        self.window.set_name("chip-fixs-window")
+        self.window.set_default_size(1040, 740)
+        self.window.set_position(Gtk.WindowPosition.CENTER)
+        self.window.set_icon_name("chip-fixs")
+        self.window.connect("destroy", Gtk.main_quit)
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+        screen = Gdk.Screen.get_default()
+        if screen:
+            Gtk.StyleContext.add_provider_for_screen(
+                screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+
+        self.header = Gtk.HeaderBar()
+        self.header.set_name("chip-header")
+        self.header.set_show_close_button(True)
+        self.header.set_title(APP_NAME)
+        self.header.set_subtitle("Diagnóstico e informações do sistema")
+        self.window.set_titlebar(self.header)
+
+        self.back_button = Gtk.Button.new_from_icon_name("go-previous", Gtk.IconSize.BUTTON)
+        self.back_button.set_tooltip_text("Voltar ao início")
+        self.back_button.connect("clicked", self.go_home)
+        self.header.pack_start(self.back_button)
+        self.back_button.hide()
+
+        self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        self.stack.set_transition_duration(150)
+        self.window.add(self.stack)
+
+        self.last_diagnostics = []
+        self.system_info = None
+        self.info_text_views = {}
+        self.info_status = None
+        self.scan_status = None
+        self.scan_progress = None
+        self.scan_button = None
+        self.info_refresh_button = None
+        self.disk_selector = None
+        self.scan_running = False
+
+        self.stack.add_named(self.build_home(), "home")
+        self.stack.add_named(self.build_fix_page(), "fix")
+        self.stack.add_named(self.build_info_page(), "info")
+        self.stack.set_visible_child_name("home")
+        self.window.show_all()
+        self.back_button.hide()
+
+    def go_home(self, *_):
+        self.stack.set_visible_child_name("home")
+        self.header.set_subtitle("Diagnóstico e informações do sistema")
+        self.back_button.hide()
+
+    @staticmethod
+    def section_title(title, subtitle):
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        title_label = Gtk.Label(label=title)
+        title_label.set_xalign(0)
+        title_label.get_style_context().add_class("hero-title")
+        subtitle_label = Gtk.Label(label=subtitle)
+        subtitle_label.set_xalign(0)
+        subtitle_label.set_line_wrap(True)
+        subtitle_label.get_style_context().add_class("hero-subtitle")
+        box.pack_start(title_label, False, False, 0)
+        box.pack_start(subtitle_label, False, False, 0)
+        return box
+
+    def chip_image(self, size=148):
+        images = sorted(CHIP_DIR.glob("*.png"))
+        for image_path in (random.choice(images),) if images else ():
+            try:
+                pixbuf = __import__("gi.repository", fromlist=["GdkPixbuf"]).GdkPixbuf.Pixbuf.new_from_file_at_scale(
+                    str(image_path), size, size, True
+                )
+                return Gtk.Image.new_from_pixbuf(pixbuf)
+            except Exception:
+                continue
+        return Gtk.Image.new_from_icon_name("computer", Gtk.IconSize.DIALOG)
+
+    @staticmethod
+    def make_action_button(title, subtitle, icon_name):
+        button = Gtk.Button()
+        button.get_style_context().add_class("chip-primary")
+        content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=14)
+        icon = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.DIALOG)
+        icon.set_pixel_size(42)
+        labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        title_label = Gtk.Label(label=title)
+        title_label.set_xalign(0)
+        title_label.get_style_context().add_class("action-title")
+        subtitle_label = Gtk.Label(label=subtitle)
+        subtitle_label.set_xalign(0)
+        subtitle_label.set_line_wrap(True)
+        subtitle_label.set_max_width_chars(38)
+        subtitle_label.get_style_context().add_class("action-description")
+        labels.pack_start(title_label, False, False, 0)
+        labels.pack_start(subtitle_label, False, False, 0)
+        content.pack_start(icon, False, False, 0)
+        content.pack_start(labels, True, True, 0)
+        button.add(content)
+        return button
+
+    def build_home(self):
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=20)
+        outer.set_border_width(30)
+
+        hero = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=22)
+        hero.set_halign(Gtk.Align.CENTER)
+        hero.set_valign(Gtk.Align.CENTER)
+        hero.pack_start(self.chip_image(158), False, False, 0)
+
+        intro = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        intro.set_valign(Gtk.Align.CENTER)
+        intro.pack_start(self.section_title(
+            "Opa! Eu sou o Chip.",
+            "Vamos conhecer seu PC e investigar os problemas juntos."
+        ), False, False, 0)
+        description = Gtk.Label(
+            label="Eu verifico o que consigo confirmar, explico o que encontrei "
+                  "e só faço reparos depois que você autorizar."
+        )
+        description.set_xalign(0)
+        description.set_line_wrap(True)
+        description.set_max_width_chars(64)
+        intro.pack_start(description, False, False, 0)
+        hero.pack_start(intro, True, True, 0)
+        outer.pack_start(hero, False, False, 24)
+
+        actions = Gtk.Grid()
+        actions.set_column_spacing(16)
+        actions.set_row_spacing(16)
+        actions.set_column_homogeneous(True)
+        actions.set_hexpand(True)
+
+        fix_button = self.make_action_button(
+            "Fix System", "Verificar o sistema e oferecer reparos específicos.",
+            "emblem-system"
+        )
+        fix_button.connect("clicked", self.open_fix_page)
+        info_button = self.make_action_button(
+            "System Info", "Conhecer processador, RAM, placa de vídeo e todo o hardware detectável.",
+            "computer"
+        )
+        info_button.connect("clicked", self.open_info_page)
+        actions.attach(fix_button, 0, 0, 1, 1)
+        actions.attach(info_button, 1, 0, 1, 1)
+        outer.pack_start(actions, False, False, 4)
+
+        privacy = Gtk.Label(
+            label="Privacidade: as verificações são locais. Nenhum relatório é enviado automaticamente."
+        )
+        privacy.set_line_wrap(True)
+        privacy.set_xalign(0.5)
+        privacy.set_halign(Gtk.Align.CENTER)
+        privacy.get_style_context().add_class("dim-label")
+        outer.pack_end(privacy, False, False, 0)
+        return outer
+
+    def build_fix_page(self):
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14)
+        outer.set_border_width(22)
+        outer.pack_start(self.section_title(
+            "Fix System",
+            "O Chip verifica componentes importantes. As verificações não apagam arquivos nem mudam configurações."
+        ), False, False, 2)
+
+        toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        self.scan_button = Gtk.Button(label="Verificar agora")
+        self.scan_button.get_style_context().add_class("suggested-action")
+        self.scan_button.connect("clicked", self.start_diagnostics)
+        toolbar.pack_start(self.scan_button, False, False, 0)
+        self.scan_status = Gtk.Label(label="Pronto para iniciar a verificação.")
+        self.scan_status.set_xalign(0)
+        toolbar.pack_start(self.scan_status, True, True, 0)
+        outer.pack_start(toolbar, False, False, 0)
+
+        self.scan_progress = Gtk.ProgressBar()
+        self.scan_progress.set_no_show_all(True)
+        outer.pack_start(self.scan_progress, False, False, 0)
+
+        self.results_list = Gtk.ListBox()
+        self.results_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.results_list.set_activate_on_single_click(False)
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled.add(self.results_list)
+        outer.pack_start(scrolled, True, True, 0)
+        return outer
+
+    def build_info_page(self):
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        outer.set_border_width(16)
+
+        toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        toolbar.get_style_context().add_class("info-toolbar")
+        self.info_refresh_button = Gtk.Button(label="Atualizar informações")
+        self.info_refresh_button.connect("clicked", self.refresh_info)
+        toolbar.pack_start(self.info_refresh_button, False, False, 0)
+
+        copy_button = Gtk.Button(label="Copiar relatório")
+        copy_button.connect("clicked", self.copy_report)
+        toolbar.pack_start(copy_button, False, False, 0)
+
+        save_button = Gtk.Button(label="Salvar relatório…")
+        save_button.connect("clicked", self.save_report)
+        toolbar.pack_start(save_button, False, False, 0)
+
+        self.info_status = Gtk.Label(label="Preparando a coleta de informações…")
+        self.info_status.set_xalign(1)
+        toolbar.pack_end(self.info_status, True, True, 0)
+        outer.pack_start(toolbar, False, False, 0)
+
+        self.info_notebook = Gtk.Notebook()
+        self.info_notebook.set_scrollable(True)
+        self.info_text_views = {}
+        self.disk_selector = Gtk.ComboBoxText()
+        self.disk_selector.set_tooltip_text("Selecione um disco físico para consultar a saúde SMART")
+        self.disk_info_button = Gtk.Button(label="Verificar saúde SMART (admin)")
+        self.disk_info_button.set_tooltip_text("Consulta somente de leitura e pede autorização administrativa")
+        self.disk_info_button.connect("clicked", self.check_smart_health)
+        self.memory_info_button = Gtk.Button(label="Detalhes avançados da RAM (admin)")
+        self.memory_info_button.set_tooltip_text("Lê os dados SMBIOS do firmware depois de solicitar autorização")
+        self.memory_info_button.connect("clicked", self.advanced_memory)
+
+        self.create_info_tab("Resumo e placa-mãe")
+        self.create_info_tab("Processador")
+        self.create_info_tab("Memória RAM e swap", extra_button=self.memory_info_button)
+        self.create_info_tab("Placa de vídeo e monitores")
+        self.create_info_tab("Discos, partições e espaço", extra_widget=self.build_disk_tools())
+        self.create_info_tab("Rede e interfaces")
+        self.create_info_tab("Áudio")
+        self.create_info_tab("Dispositivos PCI e USB")
+        self.create_info_tab("Bateria, energia e sensores")
+        self.create_info_tab("Serviços, pacotes e relógio")
+
+        outer.pack_start(self.info_notebook, True, True, 0)
+        return outer
+
+    def build_disk_tools(self):
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        row.pack_start(Gtk.Label(label="Disco físico:"), False, False, 0)
+        row.pack_start(self.disk_selector, False, False, 0)
+        row.pack_start(self.disk_info_button, False, False, 0)
+        return row
+
+    def create_info_tab(self, title, extra_button=None, extra_widget=None):
+        page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        if extra_widget is not None:
+            page.pack_start(extra_widget, False, False, 0)
+        if extra_button is not None:
+            page.pack_start(extra_button, False, False, 0)
+        view = Gtk.TextView()
+        view.set_editable(False)
+        view.set_cursor_visible(False)
+        view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        view.set_monospace(True)
+        view.set_left_margin(12)
+        view.set_right_margin(12)
+        view.set_top_margin(12)
+        view.set_bottom_margin(12)
+        view.get_buffer().set_text("Carregando…")
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scrolled.add(view)
+        page.pack_start(scrolled, True, True, 0)
+        tab = Gtk.Label(label=title)
+        tab.set_margin_start(8)
+        tab.set_margin_end(8)
+        self.info_notebook.append_page(page, tab)
+        self.info_text_views[title] = view
+
+    def open_fix_page(self, *_):
+        self.stack.set_visible_child_name("fix")
+        self.header.set_subtitle("Verificação e reparos autorizados")
+        self.back_button.show()
+        if not self.last_diagnostics and not self.scan_running:
+            self.start_diagnostics()
+
+    def open_info_page(self, *_):
+        self.stack.set_visible_child_name("info")
+        self.header.set_subtitle("Inventário local de hardware e sistema")
+        self.back_button.show()
+        if self.system_info is None:
+            self.refresh_info()
+
+    def start_diagnostics(self, *_):
+        if self.scan_running:
+            return
+        self.scan_running = True
+        self.scan_button.set_sensitive(False)
+        self.scan_progress.show()
+        self.scan_progress.set_fraction(0)
+        self.scan_status.set_text("Verificando pacotes, armazenamento, memória, serviços e componentes Rivet…")
+        GLib.timeout_add(100, self.pulse_scan)
+        start_worker(core.run_diagnostics, self.finish_diagnostics)
+
+    def pulse_scan(self):
+        if not self.scan_running:
+            self.scan_progress.hide()
+            return False
+        self.scan_progress.pulse()
+        return True
+
+    def finish_diagnostics(self, result, error):
+        self.scan_running = False
+        self.scan_button.set_sensitive(True)
+        self.scan_progress.hide()
+        if error:
+            self.scan_status.set_text("A verificação encontrou um erro inesperado.")
+            self.render_diagnostics([{
+                "status": "error", "category": "Chip Fixs", "title": "A verificação não foi concluída",
+                "details": error, "repair": None, "suggestion": None
+            }])
+            return False
+        self.last_diagnostics = result or []
+        errors = sum(1 for item in self.last_diagnostics if item["status"] in ("error", "critical"))
+        warnings = sum(1 for item in self.last_diagnostics if item["status"] == "warning")
+        if errors:
+            self.scan_status.set_text(f"Concluído: {errors} problema(s) e {warnings} aviso(s).")
+        elif warnings:
+            self.scan_status.set_text(f"Concluído: {warnings} aviso(s). Revise os detalhes.")
+        else:
+            self.scan_status.set_text("Verificação concluída. Confira os resultados abaixo.")
+        self.render_diagnostics(self.last_diagnostics)
+        return False
+
+    def render_diagnostics(self, results):
+        for child in self.results_list.get_children():
+            self.results_list.remove(child)
+
+        if not results:
+            row = Gtk.ListBoxRow()
+            row.add(Gtk.Label(label="Nenhum resultado foi recebido. Tente verificar novamente."))
+            self.results_list.add(row)
+            self.results_list.show_all()
+            return
+
+        for item in results:
+            status = item.get("status", "unknown")
+            glyph, label = STATUS.get(status, STATUS["unknown"])
+            card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=7)
+            card.set_border_width(12)
+            card.get_style_context().add_class("result-card")
+            card.get_style_context().add_class("result-" + status)
+
+            heading = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            status_label = Gtk.Label(label=f"{glyph}  {label}")
+            status_label.get_style_context().add_class("status-" + status)
+            status_label.set_xalign(0)
+            title = Gtk.Label(label=item.get("title", "Resultado"))
+            title.set_xalign(0)
+            title.set_line_wrap(True)
+            title.set_hexpand(True)
+            heading.pack_start(status_label, False, False, 0)
+            heading.pack_start(title, True, True, 0)
+            card.pack_start(heading, False, False, 0)
+
+            category = Gtk.Label(label=item.get("category", "Sistema"))
+            category.set_xalign(0)
+            category.get_style_context().add_class("dim-label")
+            card.pack_start(category, False, False, 0)
+
+            details = Gtk.Label(label=item.get("details", "Sem detalhes."))
+            details.set_xalign(0)
+            details.set_line_wrap(True)
+            details.set_selectable(True)
+            details.set_max_width_chars(120)
+            card.pack_start(details, False, False, 0)
+
+            buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            repair = item.get("repair")
+            if repair:
+                label_text = "Reiniciar áudio" if repair == "audio" else "Reiniciar serviço de rede"
+                repair_button = Gtk.Button(label=label_text)
+                repair_button.connect("clicked", self.confirm_repair, repair, item.get("title", ""))
+                buttons.pack_start(repair_button, False, False, 0)
+            suggestion = item.get("suggestion")
+            if suggestion:
+                copy_button = Gtk.Button(label="Copiar orientação")
+                copy_button.connect("clicked", self.copy_text, suggestion)
+                buttons.pack_start(copy_button, False, False, 0)
+            if buttons.get_children():
+                card.pack_start(buttons, False, False, 0)
+
+            row = Gtk.ListBoxRow()
+            row.set_selectable(False)
+            row.add(card)
+            row.set_margin_start(3)
+            row.set_margin_end(3)
+            row.set_margin_top(3)
+            row.set_margin_bottom(3)
+            self.results_list.add(row)
+
+        self.results_list.show_all()
+
+    def confirm_repair(self, _button, action, title):
+        if action == "network":
+            message = "O Chip vai solicitar autorização para reiniciar o NetworkManager. Isso pode interromper temporariamente Wi-Fi ou Ethernet. Continuar?"
+        else:
+            message = "O Chip vai tentar reiniciar os serviços PipeWire e WirePlumber da sua sessão. O áudio pode parar por alguns segundos. Continuar?"
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Autorizar reparo?",
+        )
+        dialog.format_secondary_text(message + "\n\nProblema identificado: " + title)
+        response = dialog.run()
+        dialog.destroy()
+        if response != Gtk.ResponseType.YES:
+            return
+        self.scan_status.set_text("Executando o reparo solicitado…")
+        start_worker(lambda: core.repair_action(action), self.finish_repair)
+
+    def finish_repair(self, result, error):
+        if error:
+            self.show_message("Erro durante o reparo", error, Gtk.MessageType.ERROR)
+        else:
+            succeeded, detail = result
+            self.show_message("Reparo concluído" if succeeded else "Reparo não concluído", detail,
+                              Gtk.MessageType.INFO if succeeded else Gtk.MessageType.WARNING)
+        self.start_diagnostics()
+        return False
+
+    def refresh_info(self, *_):
+        self.info_refresh_button.set_sensitive(False)
+        self.info_status.set_text("Coletando dados locais…")
+        for view in self.info_text_views.values():
+            view.get_buffer().set_text("Consultando as ferramentas e interfaces disponíveis…")
+        start_worker(core.collect_system_info, self.finish_info)
+
+    def finish_info(self, result, error):
+        self.info_refresh_button.set_sensitive(True)
+        if error:
+            self.info_status.set_text("Não foi possível concluir a coleta.")
+            self.show_message("Falha na coleta de informações", error, Gtk.MessageType.ERROR)
+            return False
+        self.system_info = result
+        for title, view in self.info_text_views.items():
+            text = result.get(title, "Nenhum dado disponível nesta categoria.")
+            view.get_buffer().set_text(text)
+        self.disk_selector.remove_all()
+        disks = core.list_physical_disks()
+        if disks:
+            for device, label in disks:
+                self.disk_selector.append(device, label)
+            self.disk_selector.set_active(0)
+        else:
+            self.disk_selector.append("", "Nenhum disco físico detectado")
+            self.disk_selector.set_active(0)
+        self.info_status.set_text("Dados atualizados. Coleta local, sem envio.")
+        return False
+
+    def make_report(self):
+        if not self.system_info:
+            return "O relatório ainda não está disponível."
+        parts = [
+            "CHIP FIXS - RELATÓRIO DO SISTEMA",
+            f"Gerado localmente em: {__import__('datetime').datetime.now().astimezone().isoformat(timespec='seconds')}",
+            "Este arquivo só é criado quando o usuário escolhe salvar. Confira dados sensíveis antes de compartilhá-lo.",
+            "",
+        ]
+        for title, body in self.system_info.items():
+            parts.extend([f"===== {title} =====", body, ""])
+        if self.last_diagnostics:
+            parts.extend(["===== Última verificação ====="])
+            for item in self.last_diagnostics:
+                parts.extend([
+                    f"[{item.get('status', 'unknown').upper()}] {item.get('title', '')}",
+                    item.get("details", ""),
+                    "",
+                ])
+        return "\n".join(parts).rstrip() + "\n"
+
+    def copy_report(self, *_):
+        if not self.system_info:
+            self.show_message("Relatório indisponível", "Atualize as informações antes de copiar.", Gtk.MessageType.INFO)
+            return
+        self.copy_text(None, self.make_report())
+        self.info_status.set_text("Relatório copiado para a área de transferência.")
+
+    def copy_text(self, _button, text):
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        clipboard.set_text(text or "", -1)
+        clipboard.store()
+        if self.scan_status:
+            self.scan_status.set_text("Orientação copiada. Nenhuma alteração foi feita.")
+
+    def save_report(self, *_):
+        if not self.system_info:
+            self.show_message("Relatório indisponível", "Atualize as informações antes de salvar.", Gtk.MessageType.INFO)
+            return
+        chooser = Gtk.FileChooserDialog(
+            title="Salvar relatório do Chip Fixs",
+            parent=self.window,
+            action=Gtk.FileChooserAction.SAVE,
+        )
+        chooser.add_buttons(
+            "Cancelar", Gtk.ResponseType.CANCEL,
+            "Salvar", Gtk.ResponseType.ACCEPT,
+        )
+        chooser.set_current_name("chip-fixs-relatorio.txt")
+        chooser.set_do_overwrite_confirmation(True)
+        response = chooser.run()
+        filename = chooser.get_filename() if response == Gtk.ResponseType.ACCEPT else None
+        chooser.destroy()
+        if not filename:
+            return
+        try:
+            Path(filename).write_text(self.make_report(), encoding="utf-8")
+            self.show_message("Relatório salvo", f"Arquivo salvo em:\n{filename}\n\nEle pode conter nomes de dispositivos e dados da rede. Revise antes de compartilhar.", Gtk.MessageType.INFO)
+        except OSError as error:
+            self.show_message("Não foi possível salvar", str(error), Gtk.MessageType.ERROR)
+
+    def advanced_memory(self, *_):
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Ler detalhes avançados da RAM?",
+        )
+        dialog.format_secondary_text(
+            "O Chip solicitará autorização administrativa para ler o inventário SMBIOS informado pelo firmware. "
+            "O comando é somente de leitura. Continuar?"
+        )
+        response = dialog.run()
+        dialog.destroy()
+        if response == Gtk.ResponseType.YES:
+            self.info_status.set_text("Aguardando autorização para ler os módulos de memória…")
+            start_worker(core.read_advanced_memory, self.finish_privileged_memory)
+
+    def finish_privileged_memory(self, result, error):
+        self.info_status.set_text("Dados avançados da memória atualizados." if not error else "Falha ao ler os detalhes.")
+        if error:
+            self.show_message("Falha ao consultar a RAM", error, Gtk.MessageType.ERROR)
+            return False
+        succeeded, detail = result
+        self.show_text_dialog(
+            "Detalhes avançados da RAM" if succeeded else "Não foi possível ler os detalhes da RAM",
+            detail,
+        )
+        return False
+
+    def check_smart_health(self, *_):
+        device = self.disk_selector.get_active_id()
+        if not device:
+            self.show_message("Nenhum disco selecionado", "Escolha um disco físico detectado pelo sistema.", Gtk.MessageType.INFO)
+            return
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text="Consultar a saúde do disco?",
+        )
+        dialog.format_secondary_text(
+            f"O Chip solicitará autorização para consultar informações SMART de {device}. "
+            "O teste é somente de leitura e não repara nem modifica o disco. Continuar?"
+        )
+        response = dialog.run()
+        dialog.destroy()
+        if response == Gtk.ResponseType.YES:
+            self.info_status.set_text(f"Consultando a saúde de {device}…")
+            start_worker(lambda: core.read_smart_health(device), self.finish_smart_health)
+
+    def finish_smart_health(self, result, error):
+        self.info_status.set_text("Consulta SMART concluída." if not error else "Falha na consulta SMART.")
+        if error:
+            self.show_message("Falha na consulta SMART", error, Gtk.MessageType.ERROR)
+            return False
+        succeeded, detail = result
+        self.show_text_dialog(
+            "Resultado da saúde SMART" if succeeded else "SMART não confirmou um estado saudável",
+            detail,
+        )
+        return False
+
+    def show_text_dialog(self, title, text):
+        dialog = Gtk.Dialog(title=title, transient_for=self.window, flags=Gtk.DialogFlags.MODAL)
+        dialog.add_button("Fechar", Gtk.ResponseType.CLOSE)
+        dialog.set_default_size(740, 540)
+        area = dialog.get_content_area()
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_border_width(10)
+        view = Gtk.TextView()
+        view.set_editable(False)
+        view.set_cursor_visible(False)
+        view.set_monospace(True)
+        view.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        view.get_buffer().set_text(text or "Nenhum detalhe retornado.")
+        scrolled.add(view)
+        area.pack_start(scrolled, True, True, 0)
+        dialog.show_all()
+        dialog.run()
+        dialog.destroy()
+
+    def show_message(self, title, message, message_type):
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=message_type,
+            buttons=Gtk.ButtonsType.CLOSE,
+            text=title,
+        )
+        dialog.format_secondary_text(message)
+        dialog.run()
+        dialog.destroy()
+
+    def run(self):
+        Gtk.main()
+
+
+def main():
+    app = ChipFixs()
+    app.run()
+
+
+if __name__ == "__main__":
+    main()
