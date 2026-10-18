@@ -84,8 +84,8 @@ grep -Fq "grep -Eq '^GPGKey=.+$'" "$BRANDING_HOOK" || {
   echo "ERROR: Flathub signing-key validation is missing or incomplete." >&2
   exit 1
 }
-if [[ "$(grep -Fc "grep -Eq '^GPGKey=.+$' /etc/flatpak/remotes.d/flathub.flatpakrepo; then" "$BRANDING_HOOK")" -ne 0 ]]; then
-  echo "ERROR: a detached Flathub validation fragment remains." >&2
+if [[ "$(grep -Fc "grep -Eq '^GPGKey=.+$' /etc/flatpak/remotes.d/flathub.flatpakrepo" "$BRANDING_HOOK")" -ne 1 ]]; then
+  echo "ERROR: expected exactly one complete Flathub signing-key validation." >&2
   exit 1
 fi
 sh -n "$ATMOSPHERE_GUARD"
