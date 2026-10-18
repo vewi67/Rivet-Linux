@@ -268,6 +268,26 @@ def check_root(root):
         if not re.search(r"(?m)^\s+-\s+sudo\s*(?:#.*)?$", users_config):
             problems.append("users.conf defaultGroups must include sudo.")
 
+        requirements = re.search(
+            r"(?ms)^passwordRequirements:[ \\t]*\\n(.*?)(?=^[A-Za-z][A-Za-z0-9_-]*:)",
+            users_config,
+        )
+        if not requirements:
+            problems.append("users.conf must define passwordRequirements.")
+        else:
+            password_policy = requirements.group(1)
+            if not re.search(r"(?m)^\\s+minLength:[ \\t]*1(?:[ \\t]*#.*)?$", password_policy):
+                problems.append("users.conf must allow any non-empty password (minLength: 1).")
+            if not re.search(r"(?m)^\\s+maxLength:[ \\t]*-1(?:[ \\t]*#.*)?$", password_policy):
+                problems.append("users.conf must not impose a maximum password length.")
+            for setting_text in ("- minlen=0", "- minclass=0"):
+                if setting_text not in password_policy:
+                    problems.append(f"users.conf password policy is missing {setting_text!r}.")
+        if setting(users_config, "allowWeakPasswords") != "true":
+            problems.append("users.conf must permit weak passwords rather than rejecting them.")
+        if setting(users_config, "allowWeakPasswordsDefault") != "true":
+            problems.append("users.conf must enable the allow-weak-passwords option by default.")
+
     packages_path = modules_dir / "packages.conf"
     if packages_path.is_file():
         packages_config = packages_path.read_text(encoding="utf-8", errors="replace")
@@ -358,7 +378,10 @@ def self_test():
         )
         write_fixture_file(
             root, "/etc/calamares/modules/users.conf",
-            'defaultGroups:\n - cdrom\n - sudo\nsudoersGroup: sudo\n',
+            'defaultGroups:\n - cdrom\n - sudo\nsudoersGroup: sudo\n'
+            'passwordRequirements:\n    minLength: 1\n    maxLength: -1\n'
+            '    libpwquality:\n        - minlen=0\n        - minclass=0\n'
+            'allowWeakPasswords: true\nallowWeakPasswordsDefault: true\n',
         )
         write_fixture_file(
             root, "/etc/calamares/modules/packages.conf",
