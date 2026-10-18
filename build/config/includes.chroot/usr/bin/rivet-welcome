@@ -186,8 +186,25 @@ class RivetWelcome(Gtk.Window):
 
 
 if __name__ == "__main__":
-    if os.path.exists(MARKER) and "--show-again" not in sys.argv:
+    show_again = "--show-again" in sys.argv
+    if os.path.exists(MARKER) and not show_again:
         sys.exit(0)
+
+    # Keep the live-session welcome simple. Installed systems are handed off
+    # to the separate full welcome and system-settings application.
+    if not is_live_session():
+        installed_app = "/usr/bin/rivet-welcome-center"
+        if not os.path.isfile(installed_app):
+            print(
+                f"Installed Rivet welcome center is missing: {installed_app}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        command = [installed_app]
+        if show_again:
+            command.append("--show-again")
+        os.execv(installed_app, command)
+
     try:
         RivetWelcome().show_all()
         Gtk.main()
