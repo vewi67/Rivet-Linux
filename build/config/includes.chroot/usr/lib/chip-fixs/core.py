@@ -50,10 +50,7 @@ def run_command(args: list[str], timeout: int = 5) -> subprocess.CompletedProces
 
 
 def find_command(name: str) -> str | None:
-    """Find system utilities even in desktop sessions whose PATH omits /usr/sbin."""
-    found = shutil.which(name)
-    if found:
-        return found
+    """Find trusted system utilities in fixed directories, never through user PATH."""
     for directory in ("/usr/bin", "/usr/sbin", "/bin", "/sbin"):
         candidate = Path(directory) / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
@@ -194,8 +191,11 @@ def memory_summary() -> tuple[list[str], dict[str, int]]:
 
 
 def list_physical_disks() -> list[tuple[str, str]]:
+    lsblk = find_command("lsblk")
+    if not lsblk:
+        return []
     result = run_command(
-        ["lsblk", "-dnJpo", "NAME,MODEL,SIZE,TYPE"],
+        [lsblk, "-dnJpo", "NAME,MODEL,SIZE,TYPE"],
         timeout=4,
     )
     if result.returncode != 0:
