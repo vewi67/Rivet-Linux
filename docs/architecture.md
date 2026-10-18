@@ -54,7 +54,7 @@ Initial software includes:
 - Synaptic
 - core XFCE utilities
 - basic diagnostic and network tools
-- a small GTK welcome application
+- a GTK welcome experience with a live-session installer view and an installed-system settings hub
 - Rivet Atmosphere controls using XFCE's native wallpaper cycler
 - Chip Fixs, a GTK 3 diagnostic and hardware-inventory utility with a separately tested Python core
 
