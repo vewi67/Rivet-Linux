@@ -412,15 +412,446 @@ if ! grep -Fxq 'NoDisplay=true' "$SOFTWARE_LAUNCHER"; then
   sed -i '/^\[Desktop Entry\]/aNoDisplay=true' "$SOFTWARE_LAUNCHER"
 fi
 mkdir -p /etc/flatpak/remotes.d
-cat > /etc/flatpak/remotes.d/flathub.flatpakrepo <<'EOF'
-[Flatpak Repo]
-Title=Flathub
-Url=https://dl.flathub.org/repo/
-Homepage=https://flathub.org/
-Comment=Applications for Linux
-Description=Flathub is a place to get and distribute applications for Linux.
-SuggestRemoteName=flathub
+# Use Flathub's official repository descriptor, including its GPG signing key.
+if ! curl --fail --silent --show-error --location --retry 3 --connect-timeout 10 \
+  --max-time 60 https://dl.flathub.org/repo/flathub.flatpakrepo \
+  --output /etc/flatpak/remotes.d/flathub.flatpakrepo; then
+  echo "ERROR: could not retrieve Flathub's official remote definition." >&2
+  exit 1
+fi
+if ! grep -Eq '^Url=https://dl\.flathub\.org/repo/?
+
+# Keep Debian's own launcher logic for display authorization and temporary fstab handling.
+# Point Calamares at Rivet branding while preserving Debian's tested module sequence.
+CALAMARES_SETTINGS="/etc/calamares/settings.conf"
+if [ ! -s "$CALAMARES_SETTINGS" ]; then
+  echo "ERROR: Calamares settings file is missing: $CALAMARES_SETTINGS" >&2
+  exit 1
+fi
+if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$' "$CALAMARES_SETTINGS"; then
+  echo "ERROR: expected Debian branding entry in $CALAMARES_SETTINGS." >&2
+  exit 1
+fi
+sed -i 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' "$CALAMARES_SETTINGS"
+
+# Add a last explicit confirmation before destructive disk work. Once file
+# systems and boot records are being written, prevent accidental cancellation.
+for setting in prompt-install disable-cancel-during-exec; do
+  if ! grep -Eq "^[[:space:]]*${setting}:[[:space:]]*(true|false)[[:space:]]*(#.*)?$" "$CALAMARES_SETTINGS"; then
+    echo "ERROR: required Calamares installation-safety setting is missing: ${setting}" >&2
+    exit 1
+  fi
+done
+sed -Ei 's/^[[:space:]]*prompt-install:[[:space:]]*.*/prompt-install: true/' "$CALAMARES_SETTINGS"
+sed -Ei 's/^[[:space:]]*disable-cancel-during-exec:[[:space:]]*.*/disable-cancel-during-exec: true/' "$CALAMARES_SETTINGS"
+
+# Configure the same password policy in both the image and the Debian-package CI test.
+USERS_CONFIG="/etc/calamares/modules/users.conf"
+PASSWORD_POLICY_HELPER="/usr/lib/rivet/configure-calamares-password-policy.py"
+if [ ! -s "$USERS_CONFIG" ]; then
+  echo "ERROR: Calamares users module configuration is missing: $USERS_CONFIG" >&2
+  exit 1
+fi
+if [ ! -s "$PASSWORD_POLICY_HELPER" ]; then
+  echo "ERROR: Rivet password policy helper is missing: $PASSWORD_POLICY_HELPER" >&2
+  exit 1
+fi
+python3 "$PASSWORD_POLICY_HELPER" "$USERS_CONFIG"
+
+mkdir -p /etc/calamares/branding/rivet
+BRANDING_DESC="/etc/calamares/branding/rivet/branding.desc"
+if [ ! -s "$BRANDING_DESC" ]; then
+  echo "ERROR: Rivet Calamares branding descriptor is missing: $BRANDING_DESC" >&2
+  exit 1
+fi
+
+# Build a true square icon from the full logo. The source logo is landscape;
+# copying it directly into a 256x256 icon slot leaves the mark small/off-center.
+# Trim transparent margins, scale the visible artwork, then center it on a
+# transparent square canvas. Keep the full wordmark for Calamares/Plymouth.
+python3 - "$RIVET_LOGO" "$RIVET_ICON_SOURCE" <<'PY'
+from PIL import Image
+
+source, destination = __import__("sys").argv[1:3]
+image = Image.open(source).convert("RGBA")
+
+alpha = image.getchannel("A")
+bounds = alpha.getbbox()
+if bounds:
+    image = image.crop(bounds)
+
+image.thumbnail((220, 220), Image.Resampling.LANCZOS)
+canvas = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+x = (256 - image.width) // 2
+y = (256 - image.height) // 2
+canvas.alpha_composite(image, (x, y))
+canvas.save(destination, format="PNG")
+PY
+
+# Use the same square icon for the desktop/app icon theme.
+mkdir -p "$(dirname "$RIVET_ICON")"
+cp "$RIVET_ICON_SOURCE" "$RIVET_ICON"
+chmod 0644 "$RIVET_ICON_SOURCE" "$RIVET_ICON"
+
+if [ ! -s /usr/bin/chip-fixs ] || [ ! -s /usr/lib/chip-fixs/core.py ]; then
+  echo "ERROR: Chip Fixs application or diagnostic core is missing." >&2
+  exit 1
+fi
+if [ ! -s /usr/share/applications/chip-fixs.desktop ]; then
+  echo "ERROR: Chip Fixs desktop launcher is missing." >&2
+  exit 1
+fi
+if [ ! -s "$CHIP_FIXS_LOGO" ]; then
+  echo "ERROR: Chip Fixs logo is missing: $CHIP_FIXS_LOGO" >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/chip-fixs
+mkdir -p "$(dirname "$CHIP_FIXS_ICON")"
+cp "$CHIP_FIXS_LOGO" "$CHIP_FIXS_ICON"
+chmod 0644 "$CHIP_FIXS_ICON"
+
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+fi
+
+# Keep Debian's packaged launcher script and installer module sequence intact.
+# Rivet uses a separate branded desktop entry that points to this same helper.
+INSTALLER="/usr/bin/calamares-install-debian"
+DEBIAN_INSTALLER_DESKTOP="/usr/share/applications/calamares-install-debian.desktop"
+RIVET_INSTALLER_DESKTOP="/usr/share/applications/rivet-installer.desktop"
+if [ ! -x "$INSTALLER" ]; then
+  echo "ERROR: Calamares launcher is missing or not executable: $INSTALLER" >&2
+  exit 1
+fi
+if [ ! -s "$DEBIAN_INSTALLER_DESKTOP" ]; then
+  echo "ERROR: Debian's Calamares desktop entry is missing: $DEBIAN_INSTALLER_DESKTOP" >&2
+  exit 1
+fi
+if [ ! -s "$RIVET_INSTALLER_DESKTOP" ]; then
+  echo "ERROR: Rivet's branded Calamares desktop entry is missing: $RIVET_INSTALLER_DESKTOP" >&2
+  exit 1
+fi
+
+# Hide the original menu entry instead of editing its name, icon, or command.
+if ! grep -Fxq 'NoDisplay=true' "$DEBIAN_INSTALLER_DESKTOP"; then
+  sed -i '/^\[Desktop Entry\]/aNoDisplay=true' "$DEBIAN_INSTALLER_DESKTOP"
+fi
+
+# Debian's helper creates an unbranded desktop shortcut on login; Rivet provides its own.
+rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop
+
+
+if [ ! -s /usr/bin/rivet-welcome ]; then
+  echo "ERROR: Rivet welcome application is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-welcome
+
+if [ ! -s /usr/bin/rivet-start-plank ]; then
+  echo "ERROR: Rivet Plank session helper is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-start-plank
+
+if [ ! -s /usr/bin/rivet-welcome-center ]; then
+  echo "ERROR: installed Rivet welcome center is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-welcome-center
+
+# Keep the expected desktop integration present in the built image.
+if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
+  echo "ERROR: Plank autostart entry is missing." >&2
+  exit 1
+fi
+
+# Give new live and installed accounts a populated bottom dock, separate from the top status bar.
+PLANK_DIR="/etc/skel/.config/plank/dock1"
+PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
+mkdir -p "$PLANK_LAUNCHERS"
+cat > "${PLANK_DIR}/settings" <<'EOF'
+[PlankDockPreferences]
+DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
+IconSize=48
+Position=3
+Alignment=3
+ItemsAlignment=3
+HideMode=0
+ZoomEnabled=true
+ZoomPercent=150
+TooltipsEnabled=true
 EOF
+
+cat > "${PLANK_LAUNCHERS}/Firefox.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/firefox-esr.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Files.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/thunar.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Welcome.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-welcome.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Software.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-software.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Install-Rivet.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-installer.desktop
+EOF
+cat > /usr/share/applications/rivet-settings.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Rivet Settings
+Comment=Configure the Rivet desktop
+Exec=xfce4-settings-manager
+Icon=preferences-desktop
+Terminal=false
+Categories=Settings;DesktopSettings;
+EOF
+cat > "${PLANK_LAUNCHERS}/Settings.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-settings.desktop
+EOF
+
+cat > "${PLANK_LAUNCHERS}/Atmosphere.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-atmosphere.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Chip-Fixs.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/chip-fixs.desktop
+EOF
+
+if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
+  echo "ERROR: Calamares branding was not switched to Rivet." >&2
+  exit 1
+fi
+
+echo "Rivet desktop, Atmosphere, dock, installer authentication, branding, and welcome experience configured."
+ /etc/flatpak/remotes.d/flathub.flatpakrepo ||
+   ! grep -Eq '^GPGKey=.+
+
+# Keep Debian's own launcher logic for display authorization and temporary fstab handling.
+# Point Calamares at Rivet branding while preserving Debian's tested module sequence.
+CALAMARES_SETTINGS="/etc/calamares/settings.conf"
+if [ ! -s "$CALAMARES_SETTINGS" ]; then
+  echo "ERROR: Calamares settings file is missing: $CALAMARES_SETTINGS" >&2
+  exit 1
+fi
+if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$' "$CALAMARES_SETTINGS"; then
+  echo "ERROR: expected Debian branding entry in $CALAMARES_SETTINGS." >&2
+  exit 1
+fi
+sed -i 's/^[[:space:]]*branding:[[:space:]]*debian[[:space:]]*$/branding: rivet/' "$CALAMARES_SETTINGS"
+
+# Add a last explicit confirmation before destructive disk work. Once file
+# systems and boot records are being written, prevent accidental cancellation.
+for setting in prompt-install disable-cancel-during-exec; do
+  if ! grep -Eq "^[[:space:]]*${setting}:[[:space:]]*(true|false)[[:space:]]*(#.*)?$" "$CALAMARES_SETTINGS"; then
+    echo "ERROR: required Calamares installation-safety setting is missing: ${setting}" >&2
+    exit 1
+  fi
+done
+sed -Ei 's/^[[:space:]]*prompt-install:[[:space:]]*.*/prompt-install: true/' "$CALAMARES_SETTINGS"
+sed -Ei 's/^[[:space:]]*disable-cancel-during-exec:[[:space:]]*.*/disable-cancel-during-exec: true/' "$CALAMARES_SETTINGS"
+
+# Configure the same password policy in both the image and the Debian-package CI test.
+USERS_CONFIG="/etc/calamares/modules/users.conf"
+PASSWORD_POLICY_HELPER="/usr/lib/rivet/configure-calamares-password-policy.py"
+if [ ! -s "$USERS_CONFIG" ]; then
+  echo "ERROR: Calamares users module configuration is missing: $USERS_CONFIG" >&2
+  exit 1
+fi
+if [ ! -s "$PASSWORD_POLICY_HELPER" ]; then
+  echo "ERROR: Rivet password policy helper is missing: $PASSWORD_POLICY_HELPER" >&2
+  exit 1
+fi
+python3 "$PASSWORD_POLICY_HELPER" "$USERS_CONFIG"
+
+mkdir -p /etc/calamares/branding/rivet
+BRANDING_DESC="/etc/calamares/branding/rivet/branding.desc"
+if [ ! -s "$BRANDING_DESC" ]; then
+  echo "ERROR: Rivet Calamares branding descriptor is missing: $BRANDING_DESC" >&2
+  exit 1
+fi
+
+# Build a true square icon from the full logo. The source logo is landscape;
+# copying it directly into a 256x256 icon slot leaves the mark small/off-center.
+# Trim transparent margins, scale the visible artwork, then center it on a
+# transparent square canvas. Keep the full wordmark for Calamares/Plymouth.
+python3 - "$RIVET_LOGO" "$RIVET_ICON_SOURCE" <<'PY'
+from PIL import Image
+
+source, destination = __import__("sys").argv[1:3]
+image = Image.open(source).convert("RGBA")
+
+alpha = image.getchannel("A")
+bounds = alpha.getbbox()
+if bounds:
+    image = image.crop(bounds)
+
+image.thumbnail((220, 220), Image.Resampling.LANCZOS)
+canvas = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+x = (256 - image.width) // 2
+y = (256 - image.height) // 2
+canvas.alpha_composite(image, (x, y))
+canvas.save(destination, format="PNG")
+PY
+
+# Use the same square icon for the desktop/app icon theme.
+mkdir -p "$(dirname "$RIVET_ICON")"
+cp "$RIVET_ICON_SOURCE" "$RIVET_ICON"
+chmod 0644 "$RIVET_ICON_SOURCE" "$RIVET_ICON"
+
+if [ ! -s /usr/bin/chip-fixs ] || [ ! -s /usr/lib/chip-fixs/core.py ]; then
+  echo "ERROR: Chip Fixs application or diagnostic core is missing." >&2
+  exit 1
+fi
+if [ ! -s /usr/share/applications/chip-fixs.desktop ]; then
+  echo "ERROR: Chip Fixs desktop launcher is missing." >&2
+  exit 1
+fi
+if [ ! -s "$CHIP_FIXS_LOGO" ]; then
+  echo "ERROR: Chip Fixs logo is missing: $CHIP_FIXS_LOGO" >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/chip-fixs
+mkdir -p "$(dirname "$CHIP_FIXS_ICON")"
+cp "$CHIP_FIXS_LOGO" "$CHIP_FIXS_ICON"
+chmod 0644 "$CHIP_FIXS_ICON"
+
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+fi
+
+# Keep Debian's packaged launcher script and installer module sequence intact.
+# Rivet uses a separate branded desktop entry that points to this same helper.
+INSTALLER="/usr/bin/calamares-install-debian"
+DEBIAN_INSTALLER_DESKTOP="/usr/share/applications/calamares-install-debian.desktop"
+RIVET_INSTALLER_DESKTOP="/usr/share/applications/rivet-installer.desktop"
+if [ ! -x "$INSTALLER" ]; then
+  echo "ERROR: Calamares launcher is missing or not executable: $INSTALLER" >&2
+  exit 1
+fi
+if [ ! -s "$DEBIAN_INSTALLER_DESKTOP" ]; then
+  echo "ERROR: Debian's Calamares desktop entry is missing: $DEBIAN_INSTALLER_DESKTOP" >&2
+  exit 1
+fi
+if [ ! -s "$RIVET_INSTALLER_DESKTOP" ]; then
+  echo "ERROR: Rivet's branded Calamares desktop entry is missing: $RIVET_INSTALLER_DESKTOP" >&2
+  exit 1
+fi
+
+# Hide the original menu entry instead of editing its name, icon, or command.
+if ! grep -Fxq 'NoDisplay=true' "$DEBIAN_INSTALLER_DESKTOP"; then
+  sed -i '/^\[Desktop Entry\]/aNoDisplay=true' "$DEBIAN_INSTALLER_DESKTOP"
+fi
+
+# Debian's helper creates an unbranded desktop shortcut on login; Rivet provides its own.
+rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop
+
+
+if [ ! -s /usr/bin/rivet-welcome ]; then
+  echo "ERROR: Rivet welcome application is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-welcome
+
+if [ ! -s /usr/bin/rivet-start-plank ]; then
+  echo "ERROR: Rivet Plank session helper is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-start-plank
+
+if [ ! -s /usr/bin/rivet-welcome-center ]; then
+  echo "ERROR: installed Rivet welcome center is missing." >&2
+  exit 1
+fi
+chmod 0755 /usr/bin/rivet-welcome-center
+
+# Keep the expected desktop integration present in the built image.
+if [ ! -s /etc/xdg/autostart/rivet-plank.desktop ]; then
+  echo "ERROR: Plank autostart entry is missing." >&2
+  exit 1
+fi
+
+# Give new live and installed accounts a populated bottom dock, separate from the top status bar.
+PLANK_DIR="/etc/skel/.config/plank/dock1"
+PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
+mkdir -p "$PLANK_LAUNCHERS"
+cat > "${PLANK_DIR}/settings" <<'EOF'
+[PlankDockPreferences]
+DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
+IconSize=48
+Position=3
+Alignment=3
+ItemsAlignment=3
+HideMode=0
+ZoomEnabled=true
+ZoomPercent=150
+TooltipsEnabled=true
+EOF
+
+cat > "${PLANK_LAUNCHERS}/Firefox.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/firefox-esr.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Files.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/thunar.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Welcome.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-welcome.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Software.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-software.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Install-Rivet.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-installer.desktop
+EOF
+cat > /usr/share/applications/rivet-settings.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Rivet Settings
+Comment=Configure the Rivet desktop
+Exec=xfce4-settings-manager
+Icon=preferences-desktop
+Terminal=false
+Categories=Settings;DesktopSettings;
+EOF
+cat > "${PLANK_LAUNCHERS}/Settings.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-settings.desktop
+EOF
+
+cat > "${PLANK_LAUNCHERS}/Atmosphere.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/rivet-atmosphere.desktop
+EOF
+cat > "${PLANK_LAUNCHERS}/Chip-Fixs.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/chip-fixs.desktop
+EOF
+
+if ! grep -Eq '^[[:space:]]*branding:[[:space:]]*rivet[[:space:]]*$' "$CALAMARES_SETTINGS"; then
+  echo "ERROR: Calamares branding was not switched to Rivet." >&2
+  exit 1
+fi
+
+echo "Rivet desktop, Atmosphere, dock, installer authentication, branding, and welcome experience configured."
+ /etc/flatpak/remotes.d/flathub.flatpakrepo; then
+  echo "ERROR: downloaded Flathub remote definition is incomplete or unexpected." >&2
+  exit 1
+fi
 
 # Keep Debian's own launcher logic for display authorization and temporary fstab handling.
 # Point Calamares at Rivet branding while preserving Debian's tested module sequence.
