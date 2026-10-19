@@ -66,6 +66,46 @@ class ParsingTests(unittest.TestCase):
         self.assertIn("1T", disks[0][1])
 
 
+class SmartHealthTests(unittest.TestCase):
+    def query(self, returncode, output):
+        result = subprocess.CompletedProcess(
+            ["/usr/bin/smartctl", "-H", "/dev/sda"], returncode, output, ""
+        )
+        with mock.patch.object(core, "list_physical_disks", return_value=[("/dev/sda", "Test disk")]):
+            with mock.patch.object(core, "find_command", side_effect=lambda name: f"/usr/bin/{name}"):
+                with mock.patch.object(core, "run_command", return_value=result):
+                    return core.read_smart_health("/dev/sda")
+
+    def test_passed_health_with_historical_log_errors_is_reported_as_a_successful_query(self):
+        succeeded, details = self.query(64, "SMART overall-health self-assessment test result: PASSED")
+        self.assertTrue(succeeded)
+        self.assertIn("PASSED", details)
+        self.assertIn("warning/history bits", details)
+
+    def test_failing_health_is_never_reported_as_healthy(self):
+        succeeded, details = self.query(8, "SMART overall-health self-assessment test result: FAILED!")
+        self.assertFalse(succeeded)
+        self.assertIn("FAILED", details)
+
+    def test_health_pass_line_does_not_override_command_error_bits(self):
+        succeeded, details = self.query(2, "SMART overall-health self-assessment test result: PASSED")
+        self.assertFalse(succeeded)
+        self.assertIn("PASSED", details)
+
+
+class LanguageTests(unittest.TestCase):
+    def test_visible_chip_fixs_labels_are_english(self):
+        app_source = (ROOT / "build/config/includes.chroot/usr/bin/chip-fixs").read_text(encoding="utf-8")
+        core_source = CORE_PATH.read_text(encoding="utf-8")
+        for fragment in (
+            "Eu verifico", "Processador", "Dispositivos PCI", "Problema identificado:",
+            "Gerado localmente em:", "Arquivo salvo em:", '"Fechar"', '"Cancelar"',
+        ):
+            self.assertNotIn(fragment, app_source + "\n" + core_source)
+        for fragment in ('"Processor"', '"Architecture"', '"PCI devices"', '"USB devices"', '"Sensors"'):
+            self.assertIn(fragment, core_source)
+
+
 class SafetyTests(unittest.TestCase):
     def test_privileged_tool_lookup_ignores_user_path(self):
         with mock.patch.object(core.shutil, "which", return_value="/tmp/fake-systemctl"):
