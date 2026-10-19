@@ -1,7 +1,12 @@
 name: Build Rivet ISO
 
 on:
-  # ISO builds are opt-in only. The default confirmation is NO.
+  # One-time, explicitly authorized trigger for the Rivet Linux build #102 release.
+  # Ordinary pushes never create ISO releases.
+  push:
+    branches:
+      - rivet-iso102-authorized-once-20261019
+  # All other ISO builds remain opt-in. The default confirmation is NO.
   workflow_dispatch:
     inputs:
       authorize_iso:
@@ -34,10 +39,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate requested release number
-        if: inputs.authorize_iso == 'YES'
+        if: inputs.authorize_iso == 'YES' || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'
         shell: bash
         env:
-          RELEASE_NUMBER: ${{ inputs.release_number }}
+          RELEASE_NUMBER: ${{ inputs.release_number || '102' }}
         run: |
           set -euo pipefail
           if [[ ! "$RELEASE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
@@ -134,7 +139,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES' && inputs.release_number != ''
+    if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -169,7 +174,7 @@ jobs:
           set -euo pipefail
 
           shopt -s nullglob
-          images=(build/live-image-*.hybrid.iso)
+          images=(build/Rivet-Linux.amd64.iso)
 
           if [[ ${#images[@]} -ne 1 ]]; then
             echo "ERROR: expected exactly one generated ISO, found ${#images[@]}." >&2
@@ -206,7 +211,7 @@ jobs:
           fi
 
           iso="${images[0]}"
-          iso_name="$(basename "$iso")"
+          iso_name="Rivet-Linux.amd64.iso"
           checksum="${iso}.sha256"
           release_dir="build/release-assets"
           rm -rf "$release_dir"
@@ -251,13 +256,13 @@ jobs:
           export LC_ALL=C
           shopt -s nullglob
 
-          parts=(live-image-*.hybrid.iso.part-*)
+          parts=(Rivet-Linux.amd64.iso.part-*)
           if (( ${#parts[@]} > 0 )); then
             iso="${parts[0]%.part-*}"
             echo "Reassembling ${#parts[@]} parts into $iso..."
             cat "${parts[@]}" > "$iso"
           else
-            images=(live-image-*.hybrid.iso)
+            images=(Rivet-Linux.amd64.iso)
             if (( ${#images[@]} != 1 )); then
               echo "ERROR: expected one ISO or a complete set of ISO parts in this directory." >&2
               exit 1
@@ -291,11 +296,11 @@ jobs:
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rivet-build-${{ inputs.release_number }}
-          name: "Rivet Linux build #${{ inputs.release_number }}"
+          tag_name: rivet-build-${{ inputs.release_number || '102' }}
+          name: "Rivet Linux build #${{ inputs.release_number || '102' }}"
           target_commitish: ${{ github.sha }}
           body: |
-            Rivet Linux build #${{ inputs.release_number }}. This is a pre-alpha development build, not a stable release.
+            Rivet Linux build #${{ inputs.release_number || '102' }}. This is a pre-alpha development build, not a stable release.
             Source commit: ${{ github.sha }}
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
