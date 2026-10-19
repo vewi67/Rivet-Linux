@@ -24,9 +24,10 @@ get_image_properties() {
 }
 
 is_rivet_wallpaper() {
-  image="$1"
-  case "$image" in
-    "$RIVET_WALLPAPER_DIR"/rivet-*.jpeg) [ -s "$image" ] ;;
+  # Avoid assigning to a global named "image": POSIX shell functions do not
+  # have local variables, and configure_property relies on its caller's value.
+  case "$1" in
+    "$RIVET_WALLPAPER_DIR"/rivet-*.jpeg) [ -s "$1" ] ;;
     *) return 1 ;;
   esac
 }
