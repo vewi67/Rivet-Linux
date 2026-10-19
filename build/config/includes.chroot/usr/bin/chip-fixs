@@ -185,7 +185,7 @@ class ChipFixs:
             "Let's get to know your PC and investigate issues together."
         ), False, False, 0)
         description = Gtk.Label(
-            label="Eu verifico o que consigo confirmar, explico o que encontrei "
+            label="I verify what I can confirm, explain what I find, "
                   "and only make repairs after you approve them."
         )
         description.set_xalign(0)
@@ -292,13 +292,13 @@ class ChipFixs:
         self.memory_info_button.connect("clicked", self.advanced_memory)
 
         self.create_info_tab("Overview and motherboard")
-        self.create_info_tab("Processador")
+        self.create_info_tab("Processor")
         self.create_info_tab("RAM and swap", extra_button=self.memory_info_button)
         self.create_info_tab("Graphics and displays")
         self.create_info_tab("Disks, partitions, and space", extra_widget=self.build_disk_tools())
         self.create_info_tab("Network and interfaces")
         self.create_info_tab("Audio")
-        self.create_info_tab("Dispositivos PCI e USB")
+        self.create_info_tab("PCI and USB devices")
         self.create_info_tab("Battery, power, and sensors")
         self.create_info_tab("Services, packages, and clock")
 
@@ -416,7 +416,7 @@ class ChipFixs:
             status_label = Gtk.Label(label=f"{glyph}  {label}")
             status_label.get_style_context().add_class("status-" + status)
             status_label.set_xalign(0)
-            title = Gtk.Label(label=item.get("title", "Resultado"))
+            title = Gtk.Label(label=item.get("title", "Result"))
             title.set_xalign(0)
             title.set_line_wrap(True)
             title.set_hexpand(True)
@@ -471,7 +471,7 @@ class ChipFixs:
             self.window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING,
             Gtk.ButtonsType.YES_NO, "Authorize repair?"
         )
-        dialog.format_secondary_text(message + "\n\nProblema identificado: " + title)
+        dialog.format_secondary_text(message + "\n\nProblem identified: " + title)
         response = dialog.run()
         dialog.destroy()
         if response != Gtk.ResponseType.YES:
@@ -523,7 +523,7 @@ class ChipFixs:
             return "The report is not available yet."
         parts = [
             "CHIP FIXS - SYSTEM REPORT",
-            f"Gerado localmente em: {__import__('datetime').datetime.now().astimezone().isoformat(timespec='seconds')}",
+            f"Generated locally: {__import__('datetime').datetime.now().astimezone().isoformat(timespec='seconds')}",
             "This file is created only when you choose to save it. Review sensitive data before sharing.",
             "",
         ]
@@ -563,7 +563,7 @@ class ChipFixs:
             action=Gtk.FileChooserAction.SAVE,
         )
         chooser.add_buttons(
-            "Cancelar", Gtk.ResponseType.CANCEL,
+            "Cancel", Gtk.ResponseType.CANCEL,
             "Save", Gtk.ResponseType.ACCEPT,
         )
         chooser.set_current_name("chip-fixs-relatorio.txt")
@@ -575,7 +575,7 @@ class ChipFixs:
             return
         try:
             Path(filename).write_text(self.make_report(), encoding="utf-8")
-            self.show_message("Report saved", f"Arquivo salvo em:\n{filename}\n\nIt may contain device names and network information. Review it before sharing.", Gtk.MessageType.INFO)
+            self.show_message("Report saved", f"File saved to:\n{filename}\n\nIt may contain device names and network information. Review it before sharing.", Gtk.MessageType.INFO)
         except OSError as error:
             self.show_message("Could not save", str(error), Gtk.MessageType.ERROR)
 
@@ -639,7 +639,7 @@ class ChipFixs:
 
     def show_text_dialog(self, title, text):
         dialog = Gtk.Dialog(title=title, transient_for=self.window, flags=Gtk.DialogFlags.MODAL)
-        dialog.add_button("Fechar", Gtk.ResponseType.CLOSE)
+        dialog.add_button("Close", Gtk.ResponseType.CLOSE)
         dialog.set_default_size(740, 540)
         area = dialog.get_content_area()
         scrolled = Gtk.ScrolledWindow()

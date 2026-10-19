@@ -41,7 +41,7 @@ BOOT_HOOK="build/config/hooks/normal/0200-configure-rivet-boot-and-locale.hook.c
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLAIN_TEXT_BOOT_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-atmosphere-app.py scripts/test-installer-launcher.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLAIN_TEXT_BOOT_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST"
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$RIVET_CONTROL_CENTER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -139,7 +139,7 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLAIN_TEXT_BOOT_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLAIN_TEXT_BOOT_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-atmosphere-app.py scripts/test-installer-launcher.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
@@ -149,6 +149,8 @@ python3 scripts/test-build-script.py
 python3 "$ISO_BOOT_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
+python3 scripts/test-atmosphere-app.py
+python3 scripts/test-installer-launcher.py
 python3 scripts/test-chip-fixs.py
 python3 "$INSTALLER_PIPELINE_CHECKER" --self-test
 
@@ -216,7 +218,12 @@ grep -Fq 'python3 scripts/test-build-script.py' scripts/validate-repo.sh
 grep -Fq 'systemd.show_status=1 locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
-for legacy_ui_text in 'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' 'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!'; do
+for legacy_ui_text in \
+  'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' \
+  'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!' 'Eu verifico' 'Processador' \
+  'Arquitetura' 'Swap em uso' 'Uso dos sistemas de arquivos' 'Dispositivos PCI' \
+  'Dispositivos USB' 'Sensores' 'Raiz (/)' 'Arquivos visuais do Rivet' \
+  'Problema identificado:' 'Gerado localmente em:' 'Arquivo salvo em:' 'Fechar' 'Cancelar'; do
   if grep -Fq "$legacy_ui_text" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$BRANDING_SLIDESHOW"; then
     echo "ERROR: Portuguese UI string remains in the English-first interface: $legacy_ui_text" >&2
     exit 1
@@ -235,11 +242,10 @@ grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
 grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
 grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
-grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
+grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
 grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
 grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
-grep -Fq "tag_name: rivet-build-\${{ inputs.release_number || '102' }}" .github/workflows/build-iso.yml
 grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
@@ -253,10 +259,10 @@ grep -Fq 'bash build/build.sh --configure-only' .github/workflows/validate.yml
 grep -Fq 'bash build/build.sh --configure-only' .github/workflows/build-iso.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/validate.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/build-iso.yml
-grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/validate.yml
+grep -Fq 'apt-get -s -o APT::Install-Recommends=true install "${packages[@]}"' .github/workflows/validate.yml
 grep -Fq '        shell: bash' .github/workflows/validate.yml
 grep -Fq '        shell: bash' .github/workflows/build-iso.yml
-grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/build-iso.yml
+grep -Fq 'apt-get -s -o APT::Install-Recommends=true install "${packages[@]}"' .github/workflows/build-iso.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/build-iso.yml
 grep -Fq 'needs: [validate, installer-package-validation, live-build-configuration-validation]' .github/workflows/build-iso.yml
 grep -Fq 'xvfb-run -a python3 scripts/test-welcome-center-gtk.py' .github/workflows/build-iso.yml
@@ -264,19 +270,19 @@ grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot' .github/workflows/validate.yml
 grep -Fq 'sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot' .github/workflows/build-iso.yml
-# Keep ISO builds opt-in: only one exact, one-time branch may trigger the #102 release on push.
-grep -Fq '      - rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml
-if [[ "$(grep -Ec '^[[:space:]]+push:' .github/workflows/build-iso.yml)" -ne 1 ]]; then
-  echo "ERROR: expected exactly one scoped push trigger for the authorized ISO #102 build." >&2
-  exit 1
-fi
-if grep -Eq '^[[:space:]]+-[[:space:]]+[*?]' .github/workflows/build-iso.yml; then
-  echo "ERROR: wildcard branch triggers are not allowed for ISO builds." >&2
-  exit 1
-fi
+# ISO builds must require a manual, affirmative authorization; pushes never build an ISO.
+grep -Fq '  workflow_dispatch:' .github/workflows/build-iso.yml
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
-grep -Fq "if: inputs.authorize_iso == 'YES' || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
-grep -Fq "if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
+if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
+  echo "ERROR: automatic push triggers are forbidden for ISO builds." >&2
+  exit 1
+fi
+if grep -Fq 'rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml; then
+  echo "ERROR: the legacy one-time ISO trigger must be removed." >&2
+  exit 1
+fi
+grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
+grep -Fq "if: inputs.authorize_iso == 'YES' && inputs.release_number != ''" .github/workflows/build-iso.yml
 grep -Fq 'iso="Rivet-Linux.amd64.iso"' build/build.sh
 grep -Fq 'images=(build/Rivet-Linux.amd64.iso)' .github/workflows/build-iso.yml
 grep -Fq 'parts=(Rivet-Linux.amd64.iso.part-*)' .github/workflows/build-iso.yml
@@ -546,7 +552,7 @@ grep -Fq 'Name=Install Rivet Linux' "$RIVET_INSTALLER_LAUNCHER"
 echo "==> Checking documentation language..."
 if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
   README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
-  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude='validate-repo.sh' --exclude-dir='.git' \
   >/tmp/rivet-portuguese-check.txt 2>/dev/null; then
   echo "ERROR: possible Portuguese text found in project documentation:" >&2
   cat /tmp/rivet-portuguese-check.txt >&2

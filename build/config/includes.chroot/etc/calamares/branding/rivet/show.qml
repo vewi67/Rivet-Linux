@@ -44,7 +44,7 @@ Presentation {
                 Row {
                     id: wikiColumns
                     width: parent.width
-                    height: parent.height - 92
+                    height: Math.max(120, parent.height - 124)
                     spacing: 24
 
                     Flickable {

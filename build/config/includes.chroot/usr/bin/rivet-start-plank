@@ -78,6 +78,16 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
 
     # Keep only essential apps in the dock; other tools remain in the app menu.
     items = list(dict.fromkeys(item for item in items if item in BASE_DOCK_ITEMS))
+    # Repair incomplete/legacy profiles too, while preserving existing order.
+    for required_index, required_item in enumerate(BASE_DOCK_ITEMS):
+        if required_item in items:
+            continue
+        later_items = BASE_DOCK_ITEMS[required_index + 1:]
+        next_item = next((item for item in items if item in later_items), None)
+        if next_item is None:
+            items.append(required_item)
+        else:
+            items.insert(items.index(next_item), required_item)
 
     # Welcome and Install Rivet belong to the live session only.
     # Preserve the welcome item position in live mode and normalize our entries.

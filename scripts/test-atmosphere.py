@@ -66,6 +66,7 @@ def run_case(
     mode: str,
     should_cycle: bool,
     expected_period_type: str = "int",
+    secondary_image: str | None = None,
 ) -> dict:
     with tempfile.TemporaryDirectory(prefix="rivet-atmosphere-test-") as raw:
         tmp = Path(raw)
@@ -79,18 +80,18 @@ def run_case(
         for name in ("rivet-waves.jpeg", "rivet-factory.jpeg", "rivet-chip.jpeg", "rivet-prism.jpeg"):
             (wallpaper_dir / name).write_bytes(b"mock artwork bytes")
 
-        current_image = Path(image)
-        if image.startswith("PERSONAL:"):
-            personal_image = tmp / "personal.jpg"
-            personal_image.write_bytes(b"personal wallpaper bytes")
-            image_value = str(personal_image)
-        else:
-            image_value = str(wallpaper_dir / current_image.name)
+        def fixture_image(value: str, label: str) -> str:
+            if value.startswith("PERSONAL:"):
+                personal_image = tmp / f"personal-{label}.jpg"
+                personal_image.write_bytes(b"personal wallpaper bytes")
+                return str(personal_image)
+            return str(wallpaper_dir / Path(value).name)
 
+        image_value = fixture_image(image, "primary")
         monitor_root = "/backdrop/screen0/monitorVirtual-1/workspace-1"
-        initial = {
-            f"{monitor_root}/last-image": image_value,
-        }
+        initial = {f"{monitor_root}/last-image": image_value}
+        if secondary_image is not None:
+            initial[f"{monitor_root}/last-single-image"] = fixture_image(secondary_image, "secondary")
         state_file = tmp / "state.json"
         state_file.write_text(
             json.dumps({"values": initial, "types": {}, "log": []}, indent=2),
@@ -134,6 +135,9 @@ def run_case(
             )
         if image.startswith("PERSONAL:") and values[f"{monitor_root}/last-image"] != image_value:
             raise AssertionError("The custom wallpaper path was changed.")
+        if secondary_image is not None and secondary_image.startswith("PERSONAL:"):
+            if values[f"{monitor_root}/last-single-image"] != fixture_image(secondary_image, "secondary"):
+                raise AssertionError("The secondary custom wallpaper path was changed.")
         if should_cycle:
             expected = {
                 f"{monitor_root}/backdrop-cycle-period": ("1", expected_period_type),
@@ -159,6 +163,18 @@ def main() -> None:
     run_case(image="rivet-waves.jpeg", mode="ambient", should_cycle=True)
     run_case(image="rivet-waves.jpeg", mode="static", should_cycle=False)
     run_case(image="PERSONAL:wallpaper.jpg", mode="ambient", should_cycle=False)
+    run_case(
+        image="rivet-waves.jpeg", secondary_image="rivet-factory.jpeg",
+        mode="ambient", should_cycle=True,
+    )
+    run_case(
+        image="rivet-waves.jpeg", secondary_image="PERSONAL:personal-wallpaper.jpg",
+        mode="ambient", should_cycle=False,
+    )
+    run_case(
+        image="PERSONAL:personal-wallpaper.jpg", secondary_image="rivet-waves.jpeg",
+        mode="ambient", should_cycle=False,
+    )
 
     print("Rivet Atmosphere tests passed: native XFCE settings are typed correctly, static mode works, and personal wallpapers are preserved.")
 
