@@ -1,7 +1,11 @@
 name: Build Rivet ISO
 
 on:
-  # ISO builds are opt-in only. The default confirmation is NO.
+  # One-time authorized push for Rivet Linux ISO #101. This branch is removed from the build trigger after publishing.
+  push:
+    branches:
+      - rivet-iso101-authorized-once-20261019
+  # Standard ISO builds remain manual and opt-in.
   workflow_dispatch:
     inputs:
       authorize_iso:
@@ -108,7 +112,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES'
+    if: inputs.authorize_iso == 'YES' || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso101-authorized-once-20261019')
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -265,10 +269,15 @@ jobs:
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rivet-build-${{ github.run_number }}
-          name: "Rivet Linux build #${{ github.run_number }}"
+          tag_name: rivet-build-101
+          name: "Rivet Linux #101 - App Menu and Post-Install Fixes"
+          target_commitish: 3d4258080605968de2075947b08e9256be402f41
           body: |
-            Automated Rivet Linux development build, not a stable release.
+            Rivet Linux #101, with the Whisker application menu, app search, session power actions, and live-only installer/welcome launchers.
+
+            This is a pre-alpha development build, not a stable release. The tag points to the clean source commit that supplies the build inputs.
+
+            The ISO passed static repository validation, Debian Trixie installer integration, live-build configuration preflight, SHA-256 verification, and explicit boot-catalog checks for both BIOS and UEFI.
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
             that limit, download all numbered .part-* files and run
