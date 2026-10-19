@@ -251,7 +251,7 @@ class RivetAtmosphere(Gtk.Window):
                 cycle_enabled(prefix) for prefix in eligible_prefixes
             )
             mode = MODE_FILE.read_text(encoding="utf-8").strip() if MODE_FILE.exists() else "ambient"
-            enabled = enabled and mode != "static"
+            enabled = enabled and mode == "ambient"
             self.toggle.set_active(enabled)
             if not eligible_prefixes:
                 self.status.set_text("Choose a Rivet wallpaper to enable Atmosphere. Personal wallpapers stay untouched.")
@@ -282,7 +282,7 @@ class RivetAtmosphere(Gtk.Window):
             except OSError:
                 stored_mode = "ambient"
             self._updating = True
-            switch.set_active(stored_mode != "static")
+            switch.set_active(stored_mode == "ambient")
             self._updating = False
 
     @staticmethod
