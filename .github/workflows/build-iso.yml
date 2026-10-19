@@ -204,7 +204,7 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
 
-          images=(build/live-image-*.hybrid.iso)
+          images=(build/Rivet-Linux.amd64.iso)
           if [[ ${#images[@]} -ne 1 ]]; then
             echo "ERROR: expected exactly one ISO to prepare for release." >&2
             exit 1
