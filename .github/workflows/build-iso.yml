@@ -1,10 +1,8 @@
 name: Build Rivet ISO
 
 on:
-  # TEMPORARY: exact, one-time trigger for the expressly authorized Rivet #103 rebuild.
-  push:
-    branches:
-      - rivet-iso103-publish-once-20261019
+  # ISO releases are created only by a manual dispatch with explicit confirmation.
+  # Pushes and pull requests must never trigger an ISO build.
   workflow_dispatch:
     inputs:
       authorize_iso:
@@ -37,10 +35,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate requested release number
-        if: inputs.authorize_iso == 'YES' || github.ref == 'refs/heads/rivet-iso103-publish-once-20261019'
+        if: inputs.authorize_iso == 'YES'
         shell: bash
         env:
-          RELEASE_NUMBER: ${{ inputs.release_number || (github.ref == 'refs/heads/rivet-iso103-publish-once-20261019' && '103') }}
+          RELEASE_NUMBER: ${{ inputs.release_number }}
         run: |
           set -euo pipefail
           if [[ ! "$RELEASE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
@@ -138,7 +136,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || github.ref == 'refs/heads/rivet-iso103-publish-once-20261019'
+    if: inputs.authorize_iso == 'YES' && inputs.release_number != ''
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -302,7 +300,7 @@ jobs:
       - name: Preserve release payload as a recovery artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rivet-build-${{ inputs.release_number || (github.ref == 'refs/heads/rivet-iso103-publish-once-20261019' && '103') }}-release-assets
+          name: rivet-build-${{ inputs.release_number }}-release-assets
           path: build/release-assets/*
           if-no-files-found: error
           retention-days: 30
@@ -310,11 +308,11 @@ jobs:
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rivet-build-${{ inputs.release_number || (github.ref == 'refs/heads/rivet-iso103-publish-once-20261019' && '103') }}
-          name: "Rivet Linux build #${{ inputs.release_number || (github.ref == 'refs/heads/rivet-iso103-publish-once-20261019' && '103') }}"
+          tag_name: rivet-build-${{ inputs.release_number }}
+          name: "Rivet Linux build #${{ inputs.release_number }}"
           target_commitish: ${{ steps.source.outputs.sha }}
           body: |
-            Rivet Linux build #${{ inputs.release_number || (github.ref == 'refs/heads/rivet-iso103-publish-once-20261019' && '103') }}. This is a pre-alpha development build, not a stable release.
+            Rivet Linux build #${{ inputs.release_number }}. This is a pre-alpha development build, not a stable release.
             Source commit: ${{ steps.source.outputs.sha }}
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
