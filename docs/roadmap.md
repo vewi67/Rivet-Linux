@@ -28,8 +28,9 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add repository validation
 - [x] Add ISO format and boot-metadata checks
 - [x] Generate a SHA-256 checksum during builds
-- [x] Complete a fresh ISO build and publish its ISO and SHA-256 checksum (latest published image: build #100, [GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-100)); the image was booted and installed in a VM, and follow-up menu/launcher fixes await the next authorized build
+- [x] Build and publish the #101 ISO and SHA-256 checksum ([GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-101)); repository, installer integration, and live-build preflight checks passed, as did checksum and BIOS/UEFI boot-catalog verification.
 - [x] Manually boot and install #100 in a VirtualBox VM; basic desktop/installer path succeeded
+- [ ] Manually boot and install #101 in a VirtualBox VM; verify Whisker menu and post-install launcher cleanup
 - [ ] Test boot in a VM using UEFI
 - [ ] Test legacy BIOS boot
 - [ ] Test XFCE and default wallpaper

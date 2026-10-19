@@ -45,9 +45,13 @@ The repository validation workflow compiles the app and core and runs `scripts/t
 
 ## Latest generated ISO
 
-The latest published image is **#100, Special Milestone Edition**, published in [GitHub Releases](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-100). It was booted and installed in a VirtualBox VM. Follow-up source changes add the Whisker application/power menu and remove live-only dock entries from installed sessions; these are not included in #100 and must be verified in a new explicitly authorized build. No replacement ISO is published automatically; the manual build workflow requires authorization with `YES` and all three pre-build checks to pass: repository validation, Debian Trixie package/installer integration, and live-build configuration preflight.
+The latest published image is [**#101, App Menu and Post-Install Fixes**](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-101). Its ISO is 1,771,438,080 bytes and is published as a single download together with a SHA-256 file, download notes, and the reassembly/verification script. SHA-256: `4a92e0fdf17bfba1f710b93557672b6910a1517356e06cbe726887456b9f1e1f`.
 
-The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The repository also now contains an English-first locale hook and a scripted Plymouth theme; these changes are **not included** in ISO #99 and need a newly authorized build plus VM verification.
+Build checks passed: repository validation, Debian Trixie package/Calamares integration, live-build configuration preflight, checksum verification, and explicit BIOS/UEFI El Torito boot-entry checks. The source tag points to the clean default-branch commit that supplies the build inputs. #101 has not yet been manually booted or installed in a VM; all post-boot behavior remains to be verified. Do not confuse the boot-catalog check with proof of a successful runtime boot.
+
+No ISO is built on ordinary pushes. A manual build needs explicit authorization with `YES`, a positive unused release number, and all three pre-build checks to pass: repository validation, Debian Trixie package/installer integration, and live-build configuration preflight.
+
+The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The English-first locale hook and scripted Plymouth theme are in the source tree used to build #101; their appearance and behavior still need visual verification during VM testing.
 
 ## Scope
 
