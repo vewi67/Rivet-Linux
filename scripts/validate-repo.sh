@@ -553,7 +553,7 @@ grep -Fq 'Name=Install Rivet Linux' "$RIVET_INSTALLER_LAUNCHER"
 echo "==> Checking documentation language..."
 if grep -RniE '(^|[[:space:]])(para|uma|das|dos|não|aqui|deve|somente|pacotes|instalar|teste|experiência|configuração|usuário)([[:space:]]|$)' \
   README.md AGENTS.md CONTRIBUTING.md docs build/README.md build/config config scripts .github/pull_request_template.md \
-  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude-dir='.git' \
+  --include='*.md' --include='*.yml' --include='*.yaml' --include='*.sh' --exclude='validate-repo.sh' --exclude-dir='.git' \
   >/tmp/rivet-portuguese-check.txt 2>/dev/null; then
   echo "ERROR: possible Portuguese text found in project documentation:" >&2
   cat /tmp/rivet-portuguese-check.txt >&2
