@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import time
 
 STOCK_LAUNCHER = "/usr/bin/calamares-install-debian"
@@ -15,6 +16,7 @@ WINDOW_TITLE = "Rivet Linux Installer"
 WINDOW_CLASS = "calamares"
 STATE_HOME = Path(os.environ.get("XDG_STATE_HOME") or (Path.home() / ".local/state"))
 LOG_PATH = STATE_HOME / "rivet" / "installer-launch.log"
+FALLBACK_LOG_PATH = Path("/tmp/rivet-installer-launch.log")
 ROOT_CALAMARES_LOG = "/root/.cache/calamares/session.log"
 WATCH_SECONDS = 20
 
@@ -29,10 +31,25 @@ except Exception as error:
     GTK_IMPORT_ERROR = f"{type(error).__name__}: {error}"
 
 
+def select_writable_log_path(primary=None, fallback=None):
+    """Return a log path that can actually be opened, or None if both fail."""
+    primary = LOG_PATH if primary is None else Path(primary)
+    fallback = FALLBACK_LOG_PATH if fallback is None else Path(fallback)
+    for path in dict.fromkeys((primary, fallback)):
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("a", encoding="utf-8"):
+                pass
+            return path
+        except OSError:
+            continue
+    return None
+
+
 def write_log(message):
     """Write diagnostics, falling back to /tmp if the user's state directory is unavailable."""
     line = message.rstrip() + "\n"
-    for path in (LOG_PATH, Path("/tmp/rivet-installer-launch.log")):
+    for path in dict.fromkeys((LOG_PATH, FALLBACK_LOG_PATH)):
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("a", encoding="utf-8") as log:
@@ -242,7 +259,14 @@ def show_diagnostics(message):
 
 
 def main():
-    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    global LOG_PATH
+    selected_log = select_writable_log_path()
+    if selected_log is None:
+        print("ERROR: no writable diagnostic log location is available.", file=sys.stderr)
+        show_diagnostics("Rivet could not open a diagnostic log. Check write permissions and available storage.")
+        return 1
+    LOG_PATH = selected_log
+
     with LOG_PATH.open("a", encoding="utf-8") as log:
         log.write(
             "\n===== Rivet installer launch: "
@@ -332,11 +356,19 @@ def main():
 
         return_code = process.poll()
         if return_code is not None:
-            time.sleep(0.3)
-            window_id, window_error = installer_window_state()
-            if window_id:
-                write_log(f"SUCCESS: visible Calamares window detected after launcher exit: {window_id}")
-                return 0
+            # The Debian launcher may exit after spawning Calamares. Give the
+            # independent GUI process a short window to map before diagnosing failure.
+            window_id = None
+            window_error = None
+            for _attempt in range(8):
+                time.sleep(0.25)
+                window_id, window_error = installer_window_state()
+                if window_id:
+                    write_log(f"SUCCESS: visible Calamares window detected after launcher exit: {window_id}")
+                    return 0
+                if window_error and window_error != last_window_error:
+                    write_log(window_error)
+                    last_window_error = window_error
 
             processes = live_processes()
             write_log(
