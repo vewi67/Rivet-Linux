@@ -41,7 +41,7 @@ BOOT_HOOK="build/config/hooks/normal/0200-configure-rivet-boot-and-locale.hook.c
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLAIN_TEXT_BOOT_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-atmosphere-app.py scripts/test-installer-launcher.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLAIN_TEXT_BOOT_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST"
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$RIVET_CONTROL_CENTER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -139,7 +139,7 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLAIN_TEXT_BOOT_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLAIN_TEXT_BOOT_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-atmosphere-app.py scripts/test-installer-launcher.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
@@ -149,6 +149,8 @@ python3 scripts/test-build-script.py
 python3 "$ISO_BOOT_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
+python3 scripts/test-atmosphere-app.py
+python3 scripts/test-installer-launcher.py
 python3 scripts/test-chip-fixs.py
 python3 "$INSTALLER_PIPELINE_CHECKER" --self-test
 
@@ -216,7 +218,12 @@ grep -Fq 'python3 scripts/test-build-script.py' scripts/validate-repo.sh
 grep -Fq 'systemd.show_status=1 locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
-for legacy_ui_text in 'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' 'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!'; do
+for legacy_ui_text in \
+  'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' \
+  'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!' 'Eu verifico' 'Processador' \
+  'Arquitetura' 'Swap em uso' 'Uso dos sistemas de arquivos' 'Dispositivos PCI' \
+  'Dispositivos USB' 'Sensores' 'Raiz (/)' 'Arquivos visuais do Rivet' \
+  'Problema identificado:' 'Gerado localmente em:' 'Arquivo salvo em:' 'Fechar' 'Cancelar'; do
   if grep -Fq "$legacy_ui_text" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$BRANDING_SLIDESHOW"; then
     echo "ERROR: Portuguese UI string remains in the English-first interface: $legacy_ui_text" >&2
     exit 1
