@@ -18,12 +18,12 @@ Use a Debian-based environment with live-build, xorriso, file, and coreutils ins
     bash build/build.sh --configure-only
     bash build/build.sh
 
-The build script checks its required inputs, configures live-build for Debian Trixie amd64, builds the image, checks the ISO boot metadata, and writes a SHA-256 checksum beside the ISO.
+The build script checks its required inputs, configures live-build for Debian Trixie amd64, builds the image, checks the ISO boot metadata, and writes a SHA-256 checksum beside the ISO. The final image is renamed from live-build's generic output to `Rivet-Linux.amd64.iso` before its checksum is written.
 
 Expected output:
 
-    build/live-image-amd64.hybrid.iso
-    build/live-image-amd64.hybrid.iso.sha256
+    build/Rivet-Linux.amd64.iso
+    build/Rivet-Linux.amd64.iso.sha256
 
 The build script clears previous live-build stages when present, removes only generated live-build configuration values and stale ISO/checksum outputs, and retains the tracked package lists, hooks, chroot includes, and package cache. It then regenerates a fresh configuration from the versioned build arguments.
 
