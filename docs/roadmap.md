@@ -59,8 +59,9 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Separate the live installer welcome from the installed settings hub
 - [x] Add automated checks for the welcome UI, launch mode and live-only installer dock item
 - [x] Define the English-first default locale and Plymouth boot identity
-- [x] Replace the legacy spinning logo with a two-stage system-status log and animated Rivet smoke/welcome finale in source
-- [ ] Verify real boot-status messages, smoke animation and graphical handoff in the next ISO on BIOS and UEFI VMs
+- [x] Replace the legacy spinning logo with a two-stage boot-status log and animated Rivet smoke/welcome finale in source
+- [x] Animate incoming boot-log lines and bridge real initramfs-tools messages into Plymouth in source
+- [ ] Verify actual initramfs/system boot messages enter the splash correctly, the smoke animation renders, and the graphical handoff works on BIOS and UEFI VMs
 - [ ] Verify splash animation, welcome transition, and installed locale in UEFI/BIOS VMs
 - [x] Implement the Chip Fixs interface and diagnostic core prototype
 - [x] Add local hardware inventory and explicitly authorized advanced reads

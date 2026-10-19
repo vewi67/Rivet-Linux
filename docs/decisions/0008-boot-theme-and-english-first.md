@@ -10,7 +10,7 @@ Rivet needs a distinct boot experience and consistent language across its own ut
 ## Decision
 
 - Use Debian's Plymouth script theme for the Rivet boot identity, without a resident animation service.
-- During startup, show the actual status/message updates received by Plymouth in a restrained terminal-style panel. Enable `systemd.show_status=1` on both the live and installed boot paths so quiet boot does not suppress systemd's terse service statuses.
+- During startup, show real status/message updates received by Plymouth in a restrained terminal-style panel. Animate each incoming line with a short horizontal slide and fade. Apply a small, idempotent patch to initramfs-tools' `_log_msg()` helper so its formatted messages are forwarded through `plymouth update --status` before quiet mode suppresses console output; reject unexpected helper layouts instead of modifying them blindly. Enable `systemd.show_status=1` on both the live and installed boot paths so systemd continues reporting terse service statuses.
 - As boot approaches the graphical handoff, transition to the aspect-ratio-preserved Rivet logo over a subtle animated blue/cyan smoke layer, then fade in **“Welcome to Rivet Linux”** and keep the final identity visible until Plymouth exits.
 - Generate eight small transparent smoke frames deterministically during image configuration. The theme consumes them from the initramfs; no background process or animation framework is added.
 - Keep all animation in the Plymouth script. The Rivet logo is copied into the theme during image configuration and the initramfs is regenerated through Plymouth's supported helper.

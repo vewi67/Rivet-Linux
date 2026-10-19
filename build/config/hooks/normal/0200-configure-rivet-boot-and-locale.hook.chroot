@@ -4,6 +4,8 @@ set -eu
 THEME_DIR="/usr/share/plymouth/themes/rivet"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
 SMOKE_GENERATOR="/usr/lib/rivet/generate-plymouth-smoke.py"
+BOOT_STATUS_CONFIGURATOR="/usr/lib/rivet/configure-plymouth-boot-status.py"
+INITRAMFS_FUNCTIONS="/usr/share/initramfs-tools/scripts/functions"
 
 if [ ! -s "$RIVET_LOGO" ]; then
   echo "ERROR: Rivet logo is missing: $RIVET_LOGO" >&2
@@ -24,6 +26,18 @@ for frame in 0 1 2 3 4 5 6 7; do
     exit 1
   fi
 done
+
+# Forward genuine initramfs-tools progress messages into the Plymouth theme.
+# The final plymouth-set-default-theme call below rebuilds the initramfs afterward.
+if [ ! -s "$BOOT_STATUS_CONFIGURATOR" ]; then
+  echo "ERROR: Rivet Plymouth status configurator is missing: $BOOT_STATUS_CONFIGURATOR" >&2
+  exit 1
+fi
+if [ ! -s "$INITRAMFS_FUNCTIONS" ]; then
+  echo "ERROR: initramfs-tools functions file is missing: $INITRAMFS_FUNCTIONS" >&2
+  exit 1
+fi
+python3 "$BOOT_STATUS_CONFIGURATOR" "$INITRAMFS_FUNCTIONS"
 
 # English is the default language for the live session and new profiles.
 if [ ! -s /etc/locale.gen ]; then

@@ -69,6 +69,7 @@ if [[ "$CONFIGURE_ONLY" != true ]]; then
   for old_image in "${old_images[@]}"; do
     rm -f -- "$old_image" "$old_image.sha256"
   done
+  rm -f -- Rivet-Linux.amd64.iso Rivet-Linux.amd64.iso.sha256
 fi
 
 echo "==> Configuring Rivet Linux for Debian Trixie (amd64)..."
@@ -90,15 +91,18 @@ if [[ ${#images[@]} -ne 1 ]]; then
   exit 1
 fi
 
-iso="${images[0]}"
-[[ -s "$iso" ]] || {
-  echo "ERROR: generated ISO is empty: $iso" >&2
+generated_iso="${images[0]}"
+[[ -s "$generated_iso" ]] || {
+  echo "ERROR: generated ISO is empty: $generated_iso" >&2
   exit 1
 }
 
 echo "==> Checking ISO format and bootable BIOS/UEFI entries..."
-bash "$ROOT_DIR/scripts/validate-iso-boot.sh" "$iso"
+bash "$ROOT_DIR/scripts/validate-iso-boot.sh" "$generated_iso"
 
+# Publish a stable, distribution-specific filename instead of exposing live-build's generic name.
+iso="Rivet-Linux.amd64.iso"
+mv -- "$generated_iso" "$iso"
 checksum_file="$iso.sha256"
 sha256sum "$iso" | tee "$checksum_file"
 

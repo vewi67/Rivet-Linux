@@ -18,12 +18,12 @@ Use a Debian-based environment with live-build, xorriso, file, and coreutils ins
     bash build/build.sh --configure-only
     bash build/build.sh
 
-The build script checks its required inputs, configures live-build for Debian Trixie amd64, builds the image, checks the ISO boot metadata, and writes a SHA-256 checksum beside the ISO.
+The build script checks its required inputs, configures live-build for Debian Trixie amd64, builds the image, checks the ISO boot metadata, and writes a SHA-256 checksum beside the ISO. The final image is renamed from live-build's generic output to `Rivet-Linux.amd64.iso` before its checksum is written.
 
 Expected output:
 
-    build/live-image-amd64.hybrid.iso
-    build/live-image-amd64.hybrid.iso.sha256
+    build/Rivet-Linux.amd64.iso
+    build/Rivet-Linux.amd64.iso.sha256
 
 The build script clears previous live-build stages when present, removes only generated live-build configuration values and stale ISO/checksum outputs, and retains the tracked package lists, hooks, chroot includes, and package cache. It then regenerates a fresh configuration from the versioned build arguments.
 
@@ -49,7 +49,7 @@ The latest published image is [**#101, App Menu and Post-Install Fixes**](https:
 
 Build checks passed: repository validation, Debian Trixie package/Calamares integration, live-build configuration preflight, checksum verification, and explicit BIOS/UEFI El Torito boot-entry checks. The source tag points to the clean default-branch commit that supplies the build inputs. #101 has not yet been manually booted or installed in a VM; all post-boot behavior remains to be verified. Do not confuse the boot-catalog check with proof of a successful runtime boot.
 
-No ISO is built on ordinary pushes. A manual build needs explicit authorization with `YES`, a positive unused release number, and all three pre-build checks to pass: repository validation, Debian Trixie package/installer integration, and live-build configuration preflight.
+No ISO is built on ordinary pushes. Build #102 is a one-time, explicitly authorized exception triggered only by the dedicated branch `rivet-iso102-authorized-once-20261019`; the workflow refuses to overwrite an existing `rivet-build-102` tag. All subsequent builds remain manual and require explicit `YES`, a positive unused release number, and all three pre-build checks to pass: repository validation, Debian Trixie package/installer integration, and live-build configuration preflight.
 
 The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The English-first locale hook and scripted Plymouth theme are in the source tree used to build #101; their appearance and behavior still need visual verification during VM testing.
 

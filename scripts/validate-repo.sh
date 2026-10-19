@@ -18,6 +18,7 @@ WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
 DOCK_HELPER="build/config/includes.chroot/usr/bin/rivet-start-plank"
 DOCK_TEST="scripts/test-rivet-dock-mode.py"
 PLYMOUTH_SMOKE_GENERATOR="build/config/includes.chroot/usr/lib/rivet/generate-plymouth-smoke.py"
+BOOT_STATUS_CONFIGURATOR="build/config/includes.chroot/usr/lib/rivet/configure-plymouth-boot-status.py"
 PLYMOUTH_TEST="scripts/test-plymouth-theme.py"
 ISO_BOOT_VALIDATOR="scripts/validate-iso-boot.sh"
 ISO_BOOT_TEST="scripts/test-iso-boot-validation.py"
@@ -52,7 +53,7 @@ required_files=(
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
   "$PASSWORD_POLICY_HELPER"
-  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT" "$PLYMOUTH_SMOKE_GENERATOR"
+  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT" "$PLYMOUTH_SMOKE_GENERATOR" "$BOOT_STATUS_CONFIGURATOR"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -142,7 +143,7 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLYMOUTH_SMOKE_GENERATOR" "$PLYMOUTH_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLYMOUTH_SMOKE_GENERATOR" "$BOOT_STATUS_CONFIGURATOR" "$PLYMOUTH_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
@@ -189,7 +190,7 @@ for package in \
   network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr \
   gnome-software gnome-software-plugin-deb gnome-software-plugin-flatpak flatpak calamares \
-  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
+  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales initramfs-tools plymouth plymouth-themes; do
   require_package "$package"
 done
 
@@ -259,7 +260,7 @@ grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
 grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
 grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
-grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
+grep -Fq "tag_name: rivet-build-\${{ inputs.release_number || '102' }}" .github/workflows/build-iso.yml
 grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
@@ -284,13 +285,23 @@ grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/build-iso.yml
-# Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
-if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
-  echo "ERROR: ISO build workflow must not have a push trigger." >&2
+# Keep ISO builds opt-in: only one exact, one-time branch may trigger the #102 release on push.
+grep -Fq '      - rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml
+if [[ "$(grep -Ec '^[[:space:]]+push:' .github/workflows/build-iso.yml)" -ne 1 ]]; then
+  echo "ERROR: expected exactly one scoped push trigger for the authorized ISO #102 build." >&2
+  exit 1
+fi
+if grep -Eq '^[[:space:]]+-[[:space:]]+[*?]' .github/workflows/build-iso.yml; then
+  echo "ERROR: wildcard branch triggers are not allowed for ISO builds." >&2
   exit 1
 fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
-grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
+grep -Fq "if: inputs.authorize_iso == 'YES' || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
+grep -Fq "if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
+grep -Fq 'iso="Rivet-Linux.amd64.iso"' build/build.sh
+grep -Fq 'images=(build/Rivet-Linux.amd64.iso)' .github/workflows/build-iso.yml
+grep -Fq 'parts=(Rivet-Linux.amd64.iso.part-*)' .github/workflows/build-iso.yml
+grep -Fq 'images=(Rivet-Linux.amd64.iso)' .github/workflows/build-iso.yml
 grep -Fq 'xfce4-whiskermenu-plugin' "$PACKAGE_LIST"
 grep -Fq 'whiskermenu-1.rc' "$BRANDING_HOOK"
 grep -Fq 'button-title=Rivet' "$BRANDING_HOOK"
