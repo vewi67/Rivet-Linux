@@ -1,22 +1,20 @@
-# ADR 0008: Scripted Boot Identity and English-First UI
+# ADR 0008: Plain-Text Boot and English-First UI
 
-- **Status:** Accepted
-- **Date:** 2026-10-18
+- **Status:** Superseded
+- **Date:** 2026-10-19
 
 ## Context
 
-Rivet needs a distinct boot experience and consistent language across its own utilities. The base image uses Debian components, and the boot splash must not require a video, an always-running service, or a custom animation framework.
+Rivet needs a consistent language across its own utilities, while early startup must remain dependable and diagnosable. Build-time checks cannot confirm that a custom graphical splash successfully hands the display to the desktop manager on real hardware.
 
 ## Decision
 
-- Use Debian's Plymouth script theme for the Rivet boot identity, without a resident animation service.
-- During startup, show real status/message updates received by Plymouth in a restrained terminal-style panel. Animate each incoming line with a short horizontal slide and fade. Apply a small, idempotent patch to initramfs-tools' `_log_msg()` helper so its formatted messages are forwarded through `plymouth update --status` before quiet mode suppresses console output; reject unexpected helper layouts instead of modifying them blindly. Enable `systemd.show_status=1` on both the live and installed boot paths so systemd continues reporting terse service statuses.
-- As boot approaches the graphical handoff, transition to the aspect-ratio-preserved Rivet logo over a subtle animated blue/cyan smoke layer, then fade in **“Welcome to Rivet Linux”** and keep the final identity visible until Plymouth exits.
-- Generate eight small transparent smoke frames deterministically during image configuration. The theme consumes them from the initramfs; no background process or animation framework is added.
-- Keep all animation in the Plymouth script. The Rivet logo is copied into the theme during image configuration and the initramfs is regenerated through Plymouth's supported helper.
-- Set the live session and default profile locale to `en_US.UTF-8`. Rivet-owned utilities and the Calamares slideshow ship in English for now. Calamares retains its locale selector, so a selected install locale can still change the installed system locale; additional Rivet UI translations are deferred.
-- Do not delay boot just to hold a branding screen. The final animation runs before Plymouth hands the display to LightDM; it cannot draw over a desktop that is already interactive. Exact timing and the final handoff must be tested on the generated ISO.
+- Retire the custom graphical boot animation and remove its splash package/theme integration from the source image.
+- Use the standard Linux startup display: do not add `quiet` or `splash` to the live or installed boot command line, and keep `systemd.show_status=1` enabled so startup messages remain visible.
+- Remove the corresponding Calamares configuration stage, so the installer does not try to configure a splash program that Rivet no longer ships.
+- Keep the live session and default profile locale at `en_US.UTF-8`. Rivet-owned utilities and the Calamares wiki ship in English for now. Calamares retains its locale selector, so a selected installation locale can still change the installed system language.
+- Do not add a boot delay merely to hold a branding screen. Reconsider a graphical identity only after a plain-text boot and the display-manager handoff pass BIOS, UEFI and installed-system tests.
 
 ## Consequences
 
-The visual identity uses a maintained Debian component and adds no resident process. The smoke textures are build-time assets; the image already includes Pillow for other branded build operations. Repository validation does not prove that the animation appears correctly on every graphics driver; UEFI/BIOS VM testing and installed-system first boot remain required.
+The boot path is simpler and keeps useful diagnostics visible during startup. The #102 release remains available as a historical build, but its graphical splash failed during real user testing. The source correction is not a replacement ISO until a newly authorized build is completed and tested.
