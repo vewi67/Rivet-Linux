@@ -18,6 +18,7 @@ WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
 DOCK_HELPER="build/config/includes.chroot/usr/bin/rivet-start-plank"
 DOCK_TEST="scripts/test-rivet-dock-mode.py"
 PLYMOUTH_SMOKE_GENERATOR="build/config/includes.chroot/usr/lib/rivet/generate-plymouth-smoke.py"
+BOOT_STATUS_CONFIGURATOR="build/config/includes.chroot/usr/lib/rivet/configure-plymouth-boot-status.py"
 PLYMOUTH_TEST="scripts/test-plymouth-theme.py"
 ISO_BOOT_VALIDATOR="scripts/validate-iso-boot.sh"
 ISO_BOOT_TEST="scripts/test-iso-boot-validation.py"
@@ -52,7 +53,7 @@ required_files=(
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
   "$PASSWORD_POLICY_HELPER"
-  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT" "$PLYMOUTH_SMOKE_GENERATOR"
+  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT" "$PLYMOUTH_SMOKE_GENERATOR" "$BOOT_STATUS_CONFIGURATOR"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -142,7 +143,7 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLYMOUTH_SMOKE_GENERATOR" "$PLYMOUTH_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLYMOUTH_SMOKE_GENERATOR" "$BOOT_STATUS_CONFIGURATOR" "$PLYMOUTH_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
@@ -189,7 +190,7 @@ for package in \
   network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr \
   gnome-software gnome-software-plugin-deb gnome-software-plugin-flatpak flatpak calamares \
-  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales plymouth plymouth-themes; do
+  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales initramfs-tools plymouth plymouth-themes; do
   require_package "$package"
 done
 
