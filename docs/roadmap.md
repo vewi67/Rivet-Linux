@@ -28,7 +28,8 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add repository validation
 - [x] Add ISO format and boot-metadata checks
 - [x] Generate a SHA-256 checksum during builds
-- [x] Complete a fresh ISO build and publish its ISO and SHA-256 checksum (latest published image: build #99, [GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-99)); the current welcome-center and installer-policy changes were made afterward and are not yet in a released ISO
+- [x] Complete a fresh ISO build and publish its ISO and SHA-256 checksum (latest published image: build #100, [GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-100)); the image was booted and installed in a VM, and follow-up menu/launcher fixes await the next authorized build
+- [x] Manually boot and install #100 in a VirtualBox VM; basic desktop/installer path succeeded
 - [ ] Test boot in a VM using UEFI
 - [ ] Test legacy BIOS boot
 - [ ] Test XFCE and default wallpaper
@@ -41,6 +42,9 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Integrate GNOME Software with Debian package and Flatpak plugins
 - [x] Configure Flathub for system-wide Flatpak app discovery
 - [x] Add Rivet Software to the application menu, dock, and welcome settings hub
+- [x] Add Whisker Menu with application search and session power actions to the top panel in source
+- [x] Make the installer and live welcome dock/menu entries conditional on live-session detection in source
+- [ ] Verify menu search/power actions and live-only launcher cleanup in the next generated ISO
 - [ ] Test application search, installation, removal, and updates in a built ISO
 
 ## Phase 2: First Rivet experience

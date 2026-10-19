@@ -116,9 +116,12 @@ def main():
         assert not module.update_menu_entries(applications, True)
 
         assert module.update_menu_entries(applications, False)
-        assert not (applications / "rivet-installer.desktop").exists()
-        assert not (applications / "rivet-welcome.desktop").exists()
+        for desktop_id in ("rivet-installer.desktop", "rivet-welcome.desktop"):
+            content = (applications / desktop_id).read_text(encoding="utf-8")
+            assert "Hidden=true" in content
+            assert "X-Rivet-Managed=true" in content
         assert not (applications / "rivet-control-center.desktop").exists()
+        assert not module.update_menu_entries(applications, False)
 
     print("Rivet dock/menu tests passed: live-only entries, installed control center, idempotence, duplicate cleanup, and malformed-settings safety.")
 

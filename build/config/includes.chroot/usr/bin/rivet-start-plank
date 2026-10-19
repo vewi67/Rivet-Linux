@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Start Plank with an installer dock item only in Rivet's live session."""
+"""Start Plank and switch live-only launchers with the session mode."""
 
 import os
 from pathlib import Path
@@ -41,7 +41,7 @@ def is_live_session(
 
 
 def update_dock_items(settings_path: Path, live_session: bool) -> bool:
-    """Add the installer dock item only in live mode, preserving other settings."""
+    """Show Welcome/installer dock entries only in live mode, preserving other settings."""
     if not settings_path.is_file():
         return False
 
