@@ -87,6 +87,31 @@ class AtmosphereStateTests(unittest.TestCase):
         self.assertEqual(active, 1)
         self.assertEqual(eligible, 1)
 
+    def test_mixed_personal_aliases_refuse_ambient_mode_without_writing_preference(self):
+        mixed = [
+            self.aliases[0],
+            (f"{self.prefix}/last-single-image", self.prefix, "PERSONAL:photo"),
+        ]
+        with mock.patch.object(app, "image_properties", return_value=mixed):
+            with mock.patch.object(app.subprocess, "run") as command:
+                with self.assertRaisesRegex(ValueError, "Choose one of the Rivet wallpapers"):
+                    app.apply_mode("ambient")
+        command.assert_not_called()
+        self.assertFalse(self.mode_file.exists())
+
+    def test_post_apply_read_failure_restores_previous_mode(self):
+        self.mode_file.write_text("static\\n", encoding="utf-8")
+        with mock.patch.object(
+            app, "image_properties", side_effect=[self.aliases, RuntimeError("read failed")]
+        ):
+            with mock.patch.object(
+                app.subprocess, "run",
+                return_value=subprocess.CompletedProcess(["guard"], 0, "", ""),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "read failed"):
+                    app.apply_mode("ambient")
+        self.assertEqual(self.mode_file.read_text(encoding="utf-8"), "static\\n")
+
     def test_query_timeout_is_reported_as_runtime_error(self):
         with mock.patch.object(
             app.subprocess, "run", side_effect=subprocess.TimeoutExpired(["xfconf-query"], 5)
