@@ -617,9 +617,13 @@ fi
 PLANK_DIR="/etc/skel/.config/plank/dock1"
 PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
+cat > "${PLANK_LAUNCHERS}/Terminal.dockitem" <<'EOF'
+[PlankDockItemPreferences]
+Launcher=file:///usr/share/applications/xfce4-terminal.desktop
+EOF
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;Chip-Fixs.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Terminal.dockitem;Welcome.dockitem;
 IconSize=48
 Position=3
 Alignment=3
