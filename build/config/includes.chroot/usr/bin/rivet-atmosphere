@@ -23,14 +23,19 @@ IMAGE_PROPERTY = re.compile(
 
 
 def run_query(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["xfconf-query", "-c", CHANNEL, *args],
-        check=False,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=5,
-    )
+    try:
+        return subprocess.run(
+            ["xfconf-query", "-c", CHANNEL, *args],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=5,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError("XFCE desktop settings did not respond within 5 seconds.") from error
+    except OSError as error:
+        raise RuntimeError(f"Could not run xfconf-query: {error}") from error
 
 
 def image_properties() -> list[tuple[str, str, str]]:
@@ -70,31 +75,61 @@ def save_mode(mode: str) -> None:
     temporary.replace(MODE_FILE)
 
 
+def restore_mode(previous_content: str | None) -> None:
+    """Restore the prior preference after a failed apply operation."""
+    if previous_content is None:
+        try:
+            MODE_FILE.unlink()
+        except FileNotFoundError:
+            pass
+        return
+
+    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temporary = MODE_FILE.with_suffix(".tmp")
+    temporary.write_text(previous_content, encoding="utf-8")
+    temporary.replace(MODE_FILE)
+
+
 def apply_mode(mode: str) -> tuple[int, int]:
     backdrops = image_properties()
-    eligible = [(prop, prefix, image) for prop, prefix, image in backdrops if is_rivet_art(image)]
+    eligible_prefixes = {
+        prefix for _prop, prefix, image in backdrops if is_rivet_art(image)
+    }
 
-    if mode == "ambient" and not eligible:
+    if mode == "ambient" and not eligible_prefixes:
         raise ValueError(
             "Choose one of the Rivet wallpapers first. Your current personal wallpaper "
             "will not be replaced."
         )
 
+    previous_content = MODE_FILE.read_text(encoding="utf-8") if MODE_FILE.exists() else None
     save_mode(mode)
-    result = subprocess.run(
-        [GUARD, "--once"],
-        check=False,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=10,
-    )
+    try:
+        result = subprocess.run(
+            [GUARD, "--once"],
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired as error:
+        restore_mode(previous_content)
+        raise RuntimeError("Rivet Atmosphere timed out while applying the wallpaper mode.") from error
+    except OSError as error:
+        restore_mode(previous_content)
+        raise RuntimeError(f"Could not start the Rivet wallpaper guard: {error}") from error
+
     if result.returncode != 0:
+        restore_mode(previous_content)
         raise RuntimeError(result.stderr.strip() or "Could not update the wallpaper mode.")
 
     refreshed = image_properties()
-    active = sum(1 for _prop, prefix, image in refreshed if is_rivet_art(image) and cycle_enabled(prefix))
-    return active, len(eligible)
+    active_prefixes = {
+        prefix for _prop, prefix, image in refreshed
+        if is_rivet_art(image) and cycle_enabled(prefix)
+    }
+    return len(active_prefixes), len(eligible_prefixes)
 
 
 class RivetAtmosphere(Gtk.Window):
@@ -180,15 +215,19 @@ class RivetAtmosphere(Gtk.Window):
     def refresh_state(self) -> None:
         try:
             backdrops = image_properties()
-            eligible = [(prop, prefix, image) for prop, prefix, image in backdrops if is_rivet_art(image)]
-            enabled = bool(eligible) and all(cycle_enabled(prefix) for _prop, prefix, _image in eligible)
+            eligible_prefixes = {
+                prefix for _prop, prefix, image in backdrops if is_rivet_art(image)
+            }
+            enabled = bool(eligible_prefixes) and all(
+                cycle_enabled(prefix) for prefix in eligible_prefixes
+            )
             mode = MODE_FILE.read_text(encoding="utf-8").strip() if MODE_FILE.exists() else "ambient"
             enabled = enabled and mode != "static"
             self.toggle.set_active(enabled)
-            if not eligible:
+            if not eligible_prefixes:
                 self.status.set_text("Choose a Rivet wallpaper to enable Atmosphere. Personal wallpapers stay untouched.")
             elif enabled:
-                self.status.set_text(f"Atmosphere is on for {len(eligible)} desktop area(s). Your own wallpapers remain static.")
+                self.status.set_text(f"Atmosphere is on for {len(eligible_prefixes)} desktop area(s). Your own wallpapers remain static.")
             else:
                 self.status.set_text("Atmosphere is paused. Your current wallpaper will stay still.")
         except (OSError, RuntimeError) as error:
