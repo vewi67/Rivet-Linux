@@ -34,8 +34,8 @@ def main() -> int:
         hook.parent.mkdir(parents=True)
         hook.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
 
-        existing_iso = build_dir / "live-image-existing.hybrid.iso"
-        existing_checksum = build_dir / "live-image-existing.hybrid.iso.sha256"
+        existing_iso = build_dir / "Rivet-Linux.amd64.iso"
+        existing_checksum = build_dir / "Rivet-Linux.amd64.iso.sha256"
         existing_iso.write_bytes(b"preserve existing ISO")
         existing_checksum.write_text("preserve existing checksum\n", encoding="utf-8")
 
