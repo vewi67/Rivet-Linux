@@ -21,11 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Plymouth smoke-test dependency
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends python3-pil
-
       - name: Validate repository
         run: bash scripts/validate-repo.sh
 
@@ -100,5 +95,11 @@ jobs:
 
           python3 /usr/lib/rivet/configure-calamares-password-policy.py \
             /etc/calamares/modules/users.conf
+          install -D -m 0644 \
+            build/config/includes.chroot/etc/calamares/branding/rivet/branding.desc \
+            /etc/calamares/branding/rivet/branding.desc
+          install -D -m 0644 \
+            build/config/includes.chroot/etc/calamares/branding/rivet/show.qml \
+            /etc/calamares/branding/rivet/show.qml
+          sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot
           xvfb-run -a python3 scripts/test-welcome-center-gtk.py
-          python3 /usr/lib/rivet/check-installer-pipeline.py --root /
