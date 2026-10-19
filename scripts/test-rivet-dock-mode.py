@@ -83,7 +83,7 @@ def main():
             "Firefox.dockitem", "Files.dockitem", "Terminal.dockitem", WELCOME_ITEM, INSTALLER_ITEM,
         ]
         assert live_items.index(INSTALLER_ITEM) == live_items.index(WELCOME_ITEM) + 1
-        assert live_items.index(WELCOME_ITEM) == live_items.index("Files.dockitem") + 1
+        assert live_items.index(WELCOME_ITEM) == live_items.index("Terminal.dockitem") + 1
         assert not module.update_dock_items(settings, True), (
             "Repeating live-mode configuration should be idempotent."
         )
