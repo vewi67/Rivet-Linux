@@ -24,7 +24,7 @@ RIVET_WALLPAPERS = (
 
 
 def run_command(args: list[str], timeout: int = 5) -> subprocess.CompletedProcess[str]:
-    """Execute uma lista fixa de argumentos, sem shell e sem esconder erros."""
+    """Execute a fixed argument list without a shell or hidden errors."""
     env = os.environ.copy()
     env["LC_ALL"] = "C"
     env["LANG"] = "C"
@@ -139,7 +139,7 @@ def read_os_and_board() -> dict[str, str]:
         "Distribution ID": os_data.get("ID", "Unknown"),
         "Distribution version": os_data.get("VERSION_ID", "Unknown"),
         "Kernel": platform.release(),
-        "Arquitetura": platform.machine(),
+        "Architecture": platform.machine(),
         "Computer name": platform.node() or "Unknown",
         "Chip Fixs version": APP_VERSION,
     }
@@ -150,7 +150,8 @@ def read_os_and_board() -> dict[str, str]:
             days, remainder = divmod(seconds, 86400)
             hours, remainder = divmod(remainder, 3600)
             minutes = remainder // 60
-            result["Uptime"] = f"{days} dia(s), {hours} h, {minutes} min"
+            day_label = "day" if days == 1 else "days"
+            result["Uptime"] = f"{days} {day_label}, {hours} h, {minutes} min"
         except (ValueError, IndexError):
             result["Uptime"] = "Not available"
     else:
@@ -186,7 +187,7 @@ def memory_summary() -> tuple[list[str], dict[str, int]]:
     else:
         values.append("Could not read /proc/meminfo.")
     values.append(f"Swap total: {format_bytes(swap_total)}")
-    values.append(f"Swap em uso: {format_bytes(max(0, swap_total - swap_free))}")
+    values.append(f"Swap used: {format_bytes(max(0, swap_total - swap_free))}")
     return values, mem
 
 
@@ -229,7 +230,7 @@ def collect_system_info() -> OrderedDict[str, str]:
                 model = line.split(":", 1)[1].strip()
                 break
         cpu_text = f"Model: {model}\nLogical processors: {os.cpu_count() or 'Not available'}"
-    info["Processador"] = cpu_text
+    info["Processor"] = cpu_text
 
     memory_lines, _mem = memory_summary()
     memory_lines.append("")
@@ -276,7 +277,7 @@ def collect_system_info() -> OrderedDict[str, str]:
     )
     df = run_command(["df", "-hT", "-x", "tmpfs", "-x", "devtmpfs"], timeout=5)
     storage = lsblk.stdout.strip() if lsblk.returncode == 0 else (lsblk.stderr.strip() or "lsblk is not available.")
-    storage += "\n\nUso dos sistemas de arquivos\n"
+    storage += "\n\nFilesystem usage\n"
     storage += df.stdout.strip() if df.returncode == 0 else (df.stderr.strip() or "df is not available.")
     storage += (
         "\n\nSMART health: select a disk and use the check button. "
@@ -315,9 +316,9 @@ def collect_system_info() -> OrderedDict[str, str]:
     pci = run_command(["lspci", "-nnk"], timeout=6)
     usb = run_command(["lsusb"], timeout=5)
     info["PCI and USB devices"] = (
-        "Dispositivos PCI\n"
+        "PCI devices\n"
         + (pci.stdout.strip() if pci.returncode == 0 else (pci.stderr.strip() or "lspci is not available."))
-        + "\n\nDispositivos USB\n"
+        + "\n\nUSB devices\n"
         + (usb.stdout.strip() if usb.returncode == 0 else (usb.stderr.strip() or "lsusb is not available."))
     )
 
@@ -347,7 +348,7 @@ def collect_system_info() -> OrderedDict[str, str]:
     if sensors.returncode == 0 and sensors.stdout.strip():
         power_lines.extend(["", "Temperature and voltage sensors", sensors.stdout.strip()])
     else:
-        power_lines.extend(["", "Sensores", "The sensors command returned no data. Some devices do not expose temperature readings."])
+        power_lines.extend(["", "Sensors", "The sensors command returned no data. Some devices do not expose temperature readings."])
     thermal: list[str] = []
     for zone in sorted(Path("/sys/class/thermal").glob("thermal_zone*")):
         temp = read_text(zone / "temp")
@@ -441,7 +442,7 @@ def run_diagnostics() -> list[dict[str, str | None]]:
     try:
         usage = shutil.disk_usage("/")
         percent = usage.used / usage.total * 100 if usage.total else 0
-        detail = f"Raiz (/): {format_bytes(usage.used)} usados de {format_bytes(usage.total)} ({percent:.1f}%)."
+        detail = f"Root filesystem: {format_bytes(usage.used)} used of {format_bytes(usage.total)} ({percent:.1f}%)."
         if percent >= 97:
             results.append(_check("disk-space", "Storage", "critical", "The root filesystem is almost full", detail + " Chip will not delete personal files automatically."))
         elif percent >= 90:
@@ -458,7 +459,7 @@ def run_diagnostics() -> list[dict[str, str | None]]:
         results.append(_check("memory", "Memory", "unknown", "RAM status unavailable", "The kernel did not provide MemTotal in /proc/meminfo."))
     else:
         percent = available / total * 100
-        detail = f"{format_bytes(available)} de {format_bytes(total)} are available ({percent:.1f}%)."
+        detail = f"{format_bytes(available)} of {format_bytes(total)} are available ({percent:.1f}%)."
         if percent < 5:
             results.append(_check("memory", "Memory", "warning", "Low available memory", detail + " Chip will not terminate programs automatically."))
         else:
@@ -509,14 +510,14 @@ def run_diagnostics() -> list[dict[str, str | None]]:
             "\nA failed unit may be optional. Chip will not restart unknown services automatically.",
         ))
     else:
-        results.append(_check("failed-units", "Services", "ok", "Services do systemd", "systemd reported no failed units."))
+        results.append(_check("failed-units", "Services", "ok", "systemd services", "systemd reported no failed units."))
 
     if Path("/usr/share/backgrounds/rivet").is_dir():
         missing = [path for path in RIVET_WALLPAPERS if not Path(path).is_file() or Path(path).stat().st_size == 0]
         if missing:
             results.append(_check("rivet-files", "Rivet", "warning", "One or more Rivet visual assets are missing", "\n".join(missing)))
         else:
-            results.append(_check("rivet-files", "Rivet", "ok", "Arquivos visuais do Rivet", "All four expected wallpapers are present."))
+            results.append(_check("rivet-files", "Rivet", "ok", "Rivet visual assets", "All four expected wallpapers are present."))
     else:
         results.append(_check("rivet-files", "Rivet", "unknown", "Rivet files not found", "This installation does not expose /usr/share/backgrounds/rivet; the app may be running outside Rivet."))
 
@@ -627,5 +628,22 @@ def read_smart_health(device: str) -> tuple[bool, str]:
         return False, "pkexec and smartmontools must be installed. No changes were made."
     result = run_command([pkexec, smartctl, "-H", device], timeout=20)
     output = (result.stdout + "\n" + result.stderr).strip()
-    # smartctl uses different exit codes for SMART warnings. Its output is still displayed.
-    return result.returncode == 0, output or f"smartctl returned code {result.returncode}."
+    # smartctl exit statuses are a bitmask. Bits 6-7 can report error/self-test
+    # log history while the overall-health result still says PASSED. Bits 0-3
+    # indicate command/device/SMART-status problems and prevent a healthy confirmation.
+    healthy_status_reported = bool(re.search(
+        r"(?:SMART overall-health self-assessment test result:\s*PASSED|SMART Health Status:\s*OK)",
+        output,
+        re.IGNORECASE,
+    ))
+    command_or_health_error_bits = result.returncode & 0x0F
+    if healthy_status_reported and command_or_health_error_bits == 0:
+        if result.returncode:
+            output += (
+                "\n\nNote: smartctl also reported warning/history bits "
+                f"(exit mask {result.returncode:#04x}). Review the output above."
+            )
+        return True, output
+    if not output:
+        output = f"smartctl returned code {result.returncode} without a health summary."
+    return False, output
