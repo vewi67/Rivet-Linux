@@ -98,6 +98,23 @@ def main():
         module.update_dock_items(settings, True)
         assert read_items(settings).count(INSTALLER_ITEM) == 1
 
+        incomplete = Path(temporary) / "incomplete-settings"
+        incomplete.write_text(
+            "[PlankDockPreferences]\n"
+            "DockItems=Software.dockitem;Atmosphere.dockitem;\n"
+            "IconSize=48\n",
+            encoding="utf-8",
+        )
+        assert module.update_dock_items(incomplete, False), (
+            "An incomplete old profile should be repaired to include all essentials."
+        )
+        assert read_items(incomplete) == [
+            "Firefox.dockitem", "Files.dockitem", "Terminal.dockitem",
+        ]
+        assert not module.update_dock_items(incomplete, False), (
+            "Repairing an incomplete profile should be idempotent."
+        )
+
         malformed = Path(temporary) / "malformed"
         malformed.write_text("[NotPlank]\nSomeOption=true\n", encoding="utf-8")
         before = malformed.read_text(encoding="utf-8")
