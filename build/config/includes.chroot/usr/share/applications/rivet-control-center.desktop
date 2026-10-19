@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Rivet Control Center
+Comment=Personalize Rivet and open system tools
+Exec=/usr/bin/rivet-welcome-center --show-again
+Icon=rivet
+Terminal=false
+Categories=Settings;System;
+StartupNotify=true

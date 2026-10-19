@@ -10,6 +10,7 @@ import tempfile
 REPOSITORY = Path(__file__).resolve().parents[1]
 APP_PATH = REPOSITORY / "build/config/includes.chroot/usr/bin/rivet-start-plank"
 INSTALLER_ITEM = "Install-Rivet.dockitem"
+WELCOME_ITEM = "Welcome.dockitem"
 
 
 def load_app():
@@ -47,9 +48,10 @@ def main():
         )
         installed_items = read_items(settings)
         assert INSTALLER_ITEM not in installed_items
+        assert WELCOME_ITEM not in installed_items
         assert installed_items == [
-            "Firefox.dockitem", "Files.dockitem", "Welcome.dockitem",
-            "Software.dockitem", "Chip-Fixs.dockitem", "Settings.dockitem",
+            "Firefox.dockitem", "Files.dockitem", "Software.dockitem",
+            "Chip-Fixs.dockitem", "Settings.dockitem",
         ]
         installed_snapshot = settings.read_text(encoding="utf-8")
         assert "KeepThis=unchanged" in installed_snapshot
@@ -58,11 +60,13 @@ def main():
         )
 
         assert module.update_dock_items(settings, True), (
-            "Live mode should add the installer item to the dock."
+            "Live mode should restore both live-only dock items."
         )
         live_items = read_items(settings)
         assert live_items.count(INSTALLER_ITEM) == 1
-        assert live_items.index(INSTALLER_ITEM) == live_items.index("Welcome.dockitem") + 1
+        assert live_items.count(WELCOME_ITEM) == 1
+        assert live_items.index(INSTALLER_ITEM) == live_items.index(WELCOME_ITEM) + 1
+        assert live_items.index(WELCOME_ITEM) == live_items.index("Files.dockitem") + 1
         assert not module.update_dock_items(settings, True), (
             "Repeating live-mode configuration should be idempotent."
         )
@@ -88,7 +92,35 @@ def main():
             raise AssertionError("Malformed Plank settings should fail visibly.")
         assert malformed.read_text(encoding="utf-8") == before
 
-    print("Rivet dock tests passed: live-only installer item, installed cleanup, idempotence, duplicates and malformed settings.")
+        applications = Path(temporary) / "applications"
+        assert module.update_menu_entries(applications, False), (
+            "Installed mode should hide live-only launchers and expose the control center."
+        )
+        for desktop_id in ("rivet-installer.desktop", "rivet-welcome.desktop"):
+            content = (applications / desktop_id).read_text(encoding="utf-8")
+            assert "Hidden=true" in content
+            assert "X-Rivet-Managed=true" in content
+        assert not (applications / "rivet-control-center.desktop").exists()
+        assert not module.update_menu_entries(applications, False), (
+            "Installed launcher visibility should be idempotent."
+        )
+
+        assert module.update_menu_entries(applications, True), (
+            "Live mode should show Welcome and hide the installed control center."
+        )
+        assert not (applications / "rivet-installer.desktop").exists()
+        assert not (applications / "rivet-welcome.desktop").exists()
+        control_override = (applications / "rivet-control-center.desktop").read_text(encoding="utf-8")
+        assert "Hidden=true" in control_override
+        assert "X-Rivet-Managed=true" in control_override
+        assert not module.update_menu_entries(applications, True)
+
+        assert module.update_menu_entries(applications, False)
+        assert not (applications / "rivet-installer.desktop").exists()
+        assert not (applications / "rivet-welcome.desktop").exists()
+        assert not (applications / "rivet-control-center.desktop").exists()
+
+    print("Rivet dock/menu tests passed: live-only entries, installed control center, idempotence, duplicate cleanup, and malformed-settings safety.")
 
 
 if __name__ == "__main__":

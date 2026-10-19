@@ -7,6 +7,19 @@ import shutil
 import sys
 
 INSTALLER_ITEM = "Install-Rivet.dockitem"
+WELCOME_ITEM = "Welcome.dockitem"
+MANAGED_OVERRIDE_MARKER = "X-Rivet-Managed=true"
+HIDDEN_OVERRIDE = (
+    "[Desktop Entry]\n"
+    "Type=Application\n"
+    "Hidden=true\n"
+    f"{MANAGED_OVERRIDE_MARKER}\n"
+)
+MENU_ENTRY_IDS = (
+    "rivet-installer.desktop",
+    "rivet-welcome.desktop",
+    "rivet-control-center.desktop",
+)
 
 
 def is_live_session(
@@ -62,17 +75,27 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
     had_trailing_separator = original_value.endswith(";")
     items = [item for item in original_value.split(";") if item]
 
-    # Remove duplicates of our conditional item, leaving every other dock item alone.
+    # Welcome and Install Rivet belong to the live session only.
+    # Preserve the welcome item position in live mode and normalize our entries.
     items = [item for item in items if item != INSTALLER_ITEM]
     if live_session:
-        welcome_index = next(
-            (index for index, item in enumerate(items) if item == "Welcome.dockitem"),
-            None,
-        )
-        if welcome_index is None:
-            items.append(INSTALLER_ITEM)
+        welcome_indexes = [
+            index for index, item in enumerate(items) if item == WELCOME_ITEM
+        ]
+        if not welcome_indexes:
+            files_index = next((index for index, item in enumerate(items) if item == "Files.dockitem"), None)
+            insert_at = files_index + 1 if files_index is not None else 0
+            items.insert(insert_at, WELCOME_ITEM)
         else:
-            items.insert(welcome_index + 1, INSTALLER_ITEM)
+            first_welcome = welcome_indexes[0]
+            items = [
+                item for index, item in enumerate(items)
+                if item != WELCOME_ITEM or index == first_welcome
+            ]
+        welcome_index = items.index(WELCOME_ITEM)
+        items.insert(welcome_index + 1, INSTALLER_ITEM)
+    else:
+        items = [item for item in items if item != WELCOME_ITEM]
 
     value = ";".join(items)
     if had_trailing_separator:
@@ -89,18 +112,53 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
     return True
 
 
+
+def update_menu_entries(applications_dir: Path, live_session: bool) -> bool:
+    """Hide live-only launchers after installation and expose the installed control center."""
+    applications_dir = Path(applications_dir)
+    applications_dir.mkdir(parents=True, exist_ok=True)
+
+    hidden = (
+        {"rivet-control-center.desktop"}
+        if live_session
+        else {"rivet-installer.desktop", "rivet-welcome.desktop"}
+    )
+    changed = False
+    for desktop_id in MENU_ENTRY_IDS:
+        override = applications_dir / desktop_id
+        if desktop_id in hidden:
+            if override.is_file():
+                current = override.read_text(encoding="utf-8")
+                # Never overwrite a user's own desktop-file override.
+                if MANAGED_OVERRIDE_MARKER not in current:
+                    continue
+            else:
+                current = ""
+            if current != HIDDEN_OVERRIDE:
+                temporary = override.with_name(override.name + ".rivet-tmp")
+                temporary.write_text(HIDDEN_OVERRIDE, encoding="utf-8")
+                temporary.replace(override)
+                changed = True
+        elif override.is_file():
+            current = override.read_text(encoding="utf-8")
+            if MANAGED_OVERRIDE_MARKER in current:
+                override.unlink()
+                changed = True
+    return changed
+
 def main() -> int:
     settings = Path.home() / ".config/plank/dock1/settings"
     live_session = is_live_session()
     try:
-        changed = update_dock_items(settings, live_session)
+        dock_changed = update_dock_items(settings, live_session)
+        menu_changed = update_menu_entries(Path.home() / ".local/share/applications", live_session)
     except (OSError, ValueError) as error:
-        print(f"Rivet could not configure the dock: {error}", file=sys.stderr)
+        print(f"Rivet could not configure desktop launchers: {error}", file=sys.stderr)
         return 1
 
-    if changed:
+    if dock_changed or menu_changed:
         mode = "live" if live_session else "installed"
-        print(f"Configured Plank installer shortcut for {mode} mode.")
+        print(f"Configured live-only launchers for {mode} mode.")
 
     if shutil.which("plank") is None:
         print("Rivet dock could not start: Plank is not installed.", file=sys.stderr)
