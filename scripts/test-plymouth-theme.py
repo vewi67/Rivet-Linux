@@ -69,12 +69,12 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="rivet-plymouth-status-") as temporary:
         functions_file = Path(temporary) / "functions"
         original_functions = (
-            "# -*- shell-script -*-\\n"
-            "_log_msg()\\n"
-            "{\\n"
-            '\\tif [ "${quiet?}" = "y" ]; then return; fi\\n'
-            '\\tprintf "$@"\\n'
-            "}\\n"
+            "# -*- shell-script -*-\n"
+            "_log_msg()\n"
+            "{\n"
+            '\\tif [ "${quiet?}" = "y" ]; then return; fi\n'
+            '\\tprintf "$@"\n'
+            "}\n"
         )
         functions_file.write_text(original_functions, encoding="utf-8")
         for _ in range(2):
@@ -102,7 +102,7 @@ def main() -> int:
         )
 
         malformed_file = Path(temporary) / "malformed-functions"
-        malformed_file.write_text("# no compatible _log_msg function\\n", encoding="utf-8")
+        malformed_file.write_text("# no compatible _log_msg function\n", encoding="utf-8")
         failed_patch = subprocess.run(
             [sys.executable, str(BOOT_STATUS_CONFIGURATOR), str(malformed_file)],
             capture_output=True,
@@ -111,7 +111,7 @@ def main() -> int:
         )
         require(failed_patch.returncode != 0, "The status bridge must reject unknown initramfs-tools layouts.")
         require(
-            malformed_file.read_text(encoding="utf-8") == "# no compatible _log_msg function\\n",
+            malformed_file.read_text(encoding="utf-8") == "# no compatible _log_msg function\n",
             "A failed status bridge must leave the target file unchanged.",
         )
 
