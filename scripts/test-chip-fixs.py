@@ -102,7 +102,7 @@ class LanguageTests(unittest.TestCase):
             "Gerado localmente em:", "Arquivo salvo em:", '"Fechar"', '"Cancelar"',
         ):
             self.assertNotIn(fragment, app_source + "\n" + core_source)
-        for fragment in ('"Processor"', '"Architecture"', '"PCI devices"', '"USB devices"', '"Sensors"'):
+        for fragment in ('"Processor"', '"Architecture"', 'PCI devices\\n', 'USB devices\\n', '"Sensors"'):
             self.assertIn(fragment, core_source)
 
 
