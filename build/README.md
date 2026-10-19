@@ -45,7 +45,7 @@ The repository validation workflow compiles the app and core and runs `scripts/t
 
 ## Latest generated ISO
 
-The latest published image is [**#101, App Menu and Post-Install Fixes**](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-101). Its ISO is 1,771,438,080 bytes and is published as a single download together with a SHA-256 file, download notes, and the reassembly/verification script. SHA-256: `4a92e0fdf17bfba1f710b93557672b6910a1517356e06cbe726887456b9f1e1f`.
+The latest published image is [**#102, Animated Boot Experience**](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102). It is published as `Rivet-Linux.amd64.iso` (1,773,174,784 bytes) together with its SHA-256 file, download notes, and the reassembly/verification script. SHA-256: `66f1fd8a37088e7649015036b5f7e2da9aab09d846a23008e66aebda6bc0b083`.
 
 Build checks passed: repository validation, Debian Trixie package/Calamares integration, live-build configuration preflight, checksum verification, and explicit BIOS/UEFI El Torito boot-entry checks. The source tag points to the clean default-branch commit that supplies the build inputs. #101 has not yet been manually booted or installed in a VM; all post-boot behavior remains to be verified. Do not confuse the boot-catalog check with proof of a successful runtime boot.
 
