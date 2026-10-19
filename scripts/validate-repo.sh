@@ -262,8 +262,8 @@ grep -Fq 'needs: [validate, installer-package-validation, live-build-configurati
 grep -Fq 'xvfb-run -a python3 scripts/test-welcome-center-gtk.py' .github/workflows/build-iso.yml
 grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
-grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
-grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/build-iso.yml
+grep -Fq 'sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot' .github/workflows/validate.yml
+grep -Fq 'sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot' .github/workflows/build-iso.yml
 # Keep ISO builds opt-in: only one exact, one-time branch may trigger the #102 release on push.
 grep -Fq '      - rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml
 if [[ "$(grep -Ec '^[[:space:]]+push:' .github/workflows/build-iso.yml)" -ne 1 ]]; then
