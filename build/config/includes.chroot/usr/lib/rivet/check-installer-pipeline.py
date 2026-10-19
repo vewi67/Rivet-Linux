@@ -36,7 +36,6 @@ REQUIRED_EXEC_ORDER = (
     "grubcfg",
     "bootloader",
     "packages",
-    "plymouthcfg",
     "initramfscfg",
     "initramfs",
     "dpkg-unsafe-io-undo",
@@ -184,6 +183,9 @@ def check_root(root):
         problems.append(
             "the preparation UI must include welcome, locale, keyboard, partition, users, and summary."
         )
+
+    if any("plymouthcfg" in modules for modules in exec_phases):
+        problems.append("the installation sequence must not run plymouthcfg because Rivet no longer ships the boot-splash system.")
 
     if len(exec_phases) != 1:
         problems.append(
