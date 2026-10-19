@@ -33,9 +33,9 @@ The Build Rivet ISO workflow requires static repository validation, a Debian Tri
 
 GitHub limits each release asset to less than 2 GiB. If the generated ISO is larger, the workflow splits it into numbered parts below that limit and publishes a reassembly script plus the SHA-256 file. Download all parts into one directory and run `bash reassemble-rivet-iso.sh`; the script joins the parts and verifies the checksum.
 
-## Installer mini-game
+## Calamares wiki
 
-The Calamares branding slideshow includes a lightweight Rivet Pong prototype written in QML. During installation, move the mouse to control the left paddle; the computer controls the right paddle, and the first side to score five points wins. The game's timer follows Calamares slideshow activation and stops when the installer leaves the slideshow. The QML has not yet been verified at runtime inside a generated ISO, so this remains a prototype until that test is completed.
+The installer slideshow now tells the story of Rivet Linux in two readable columns. It covers the Debian/XFCE foundation, visual identity and bundled tools, lessons from the #102 startup failure, and next verification steps. The text uses a normal font size and can scroll vertically on smaller installer windows. The previous mouse-controlled Rivet Pong prototype has been removed.
 
 ## Chip Fixs
 
@@ -45,13 +45,9 @@ The repository validation workflow compiles the app and core and runs `scripts/t
 
 ## Latest generated ISO
 
-The latest published image is [**#102, Animated Boot Experience**](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102). It is published as `Rivet-Linux.amd64.iso` (1,773,174,784 bytes) together with its SHA-256 file, download notes, and the reassembly/verification script. SHA-256: `66f1fd8a37088e7649015036b5f7e2da9aab09d846a23008e66aebda6bc0b083`.
+The latest published image remains [**#102**](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102), named `Rivet-Linux.amd64.iso`. During a real user test, the custom startup splash failed and the system did not complete the desktop handoff. The green build checks and BIOS/UEFI boot-catalog checks did not detect this runtime problem.
 
-Build checks passed: repository validation, Debian Trixie package/Calamares integration, live-build configuration preflight, checksum verification, and explicit BIOS/UEFI El Torito boot-entry checks. The source tag points to the clean default-branch commit that supplies the build inputs. #102 has not yet been manually booted or installed in a VM; all post-boot behavior, including the new animated status log, smoke transition, and display-manager handoff, remains to be verified. Do not confuse the boot-catalog check with proof of a successful runtime boot.
-
-No ISO is built on ordinary pushes. Build #102 is a one-time, explicitly authorized exception triggered only by the dedicated branch `rivet-iso102-authorized-once-20261019`; the workflow refuses to overwrite an existing `rivet-build-102` tag. All subsequent builds remain manual and require explicit `YES`, a positive unused release number, and all three pre-build checks to pass: repository validation, Debian Trixie package/installer integration, and live-build configuration preflight.
-
-The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The English-first locale hook and animated scripted Plymouth theme are included in the source tree used to build #102; their appearance and behavior still need visual verification during VM testing.
+The source correction removes the splash packages, custom theme, status bridge and installer configuration stage; it restores visible text boot status, trims the live dock, and replaces Rivet Pong with the installer wiki. This source revision has not yet been built into a replacement ISO. No ISO is built on normal pushes, and a new build still requires explicit user authorization.
 
 ## Scope
 
