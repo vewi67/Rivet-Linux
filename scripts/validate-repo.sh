@@ -260,7 +260,7 @@ grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
 grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
 grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
-grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
+grep -Fq "tag_name: rivet-build-\${{ inputs.release_number || '102' }}" .github/workflows/build-iso.yml
 grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
@@ -285,13 +285,23 @@ grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/build-iso.yml
-# Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
-if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
-  echo "ERROR: ISO build workflow must not have a push trigger." >&2
+# Keep ISO builds opt-in: only one exact, one-time branch may trigger the #102 release on push.
+grep -Fq '      - rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml
+if [[ "$(grep -Ec '^[[:space:]]+push:' .github/workflows/build-iso.yml)" -ne 1 ]]; then
+  echo "ERROR: expected exactly one scoped push trigger for the authorized ISO #102 build." >&2
+  exit 1
+fi
+if grep -Eq '^[[:space:]]+-[[:space:]]+[*?]' .github/workflows/build-iso.yml; then
+  echo "ERROR: wildcard branch triggers are not allowed for ISO builds." >&2
   exit 1
 fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
-grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
+grep -Fq "if: inputs.authorize_iso == 'YES' || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
+grep -Fq "if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
+grep -Fq 'iso="Rivet-Linux.amd64.iso"' build/build.sh
+grep -Fq 'images=(build/Rivet-Linux.amd64.iso)' .github/workflows/build-iso.yml
+grep -Fq 'parts=(Rivet-Linux.amd64.iso.part-*)' .github/workflows/build-iso.yml
+grep -Fq 'images=(Rivet-Linux.amd64.iso)' .github/workflows/build-iso.yml
 grep -Fq 'xfce4-whiskermenu-plugin' "$PACKAGE_LIST"
 grep -Fq 'whiskermenu-1.rc' "$BRANDING_HOOK"
 grep -Fq 'button-title=Rivet' "$BRANDING_HOOK"
