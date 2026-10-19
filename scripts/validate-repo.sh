@@ -242,7 +242,7 @@ grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
 grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
 grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
-grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
+grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
 grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
 grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
@@ -271,19 +271,19 @@ grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot' .github/workflows/validate.yml
 grep -Fq 'sh build/config/hooks/normal/0900-configure-rivet-calamares-slideshow.hook.chroot' .github/workflows/build-iso.yml
-# Keep ISO builds opt-in: only one exact, one-time branch may trigger the #102 release on push.
-grep -Fq '      - rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml
-if [[ "$(grep -Ec '^[[:space:]]+push:' .github/workflows/build-iso.yml)" -ne 1 ]]; then
-  echo "ERROR: expected exactly one scoped push trigger for the authorized ISO #102 build." >&2
-  exit 1
-fi
-if grep -Eq '^[[:space:]]+-[[:space:]]+[*?]' .github/workflows/build-iso.yml; then
-  echo "ERROR: wildcard branch triggers are not allowed for ISO builds." >&2
-  exit 1
-fi
+# ISO builds must require a manual, affirmative authorization; pushes never build an ISO.
+grep -Fq '  workflow_dispatch:' .github/workflows/build-iso.yml
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
-grep -Fq "if: inputs.authorize_iso == 'YES' || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
-grep -Fq "if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || github.ref == 'refs/heads/rivet-iso102-authorized-once-20261019'" .github/workflows/build-iso.yml
+if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
+  echo "ERROR: automatic push triggers are forbidden for ISO builds." >&2
+  exit 1
+fi
+if grep -Fq 'rivet-iso102-authorized-once-20261019' .github/workflows/build-iso.yml; then
+  echo "ERROR: the legacy one-time ISO trigger must be removed." >&2
+  exit 1
+fi
+grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
+grep -Fq "if: inputs.authorize_iso == 'YES' && inputs.release_number != ''" .github/workflows/build-iso.yml
 grep -Fq 'iso="Rivet-Linux.amd64.iso"' build/build.sh
 grep -Fq 'images=(build/Rivet-Linux.amd64.iso)' .github/workflows/build-iso.yml
 grep -Fq 'parts=(Rivet-Linux.amd64.iso.part-*)' .github/workflows/build-iso.yml
