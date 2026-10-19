@@ -636,7 +636,7 @@ def read_smart_health(device: str) -> tuple[bool, str]:
         output,
         re.IGNORECASE,
     ))
-    command_or_health_error_bits = result.returncode & 0x0F
+    command_or_health_error_bits = result.returncode & 0x1F
     if healthy_status_reported and command_or_health_error_bits == 0:
         if result.returncode:
             output += (
