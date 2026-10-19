@@ -142,8 +142,15 @@ jobs:
     timeout-minutes: 45
 
     steps:
-      - name: Checkout
+      - name: Checkout default-branch source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Record checked-out source revision
+        id: source
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Build inside Debian Trixie
         run: |
@@ -290,21 +297,29 @@ jobs:
           If the release contains a single ISO instead, the same script verifies it.
           README
 
+      - name: Preserve release payload as a recovery artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rivet-build-${{ inputs.release_number }}-release-assets
+          path: build/release-assets/*
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: rivet-build-${{ inputs.release_number }}
           name: "Rivet Linux build #${{ inputs.release_number }}"
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ steps.source.outputs.sha }}
           body: |
             Rivet Linux build #${{ inputs.release_number }}. This is a pre-alpha development build, not a stable release.
-            Source commit: ${{ github.sha }}
+            Source commit: ${{ steps.source.outputs.sha }}
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
             that limit, download all numbered .part-* files and run
             reassemble-rivet-iso.sh in the same directory to reconstruct and
-            verify the ISO. The ISO is published directly in this GitHub Release,
-            not as a short-lived Actions artifact.
+            verify the ISO. The GitHub Release is the primary download; a matching
+            30-day Actions artifact is also retained as a recovery copy if publishing fails.
           prerelease: true
           files: |
             build/release-assets/*

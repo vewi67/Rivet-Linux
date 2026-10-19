@@ -242,11 +242,15 @@ grep -Fq 'name: Publish ISO as a GitHub Release' .github/workflows/build-iso.yml
 grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
 grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
+grep -Fq 'uses: actions/upload-artifact@v4' .github/workflows/build-iso.yml
+grep -Fq 'name: rivet-build-${{ inputs.release_number }}-release-assets' .github/workflows/build-iso.yml
+grep -Fq 'retention-days: 30' .github/workflows/build-iso.yml
+grep -Fq 'ref: ${{ github.event.repository.default_branch }}' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
 grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
 grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
-grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
+grep -Fq 'target_commitish: ${{ steps.source.outputs.sha }}' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
 grep -Fq 'name: Live-build configuration preflight' .github/workflows/validate.yml
