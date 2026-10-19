@@ -17,6 +17,8 @@ WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
 WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
 DOCK_HELPER="build/config/includes.chroot/usr/bin/rivet-start-plank"
 DOCK_TEST="scripts/test-rivet-dock-mode.py"
+PLYMOUTH_SMOKE_GENERATOR="build/config/includes.chroot/usr/lib/rivet/generate-plymouth-smoke.py"
+PLYMOUTH_TEST="scripts/test-plymouth-theme.py"
 ISO_BOOT_VALIDATOR="scripts/validate-iso-boot.sh"
 ISO_BOOT_TEST="scripts/test-iso-boot-validation.py"
 PASSWORD_POLICY_HELPER="build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py"
@@ -42,7 +44,7 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLYMOUTH_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST"
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$RIVET_CONTROL_CENTER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -50,7 +52,7 @@ required_files=(
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
   "$PASSWORD_POLICY_HELPER"
-  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT"
+  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT" "$PLYMOUTH_SMOKE_GENERATOR"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -140,10 +142,11 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLYMOUTH_SMOKE_GENERATOR" "$PLYMOUTH_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
+python3 "$PLYMOUTH_TEST"
 python3 "$PASSWORD_POLICY_TEST"
 python3 scripts/test-build-script.py
 python3 "$ISO_BOOT_TEST"
@@ -213,10 +216,20 @@ grep -Fq 'CONFIGURE_ONLY' build/build.sh
 grep -Fq 'if [[ "$CONFIGURE_ONLY" != true ]]; then' build/build.sh
 grep -Fq 'preserves existing ISO/checksum' scripts/test-build-script.py
 grep -Fq 'python3 scripts/test-build-script.py' scripts/validate-repo.sh
-grep -Fq 'quiet splash locales=en_US.UTF-8' build/build.sh
+grep -Fq 'quiet splash systemd.show_status=1 locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'plymouth-set-default-theme -R rivet' "$BOOT_HOOK"
+grep -Fq 'systemd.show_status=1' "$BOOT_HOOK"
+grep -Fq 'generate-plymouth-smoke.py' "$BOOT_HOOK"
+grep -Fq 'Plymouth.SetUpdateStatusFunction(update_status_callback)' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Plymouth.SetMessageFunction(message_callback)' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Image("smoke-0.png")' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Welcome to Rivet Linux' "$PLYMOUTH_SCRIPT"
+if grep -Fq 'Let us Do the Magic' "$PLYMOUTH_SCRIPT" || grep -Fq 'logo.base_image.Rotate' "$PLYMOUTH_SCRIPT"; then
+  echo "ERROR: legacy spinning-logo boot animation remains in the new Plymouth theme." >&2
+  exit 1
+fi
 grep -Fxq 'Name=Rivet Linux' "$PLYMOUTH_THEME"
 grep -Fxq 'ModuleName=script' "$PLYMOUTH_THEME"
 grep -Fq 'ScriptFile=/usr/share/plymouth/themes/rivet/rivet.script' "$PLYMOUTH_THEME"

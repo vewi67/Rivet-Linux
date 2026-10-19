@@ -1,147 +1,278 @@
-# Rivet Linux boot identity, rendered by Plymouth's script engine.
-# Precompute rotations so each refresh stays lightweight.
+# Rivet Linux two-stage Plymouth boot theme.
+# Phase 1 displays the actual status/message updates received by Plymouth.
+# Phase 2 fades into the Rivet wordmark, animated smoke and welcome message.
 
 Window.SetBackgroundTopColor(0.008, 0.016, 0.032);
 Window.SetBackgroundBottomColor(0.004, 0.028, 0.060);
 
-phase = "boot";
+phase = "logs";
 boot_progress = 0;
-refresh_ticks = 0;
-glow_clock = 0;
 phase_time = 0;
+animation_clock = 0;
+smoke_tick = 0;
 
-logo.frame_count = 36;
-logo.base_image = Image("logo.png").Scale(232, 232);
-logo.images = [];
-for (index = 0; index < logo.frame_count; index++)
+log.max_lines = 8;
+log.line_count = 0;
+log.lines = [];
+log.sprites = [];
+log.max_width = Window.GetWidth() * 0.80;
+log.header.image = Image.Text("RIVET LINUX  /  BOOT SEQUENCE", 0.26, 0.78, 0.98);
+log.header.sprite = Sprite(log.header.image);
+log.subtitle.image = Image.Text("SYSTEMD  /  INITRAMFS  /  KERNEL STATUS", 0.40, 0.61, 0.78);
+log.subtitle.sprite = Sprite(log.subtitle.image);
+
+for (index = 0; index < log.max_lines; index++)
 {
-    logo.images[index] = logo.base_image.Rotate((2 * Math.Pi * index) / logo.frame_count);
+    log.lines[index] = "";
+    log.sprites[index] = Sprite();
+    log.sprites[index].SetOpacity(0);
 }
-logo.frame = 0;
-logo.image = logo.images[0];
-logo.sprite = Sprite(logo.image);
-logo.sprite.SetOpacity(1);
 
-# Layered blue text and a shifting halo create an energy haze, not literal smoke.
-tagline.haze_wide_image = Image.Text("Let us Do the Magic", 0.08, 0.30, 1.0).Scale(560, 58);
-tagline.haze_wide_sprite = Sprite(tagline.haze_wide_image);
-tagline.haze_mid_image = Image.Text("Let us Do the Magic", 0.10, 0.48, 1.0).Scale(510, 48);
-tagline.haze_mid_sprite = Sprite(tagline.haze_mid_image);
-tagline.image = Image.Text("Let us Do the Magic", 0.83, 0.96, 1.0).Scale(450, 42);
-tagline.sprite = Sprite(tagline.image);
+fun render_log_lines ()
+{
+    log.max_width = Window.GetWidth() * 0.80;
+    for (index = 0; index < log.max_lines; index++)
+    {
+        if (log.lines[index] != "")
+        {
+            log.line_image = Image.Text(log.lines[index], 0.72, 0.84, 0.96);
+            if (log.line_image.GetWidth() > log.max_width)
+            {
+                log.line_scale = log.max_width / log.line_image.GetWidth();
+                log.line_image = log.line_image.Scale(
+                    log.max_width,
+                    log.line_image.GetHeight() * log.line_scale
+                );
+            }
+            log.sprites[index].SetImage(log.line_image);
+            log.sprites[index].SetOpacity(1);
+        }
+        else
+            log.sprites[index].SetOpacity(0);
+    }
+}
+
+fun push_log_line (text)
+{
+    if (phase != "logs" || text == "")
+        return;
+
+    if (log.line_count < log.max_lines)
+    {
+        log.lines[log.line_count] = text;
+        log.line_count++;
+    }
+    else
+    {
+        for (index = 0; index < log.max_lines - 1; index++)
+            log.lines[index] = log.lines[index + 1];
+        log.lines[log.max_lines - 1] = text;
+    }
+    render_log_lines();
+}
+
+# These are truthful renderer states, not fabricated kernel/service messages.
+push_log_line("Rivet boot monitor initialized.");
+push_log_line("Waiting for system startup status...");
+
+# Keep the Rivet wordmark at its original aspect ratio.
+logo.source_image = Image("logo.png");
+logo.scale = 1.0;
+logo.max_width = 520;
+logo.max_height = 176;
+if (logo.source_image.GetWidth() > logo.max_width)
+    logo.scale = logo.max_width / logo.source_image.GetWidth();
+if (logo.source_image.GetHeight() * logo.scale > logo.max_height)
+    logo.scale = logo.max_height / logo.source_image.GetHeight();
+logo.image = logo.source_image.Scale(
+    logo.source_image.GetWidth() * logo.scale,
+    logo.source_image.GetHeight() * logo.scale
+);
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetOpacity(0);
+
+# Eight small, transparent smoke frames are generated at image-build time.
+smoke.frame_count = 8;
+smoke.frame = 0;
+smoke.back_frame = 4;
+smoke.source_images = [];
+smoke.source_images[0] = Image("smoke-0.png");
+smoke.source_images[1] = Image("smoke-1.png");
+smoke.source_images[2] = Image("smoke-2.png");
+smoke.source_images[3] = Image("smoke-3.png");
+smoke.source_images[4] = Image("smoke-4.png");
+smoke.source_images[5] = Image("smoke-5.png");
+smoke.source_images[6] = Image("smoke-6.png");
+smoke.source_images[7] = Image("smoke-7.png");
+
+smoke.width = Window.GetWidth() * 0.70;
+if (smoke.width > 1040)
+    smoke.width = 1040;
+smoke.height = smoke.width * smoke.source_images[0].GetHeight() / smoke.source_images[0].GetWidth();
+smoke.images = [];
+for (index = 0; index < smoke.frame_count; index++)
+    smoke.images[index] = smoke.source_images[index].Scale(smoke.width, smoke.height);
+
+smoke.front_sprite = Sprite(smoke.images[0]);
+smoke.back_sprite = Sprite(smoke.images[4]);
+smoke.front_sprite.SetOpacity(0);
+smoke.back_sprite.SetOpacity(0);
 
 welcome.image = Image.Text("Welcome to Rivet Linux", 0.92, 0.98, 1.0).Scale(500, 46);
 welcome.sprite = Sprite(welcome.image);
 welcome.sprite.SetOpacity(0);
 
+fun hide_log_screen ()
+{
+    log.header.sprite.SetOpacity(0);
+    log.subtitle.sprite.SetOpacity(0);
+    for (index = 0; index < log.max_lines; index++)
+        log.sprites[index].SetOpacity(0);
+}
+
+fun begin_brand_phase ()
+{
+    if (phase == "logs")
+    {
+        phase = "brand";
+        phase_time = 0;
+        hide_log_screen();
+    }
+}
+
+fun place_log_screen ()
+{
+    log.header.sprite.SetPosition(
+        Window.GetX() + Window.GetWidth() * 0.085,
+        Window.GetY() + Window.GetHeight() * 0.105,
+        20
+    );
+    log.subtitle.sprite.SetPosition(
+        Window.GetX() + Window.GetWidth() * 0.085,
+        Window.GetY() + Window.GetHeight() * 0.158,
+        20
+    );
+    log.row_y = Window.GetY() + Window.GetHeight() * 0.25;
+    log.row_gap = Window.GetHeight() * 0.047;
+    for (index = 0; index < log.max_lines; index++)
+    {
+        log.sprites[index].SetPosition(
+            Window.GetX() + Window.GetWidth() * 0.085,
+            log.row_y + index * log.row_gap,
+            21 + index
+        );
+    }
+}
+
+fun place_brand_scene (logo_opacity, welcome_opacity)
+{
+    center_x = Window.GetX() + Window.GetWidth() / 2;
+    center_y = Window.GetY() + Window.GetHeight() * 0.405;
+    animation_clock += 0.045;
+    smoke_tick++;
+
+    if (smoke_tick >= 3)
+    {
+        smoke_tick = 0;
+        smoke.frame = (smoke.frame + 1) % smoke.frame_count;
+        smoke.back_frame = (smoke.frame + 4) % smoke.frame_count;
+        smoke.front_sprite.SetImage(smoke.images[smoke.frame]);
+        smoke.back_sprite.SetImage(smoke.images[smoke.back_frame]);
+    }
+
+    smoke_pulse = 0.44 + (Math.Sin(animation_clock) + 1) * 0.09;
+    smoke.front_sprite.SetPosition(
+        center_x - smoke.width / 2 + Math.Sin(animation_clock * 0.44) * 13,
+        center_y - smoke.height * 0.52 + Math.Cos(animation_clock * 0.63) * 8,
+        1
+    );
+    smoke.back_sprite.SetPosition(
+        center_x - smoke.width * 0.48 - Math.Sin(animation_clock * 0.37) * 20,
+        center_y - smoke.height * 0.48 - Math.Sin(animation_clock * 0.50) * 12,
+        2
+    );
+    smoke.back_sprite.SetOpacity(smoke_pulse * 0.58 * logo_opacity);
+    smoke.front_sprite.SetOpacity(smoke_pulse * logo_opacity);
+
+    logo.sprite.SetPosition(
+        center_x - logo.image.GetWidth() / 2,
+        center_y - logo.image.GetHeight() / 2,
+        4
+    );
+    logo.sprite.SetOpacity(logo_opacity);
+
+    welcome.sprite.SetPosition(
+        center_x - welcome.image.GetWidth() / 2,
+        Window.GetY() + Window.GetHeight() * 0.655 - welcome.image.GetHeight() / 2,
+        5
+    );
+    welcome.sprite.SetOpacity(welcome_opacity);
+}
+
 fun refresh_callback ()
 {
-    if (phase == "boot")
+    if (phase == "logs")
     {
-        refresh_ticks++;
-        glow_clock += 0.075;
-        if (refresh_ticks >= 5)
-        {
-            refresh_ticks = 0;
-            logo.frame = (logo.frame + 1) % logo.frame_count;
-            logo.image = logo.images[logo.frame];
-            logo.sprite.SetImage(logo.image);
-        }
-
-        logo.sprite.SetPosition(
-            Window.GetX() + Window.GetWidth() / 2 - logo.image.GetWidth() / 2,
-            Window.GetY() + Window.GetHeight() * 0.34 - logo.image.GetHeight() / 2,
-            2
-        );
-
-        center_x = Window.GetX() + Window.GetWidth() / 2;
-        tagline_y = Window.GetY() + Window.GetHeight() * 0.70;
-        glow = 0.07 + (Math.Sin(glow_clock) + 1) * 0.045;
-        tagline.haze_wide_sprite.SetPosition(
-            center_x - tagline.haze_wide_image.GetWidth() / 2 + Math.Sin(glow_clock * 0.55) * 9,
-            tagline_y - 7 + Math.Sin(glow_clock * 0.7) * 4,
-            1
-        );
-        tagline.haze_wide_sprite.SetOpacity(glow);
-        tagline.haze_mid_sprite.SetPosition(
-            center_x - tagline.haze_mid_image.GetWidth() / 2 + Math.Sin(glow_clock * 0.8) * 5,
-            tagline_y + Math.Cos(glow_clock * 0.65) * 3,
-            2
-        );
-        tagline.haze_mid_sprite.SetOpacity(glow + 0.03);
-        tagline.sprite.SetPosition(center_x - tagline.image.GetWidth() / 2, tagline_y + 2, 3);
-        tagline.sprite.SetOpacity(1);
-
-        # Start the handoff animation near the end; stay on Welcome until Plymouth exits.
-        if (boot_progress >= 0.965)
-        {
-            phase = "transition";
-            phase_time = 0;
-        }
+        place_log_screen();
+        if (boot_progress >= 0.90)
+            begin_brand_phase();
     }
-    else if (phase == "transition")
+
+    if (phase == "brand")
     {
         phase_time += 0.033;
-        if (phase_time < 0.62)
+        if (phase_time < 0.72)
         {
-            fade = 1 - phase_time / 0.62;
+            logo_opacity = phase_time / 0.72;
             welcome_opacity = 0;
+        }
+        else if (phase_time < 1.32)
+        {
+            logo_opacity = 1;
+            welcome_opacity = (phase_time - 0.72) / 0.60;
         }
         else
         {
-            fade = 0;
-            if (phase_time < 1.08)
-                welcome_opacity = (phase_time - 0.62) / 0.46;
-            else
-                welcome_opacity = 1;
-        }
-        logo.sprite.SetOpacity(fade);
-        tagline.haze_wide_sprite.SetOpacity(fade * 0.10);
-        tagline.haze_mid_sprite.SetOpacity(fade * 0.13);
-        tagline.sprite.SetOpacity(fade);
-        welcome.sprite.SetPosition(
-            Window.GetX() + Window.GetWidth() / 2 - welcome.image.GetWidth() / 2,
-            Window.GetY() + Window.GetHeight() * 0.70 - welcome.image.GetHeight() / 2,
-            4
-        );
-        welcome.sprite.SetOpacity(welcome_opacity);
-        if (phase_time >= 1.08)
+            logo_opacity = 1;
+            welcome_opacity = 1;
             phase = "welcome";
+        }
+        place_brand_scene(logo_opacity, welcome_opacity);
     }
-    else
-    {
-        welcome.sprite.SetPosition(
-            Window.GetX() + Window.GetWidth() / 2 - welcome.image.GetWidth() / 2,
-            Window.GetY() + Window.GetHeight() * 0.70 - welcome.image.GetHeight() / 2,
-            4
-        );
-        welcome.sprite.SetOpacity(1);
-    }
+    else if (phase == "welcome")
+        place_brand_scene(1, 1);
 }
 
 fun progress_callback (duration, progress)
 {
     boot_progress = progress;
+    if (phase == "logs" && boot_progress >= 0.90)
+        begin_brand_phase();
+}
+
+fun update_status_callback (status)
+{
+    # systemd/Plymouth status updates are shown verbatim while startup is in progress.
+    push_log_line(status);
+}
+
+fun message_callback (text)
+{
+    # Also accept messages explicitly sent to Plymouth by boot helpers.
+    push_log_line(text);
 }
 
 fun quit_callback ()
 {
-    # Some boot paths skip the final progress tick; preserve the welcome mark at handoff.
-    if (phase == "boot" || phase == "transition")
-    {
-        logo.sprite.SetOpacity(0);
-        tagline.haze_wide_sprite.SetOpacity(0);
-        tagline.haze_mid_sprite.SetOpacity(0);
-        tagline.sprite.SetOpacity(0);
-        welcome.sprite.SetPosition(
-            Window.GetX() + Window.GetWidth() / 2 - welcome.image.GetWidth() / 2,
-            Window.GetY() + Window.GetHeight() * 0.70 - welcome.image.GetHeight() / 2,
-            4
-        );
-        welcome.sprite.SetOpacity(1);
-    }
+    # Preserve the final Rivet identity during the display-manager handoff,
+    # even on systems that skip the final progress callback.
+    hide_log_screen();
+    phase = "welcome";
+    place_brand_scene(1, 1);
 }
 
 Plymouth.SetRefreshFunction(refresh_callback);
 Plymouth.SetBootProgressFunction(progress_callback);
+Plymouth.SetUpdateStatusFunction(update_status_callback);
+Plymouth.SetMessageFunction(message_callback);
 Plymouth.SetQuitFunction(quit_callback);

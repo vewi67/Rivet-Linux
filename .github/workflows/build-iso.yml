@@ -50,6 +50,11 @@ jobs:
             exit 1
           fi
 
+      - name: Install Plymouth smoke-test dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-pil
+
       - name: Validate repository
         run: bash scripts/validate-repo.sh
 

@@ -58,7 +58,9 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add the installed-system Welcome to Rivet settings center with Chip
 - [x] Separate the live installer welcome from the installed settings hub
 - [x] Add automated checks for the welcome UI, launch mode and live-only installer dock item
-- [x] Define the animated Plymouth boot identity and English-first default locale
+- [x] Define the English-first default locale and Plymouth boot identity
+- [x] Replace the legacy spinning logo with a two-stage system-status log and animated Rivet smoke/welcome finale in source
+- [ ] Verify real boot-status messages, smoke animation and graphical handoff in the next ISO on BIOS and UEFI VMs
 - [ ] Verify splash animation, welcome transition, and installed locale in UEFI/BIOS VMs
 - [x] Implement the Chip Fixs interface and diagnostic core prototype
 - [x] Add local hardware inventory and explicitly authorized advanced reads

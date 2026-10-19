@@ -3,6 +3,7 @@ set -eu
 
 THEME_DIR="/usr/share/plymouth/themes/rivet"
 RIVET_LOGO="/etc/calamares/branding/rivet/rivet.logo.png"
+SMOKE_GENERATOR="/usr/lib/rivet/generate-plymouth-smoke.py"
 
 if [ ! -s "$RIVET_LOGO" ]; then
   echo "ERROR: Rivet logo is missing: $RIVET_LOGO" >&2
@@ -10,6 +11,19 @@ if [ ! -s "$RIVET_LOGO" ]; then
 fi
 mkdir -p "$THEME_DIR"
 install -m 0644 "$RIVET_LOGO" "$THEME_DIR/logo.png"
+
+# Generate lightweight smoke frames before Plymouth rebuilds the initramfs.
+if [ ! -s "$SMOKE_GENERATOR" ]; then
+  echo "ERROR: Rivet Plymouth smoke generator is missing: $SMOKE_GENERATOR" >&2
+  exit 1
+fi
+python3 "$SMOKE_GENERATOR" "$THEME_DIR"
+for frame in 0 1 2 3 4 5 6 7; do
+  if [ ! -s "$THEME_DIR/smoke-$frame.png" ]; then
+    echo "ERROR: Rivet Plymouth smoke frame is missing: $THEME_DIR/smoke-$frame.png" >&2
+    exit 1
+  fi
+done
 
 # English is the default language for the live session and new profiles.
 if [ ! -s /etc/locale.gen ]; then
@@ -31,9 +45,10 @@ if [ -f /etc/default/grub ]; then
     current="$(sed -n 's/^GRUB_CMDLINE_LINUX_DEFAULT="\([^"]*\)".*/\1/p' /etc/default/grub)"
     case " $current " in *" quiet "*) ;; *) current="${current:+$current }quiet" ;; esac
     case " $current " in *" splash "*) ;; *) current="${current:+$current }splash" ;; esac
+    case " $current " in *" systemd.show_status=1 "*) ;; *) current="${current:+$current }systemd.show_status=1" ;; esac
     sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"$current\"|" /etc/default/grub
   else
-    printf '%s\n' 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"' >> /etc/default/grub
+    printf '%s\n' 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash systemd.show_status=1"' >> /etc/default/grub
   fi
 fi
 
