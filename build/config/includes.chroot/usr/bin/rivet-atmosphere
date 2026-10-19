@@ -79,7 +79,8 @@ def rivet_wallpaper_prefixes(backdrops: list[tuple[str, str, str]]) -> set[str]:
     }
 
 
-def save_mode(mode: str) -> None:    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+def save_mode(mode: str) -> None:
+    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
     temporary = MODE_FILE.with_suffix(".tmp")
     temporary.write_text(mode + "\n", encoding="utf-8")
     temporary.replace(MODE_FILE)
