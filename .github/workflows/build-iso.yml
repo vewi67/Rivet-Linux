@@ -6,7 +6,6 @@ on:
     branches:
       - rivet-iso103-authorized-once-20261019
   workflow_dispatch:
-  workflow_dispatch:
     inputs:
       authorize_iso:
         description: "Choose YES only when you explicitly authorize generating and publishing a new ISO."
