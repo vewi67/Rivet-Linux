@@ -253,10 +253,10 @@ grep -Fq 'bash build/build.sh --configure-only' .github/workflows/validate.yml
 grep -Fq 'bash build/build.sh --configure-only' .github/workflows/build-iso.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/validate.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/build-iso.yml
-grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/validate.yml
+grep -Fq 'apt-get -s --install-recommends install "${packages[@]}"' .github/workflows/validate.yml
 grep -Fq '        shell: bash' .github/workflows/validate.yml
 grep -Fq '        shell: bash' .github/workflows/build-iso.yml
-grep -Fq 'apt-get -s --no-install-recommends install "${packages[@]}"' .github/workflows/build-iso.yml
+grep -Fq 'apt-get -s --install-recommends install "${packages[@]}"' .github/workflows/build-iso.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/build-iso.yml
 grep -Fq 'needs: [validate, installer-package-validation, live-build-configuration-validation]' .github/workflows/build-iso.yml
 grep -Fq 'xvfb-run -a python3 scripts/test-welcome-center-gtk.py' .github/workflows/build-iso.yml
