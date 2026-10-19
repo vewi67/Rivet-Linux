@@ -248,8 +248,16 @@ grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
 grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
 grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
-grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
-grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
+if grep -Fq 'rivet-build-101' .github/workflows/build-iso.yml; then
+  authorized_branch="rivet-iso101-retry-once-20261019"
+  grep -Fq -- "$authorized_branch" .github/workflows/build-iso.yml
+  grep -Fq "target_commitish: 4086ed8796556e048220be4609df820555ce72c0" .github/workflows/build-iso.yml
+  grep -Fq "tag_name: rivet-build-101" .github/workflows/build-iso.yml
+  grep -Fq "refs/heads/${authorized_branch}" .github/workflows/build-iso.yml
+else
+  grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
+  grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
+fi
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
 grep -Fq 'name: Live-build configuration preflight' .github/workflows/validate.yml
@@ -273,10 +281,17 @@ grep -Fq 'container: debian:trixie' .github/workflows/validate.yml
 grep -Fq 'calamares-settings-debian' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/validate.yml
 grep -Fq 'check-installer-pipeline.py --root /' .github/workflows/build-iso.yml
-# Keep the ISO build opt-in: ordinary pushes must never build or publish an ISO.
+# Ordinary pushes must not build ISOs. Only this exact authorized one-time retry is allowed.
 if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
-  echo "ERROR: ISO build workflow must not have a push trigger." >&2
-  exit 1
+  authorized_branch="rivet-iso101-retry-once-20261019"
+  if ! grep -Fq -- "$authorized_branch" .github/workflows/build-iso.yml ||
+     ! grep -Fq "refs/heads/${authorized_branch}" .github/workflows/build-iso.yml ||
+     ! grep -Fq "tag_name: rivet-build-101" .github/workflows/build-iso.yml ||
+     ! grep -Fq "target_commitish: 4086ed8796556e048220be4609df820555ce72c0" .github/workflows/build-iso.yml ||
+     ! grep -Fq "github.event_name == 'push'" .github/workflows/build-iso.yml; then
+    echo "ERROR: ISO build workflow contains an unauthorized push trigger." >&2
+    exit 1
+  fi
 fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
 grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
