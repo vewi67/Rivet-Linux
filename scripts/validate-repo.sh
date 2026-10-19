@@ -17,9 +17,7 @@ WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
 WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
 DOCK_HELPER="build/config/includes.chroot/usr/bin/rivet-start-plank"
 DOCK_TEST="scripts/test-rivet-dock-mode.py"
-PLYMOUTH_SMOKE_GENERATOR="build/config/includes.chroot/usr/lib/rivet/generate-plymouth-smoke.py"
-BOOT_STATUS_CONFIGURATOR="build/config/includes.chroot/usr/lib/rivet/configure-plymouth-boot-status.py"
-PLYMOUTH_TEST="scripts/test-plymouth-theme.py"
+PLAIN_TEXT_BOOT_TEST="scripts/test-plain-text-boot.py"
 ISO_BOOT_VALIDATOR="scripts/validate-iso-boot.sh"
 ISO_BOOT_TEST="scripts/test-iso-boot-validation.py"
 PASSWORD_POLICY_HELPER="build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py"
@@ -40,12 +38,10 @@ CHIP_FIXS_DESKTOP="build/config/includes.chroot/usr/share/applications/chip-fixs
 CHIP_FIXS_LOGO_SOURCE="assets/chip-fixs/logo.png"
 CHIP_FIXS_LOGO_INCLUDE="build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png"
 BOOT_HOOK="build/config/hooks/normal/0200-configure-rivet-boot-and-locale.hook.chroot"
-PLYMOUTH_THEME="build/config/includes.chroot/usr/share/plymouth/themes/rivet/rivet.plymouth"
-PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/rivet.script"
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLYMOUTH_TEST" "$PASSWORD_POLICY_TEST"
+  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PLAIN_TEXT_BOOT_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST"
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$RIVET_CONTROL_CENTER_LAUNCHER" "$PLANK_AUTOSTART"
@@ -53,7 +49,7 @@ required_files=(
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
   "$PASSWORD_POLICY_HELPER"
-  "$BOOT_HOOK" "$PLYMOUTH_THEME" "$PLYMOUTH_SCRIPT" "$PLYMOUTH_SMOKE_GENERATOR" "$BOOT_STATUS_CONFIGURATOR"
+  "$BOOT_HOOK"
   "$CHIP_DIR/README.md"
   .github/workflows/build-iso.yml .github/workflows/validate.yml
   config/README.md scripts/README.md
@@ -143,11 +139,11 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLYMOUTH_SMOKE_GENERATOR" "$BOOT_STATUS_CONFIGURATOR" "$PLYMOUTH_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$PLAIN_TEXT_BOOT_TEST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
-python3 "$PLYMOUTH_TEST"
+python3 "$PLAIN_TEXT_BOOT_TEST"
 python3 "$PASSWORD_POLICY_TEST"
 python3 scripts/test-build-script.py
 python3 "$ISO_BOOT_TEST"
@@ -190,7 +186,7 @@ for package in \
   network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr \
   gnome-software gnome-software-plugin-deb gnome-software-plugin-flatpak flatpak calamares \
-  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales initramfs-tools plymouth plymouth-themes; do
+  calamares-settings-debian rsync squashfs-tools sudo curl python3-pil python3-gi gir1.2-gtk-3.0 dmidecode smartmontools lm-sensors mesa-utils locales initramfs-tools; do
   require_package "$package"
 done
 
@@ -217,26 +213,9 @@ grep -Fq 'CONFIGURE_ONLY' build/build.sh
 grep -Fq 'if [[ "$CONFIGURE_ONLY" != true ]]; then' build/build.sh
 grep -Fq 'preserves existing ISO/checksum' scripts/test-build-script.py
 grep -Fq 'python3 scripts/test-build-script.py' scripts/validate-repo.sh
-grep -Fq 'quiet splash systemd.show_status=1 locales=en_US.UTF-8' build/build.sh
+grep -Fq 'systemd.show_status=1 locales=en_US.UTF-8' build/build.sh
 grep -Fq 'LANG=en_US.UTF-8' "$BOOT_HOOK"
 grep -Fq 'LC_MESSAGES=en_US.UTF-8' "$BOOT_HOOK"
-grep -Fq 'plymouth-set-default-theme -R rivet' "$BOOT_HOOK"
-grep -Fq 'systemd.show_status=1' "$BOOT_HOOK"
-grep -Fq 'generate-plymouth-smoke.py' "$BOOT_HOOK"
-grep -Fq 'Plymouth.SetUpdateStatusFunction(update_status_callback)' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Plymouth.SetDisplayMessageFunction(message_callback)' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Image("smoke-0.png")' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Welcome to Rivet Linux' "$PLYMOUTH_SCRIPT"
-if grep -Fq 'Let us Do the Magic' "$PLYMOUTH_SCRIPT" || grep -Fq 'logo.base_image.Rotate' "$PLYMOUTH_SCRIPT"; then
-  echo "ERROR: legacy spinning-logo boot animation remains in the new Plymouth theme." >&2
-  exit 1
-fi
-grep -Fxq 'Name=Rivet Linux' "$PLYMOUTH_THEME"
-grep -Fxq 'ModuleName=script' "$PLYMOUTH_THEME"
-grep -Fq 'ScriptFile=/usr/share/plymouth/themes/rivet/rivet.script' "$PLYMOUTH_THEME"
-grep -Fq 'Plymouth.SetRefreshFunction(refresh_callback)' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Plymouth.SetBootProgressFunction(progress_callback)' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Welcome to Rivet Linux' "$PLYMOUTH_SCRIPT"
 for legacy_ui_text in 'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' 'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!'; do
   if grep -Fq "$legacy_ui_text" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$BRANDING_SLIDESHOW"; then
     echo "ERROR: Portuguese UI string remains in the English-first interface: $legacy_ui_text" >&2
@@ -546,14 +525,15 @@ grep -Fq 'slideshow: "show.qml"' "$BRANDING_DESC"
 grep -Fq 'slideshowAPI: 2' "$BRANDING_DESC"
 grep -Fq 'Presentation {' "$BRANDING_SLIDESHOW"
 grep -Fq 'title: qsTr("Installing Rivet Linux")' "$BRANDING_SLIDESHOW"
-grep -Fq 'RIVET PONG' "$BRANDING_SLIDESHOW"
-grep -Fq 'mouseNavigation: false' "$BRANDING_SLIDESHOW"
-grep -Fq 'property int targetScore: 5' "$BRANDING_SLIDESHOW"
-grep -Fq 'function advanceGame()' "$BRANDING_SLIDESHOW"
-grep -Fq 'function awardPlayerPoint()' "$BRANDING_SLIDESHOW"
-grep -Fq 'function awardComputerPoint()' "$BRANDING_SLIDESHOW"
-grep -Fq 'onPositionChanged:' "$BRANDING_SLIDESHOW"
-grep -Fq 'id: gameTimer' "$BRANDING_SLIDESHOW"
+grep -Fq 'RIVET WIKI' "$BRANDING_SLIDESHOW"
+grep -Fq 'WHERE IT STARTED' "$BRANDING_SLIDESHOW"
+grep -Fq 'WHAT WE LEARNED' "$BRANDING_SLIDESHOW"
+grep -Fq 'WHAT COMES NEXT' "$BRANDING_SLIDESHOW"
+grep -Fq 'font.pixelSize: 15' "$BRANDING_SLIDESHOW"
+if grep -Eq 'RIVET PONG|rivetPongField|gameTimer|targetScore' "$BRANDING_SLIDESHOW"; then
+  echo "ERROR: the previous installer minigame remains in the slideshow." >&2
+  exit 1
+fi
 grep -Fq 'calamares-install-debian' "$BRANDING_HOOK"
 grep -Fq 'NoDisplay=true' "$BRANDING_HOOK"
 grep -Fq 'rivet-installer.desktop' "$BRANDING_HOOK"
