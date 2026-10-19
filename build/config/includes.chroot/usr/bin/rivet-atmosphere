@@ -68,8 +68,18 @@ def is_rivet_art(image: str) -> bool:
         return False
 
 
-def save_mode(mode: str) -> None:
-    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
+def rivet_wallpaper_prefixes(backdrops: list[tuple[str, str, str]]) -> set[str]:
+    """Return areas whose known XFCE image aliases all reference Rivet artwork."""
+    grouped: dict[str, list[str]] = {}
+    for _property, prefix, image in backdrops:
+        grouped.setdefault(prefix, []).append(image)
+    return {
+        prefix for prefix, images in grouped.items()
+        if images and all(is_rivet_art(image) for image in images)
+    }
+
+
+def save_mode(mode: str) -> None:    MODE_FILE.parent.mkdir(parents=True, exist_ok=True)
     temporary = MODE_FILE.with_suffix(".tmp")
     temporary.write_text(mode + "\n", encoding="utf-8")
     temporary.replace(MODE_FILE)
@@ -92,9 +102,7 @@ def restore_mode(previous_content: str | None) -> None:
 
 def apply_mode(mode: str) -> tuple[int, int]:
     backdrops = image_properties()
-    eligible_prefixes = {
-        prefix for _prop, prefix, image in backdrops if is_rivet_art(image)
-    }
+    eligible_prefixes = rivet_wallpaper_prefixes(backdrops)
 
     if mode == "ambient" and not eligible_prefixes:
         raise ValueError(
@@ -125,9 +133,14 @@ def apply_mode(mode: str) -> tuple[int, int]:
         # Do not commit the new preference unless the post-apply state can be read.
         refreshed = image_properties()
         active_prefixes = {
-            prefix for _prop, prefix, image in refreshed
-            if is_rivet_art(image) and cycle_enabled(prefix)
+            prefix for prefix in rivet_wallpaper_prefixes(refreshed)
+            if cycle_enabled(prefix)
         }
+        if mode == "ambient" and not active_prefixes:
+            raise RuntimeError(
+                "Atmosphere could not enable any Rivet wallpaper area. "
+                "A personal wallpaper or unavailable image may be taking priority."
+            )
     except (OSError, RuntimeError, ValueError) as error:
         try:
             restore_mode(previous_content)
@@ -232,9 +245,7 @@ class RivetAtmosphere(Gtk.Window):
     def refresh_state(self) -> None:
         try:
             backdrops = image_properties()
-            eligible_prefixes = {
-                prefix for _prop, prefix, image in backdrops if is_rivet_art(image)
-            }
+            eligible_prefixes = rivet_wallpaper_prefixes(backdrops)
             enabled = bool(eligible_prefixes) and all(
                 cycle_enabled(prefix) for prefix in eligible_prefixes
             )
