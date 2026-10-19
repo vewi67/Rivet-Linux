@@ -114,6 +114,29 @@ class AtmosphereStateTests(unittest.TestCase):
                     app.apply_mode("ambient")
         self.assertEqual(self.mode_file.read_text(encoding="utf-8"), "static\\n")
 
+    def test_unknown_saved_mode_is_displayed_as_paused(self):
+        self.mode_file.write_text("corrupt-mode\n", encoding="utf-8")
+        window = object.__new__(app.RivetAtmosphere)
+        window.toggle = mock.Mock()
+        window.status = mock.Mock()
+        with mock.patch.object(app, "image_properties", return_value=self.aliases):
+            with mock.patch.object(app, "cycle_enabled", return_value=True):
+                window.refresh_state()
+        window.toggle.set_active.assert_called_once_with(False)
+        self.assertIn("paused", window.status.set_text.call_args.args[0].lower())
+
+    def test_toggle_failure_does_not_treat_unknown_mode_as_enabled(self):
+        self.mode_file.write_text("corrupt-mode\n", encoding="utf-8")
+        window = object.__new__(app.RivetAtmosphere)
+        window._updating = False
+        window.status = mock.Mock()
+        switch = mock.Mock()
+        switch.get_active.return_value = True
+        with mock.patch.object(app, "apply_mode", side_effect=RuntimeError("simulated guard failure")):
+            window.on_toggle(switch, None)
+        switch.set_active.assert_called_once_with(False)
+        self.assertIn("simulated guard failure", window.status.set_text.call_args.args[0])
+
     def test_query_timeout_is_reported_as_runtime_error(self):
         with mock.patch.object(
             app.subprocess, "run", side_effect=subprocess.TimeoutExpired(["xfconf-query"], 5)
