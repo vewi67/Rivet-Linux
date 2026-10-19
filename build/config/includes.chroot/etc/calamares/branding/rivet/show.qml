@@ -3,305 +3,168 @@ import calamares.slideshow 1.0
 
 Presentation {
     id: presentation
-
-    // The installer slideshow is a game surface, not a navigable presentation.
-    // Keep clicks and navigation keys from accidentally switching slides.
     mouseNavigation: false
     arrowNavigation: false
     keyShortcutsEnabled: false
 
     Slide {
-        id: gameSlide
-        title: qsTr("Installing Rivet Linux")
-        notes: qsTr("Rivet Pong: move the mouse to control the left paddle. The first to reach five points wins.")
+        id: wikiSlide
+        title: qsTr("Rivet Wiki")
+        notes: qsTr("The story of Rivet Linux, what we learned, and what comes next.")
 
         Rectangle {
-            id: rivetPongField
             anchors.fill: parent
             color: "#0b1720"
             radius: 12
             border.color: "#20c997"
             border.width: 2
 
-            property int targetScore: 5
-            property int playerScore: 0
-            property int computerScore: 0
-            property bool gameStarted: false
-            property bool gameFinished: false
-            property real ballVelocityX: 0
-            property real ballVelocityY: 0
+            Column {
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 9
 
-            function resetGame() {
-                playerScore = 0
-                computerScore = 0
-                gameStarted = false
-                gameFinished = false
-                ballVelocityX = 0
-                ballVelocityY = 0
-                playerPaddle.y = (court.height - playerPaddle.height) / 2
-                computerPaddle.y = (court.height - computerPaddle.height) / 2
-                ball.x = (court.width - ball.width) / 2
-                ball.y = (court.height - ball.height) / 2
-            }
-
-            function serve(direction) {
-                ball.x = (court.width - ball.width) / 2
-                ball.y = (court.height - ball.height) / 2
-                ballVelocityX = court.width * 0.0055 * direction
-                ballVelocityY = court.height * (Math.random() * 0.008 - 0.004)
-
-                if (Math.abs(ballVelocityY) < court.height * 0.0018) {
-                    ballVelocityY = court.height * 0.0018 * (Math.random() < 0.5 ? -1 : 1)
-                }
-
-                gameFinished = false
-                gameStarted = true
-            }
-
-            function finishGame() {
-                gameStarted = false
-                gameFinished = true
-                ballVelocityX = 0
-                ballVelocityY = 0
-            }
-
-            function awardPlayerPoint() {
-                playerScore += 1
-                if (playerScore >= targetScore) {
-                    finishGame()
-                } else {
-                    serve(1)
-                }
-            }
-
-            function awardComputerPoint() {
-                computerScore += 1
-                if (computerScore >= targetScore) {
-                    finishGame()
-                } else {
-                    serve(-1)
-                }
-            }
-
-            function advanceGame() {
-                if (!gameStarted || gameFinished || court.width <= 0 || court.height <= 0) {
-                    return
-                }
-
-                // The computer tracks the ball, but deliberately leaves room to beat it.
-                var targetY
-                if (ballVelocityX > 0) {
-                    targetY = ball.y + ball.height / 2 - computerPaddle.height / 2
-                } else {
-                    targetY = (court.height - computerPaddle.height) / 2
-                }
-                var tracking = ballVelocityX > 0 ? 0.065 : 0.035
-                computerPaddle.y += (targetY - computerPaddle.y) * tracking
-                computerPaddle.y = Math.max(0, Math.min(court.height - computerPaddle.height, computerPaddle.y))
-
-                ball.x += ballVelocityX
-                ball.y += ballVelocityY
-
-                if (ball.y < 0) {
-                    ball.y = 0
-                    ballVelocityY = Math.abs(ballVelocityY)
-                } else if (ball.y + ball.height > court.height) {
-                    ball.y = court.height - ball.height
-                    ballVelocityY = -Math.abs(ballVelocityY)
-                }
-
-                if (ballVelocityX < 0
-                        && ball.x <= playerPaddle.x + playerPaddle.width
-                        && ball.x + ball.width >= playerPaddle.x
-                        && ball.y + ball.height >= playerPaddle.y
-                        && ball.y <= playerPaddle.y + playerPaddle.height) {
-                    var playerImpact = (ball.y + ball.height / 2
-                                        - (playerPaddle.y + playerPaddle.height / 2))
-                                       / (playerPaddle.height / 2)
-                    ballVelocityX = Math.min(Math.abs(ballVelocityX) * 1.04, court.width * 0.012)
-                    ballVelocityY = Math.max(-court.height * 0.012,
-                                              Math.min(court.height * 0.012,
-                                                       playerImpact * court.height * 0.008))
-                    ball.x = playerPaddle.x + playerPaddle.width + 2
-                }
-
-                if (ballVelocityX > 0
-                        && ball.x + ball.width >= computerPaddle.x
-                        && ball.x <= computerPaddle.x + computerPaddle.width
-                        && ball.y + ball.height >= computerPaddle.y
-                        && ball.y <= computerPaddle.y + computerPaddle.height) {
-                    var computerImpact = (ball.y + ball.height / 2
-                                          - (computerPaddle.y + computerPaddle.height / 2))
-                                         / (computerPaddle.height / 2)
-                    ballVelocityX = -Math.min(Math.abs(ballVelocityX) * 1.04, court.width * 0.012)
-                    ballVelocityY = Math.max(-court.height * 0.012,
-                                              Math.min(court.height * 0.012,
-                                                       computerImpact * court.height * 0.008))
-                    ball.x = computerPaddle.x - ball.width - 2
-                }
-
-                if (ball.x + ball.width < 0) {
-                    awardComputerPoint()
-                } else if (ball.x > court.width) {
-                    awardPlayerPoint()
-                }
-            }
-
-            Text {
-                id: gameTitle
-                x: 14
-                y: 9
-                text: "RIVET PONG"
-                color: "#e9fff8"
-                font.bold: true
-                font.pixelSize: Math.max(16, rivetPongField.height * 0.055)
-            }
-
-            Text {
-                id: scoreText
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: 9
-                text: rivetPongField.playerScore + "  :  " + rivetPongField.computerScore
-                color: "#e9fff8"
-                font.bold: true
-                font.pixelSize: Math.max(18, rivetPongField.height * 0.06)
-            }
-
-            Text {
-                id: targetText
-                anchors.right: parent.right
-                anchors.rightMargin: 14
-                y: 13
-                text: qsTr("FIRST TO %1").arg(rivetPongField.targetScore)
-                color: "#a9c5d0"
-                font.pixelSize: Math.max(10, rivetPongField.height * 0.032)
-            }
-
-            Item {
-                id: court
-                x: 12
-                y: 46
-                width: parent.width - 24
-                height: Math.max(80, parent.height - 58)
-                clip: true
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: "#08121a"
-                    radius: 7
-                    border.color: "#24404b"
-                    border.width: 1
-                }
-
-                Repeater {
-                    model: 10
-                    Rectangle {
-                        x: (court.width - width) / 2
-                        y: index * court.height / 10
-                        width: 2
-                        height: court.height / 18
-                        radius: 1
-                        color: "#49717d"
-                        opacity: 0.75
-                    }
-                }
-
-                Rectangle {
-                    id: playerPaddle
-                    x: court.width * 0.035
-                    y: (court.height - height) / 2
-                    width: Math.max(6, court.width * 0.022)
-                    height: Math.max(34, court.height * 0.23)
-                    radius: width / 2
+                Text {
+                    text: "RIVET WIKI"
                     color: "#20c997"
+                    font.bold: true
+                    font.pixelSize: 29
                 }
-
+                Text {
+                    text: "A small distro with a big journey."
+                    color: "#dcecf3"
+                    font.pixelSize: 18
+                }
                 Rectangle {
-                    id: computerPaddle
-                    x: court.width - width - court.width * 0.035
-                    y: (court.height - height) / 2
-                    width: Math.max(6, court.width * 0.022)
-                    height: Math.max(34, court.height * 0.23)
-                    radius: width / 2
-                    color: "#60a5fa"
+                    width: parent.width
+                    height: 2
+                    color: "#24404b"
                 }
 
-                Rectangle {
-                    id: ball
-                    width: Math.max(8, court.width * 0.022)
-                    height: width
-                    radius: width / 2
-                    x: (court.width - width) / 2
-                    y: (court.height - height) / 2
-                    color: "#f2fff9"
-                }
+                Row {
+                    id: wikiColumns
+                    width: parent.width
+                    height: parent.height - 92
+                    spacing: 24
 
-                Rectangle {
-                    id: gameOverlay
-                    anchors.fill: parent
-                    z: 10
-                    radius: 7
-                    color: "#061018"
-                    opacity: 0.91
-                    visible: !rivetPongField.gameStarted
+                    Flickable {
+                        id: leftScroll
+                        width: (wikiColumns.width - wikiColumns.spacing) / 2
+                        height: wikiColumns.height
+                        contentWidth: width
+                        contentHeight: leftColumn.implicitHeight
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
 
-                    Text {
-                        anchors.centerIn: parent
-                        width: parent.width * 0.86
-                        text: rivetPongField.gameFinished
-                              ? (rivetPongField.playerScore >= rivetPongField.targetScore
-                                 ? qsTr("YOU WIN!\nClick to play again")
-                                 : qsTr("THE COMPUTER WINS!\nClick to try again"))
-                              : qsTr("MOVE THE MOUSE TO CONTROL THE LEFT PADDLE\nCLICK TO START\nFirst to five points wins")
-                        color: "#e9fff8"
-                        font.bold: true
-                        font.pixelSize: Math.max(13, court.height * 0.055)
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        wrapMode: Text.WordWrap
-                    }
-                }
+                        Column {
+                            id: leftColumn
+                            width: leftScroll.width
+                            spacing: 11
 
-                MouseArea {
-                    id: gameControls
-                    anchors.fill: parent
-                    z: 11
-                    hoverEnabled: true
-
-                    onPositionChanged: {
-                        if (rivetPongField.gameStarted && !rivetPongField.gameFinished) {
-                            playerPaddle.y = Math.max(0,
-                                Math.min(court.height - playerPaddle.height,
-                                         mouse.y - playerPaddle.height / 2))
+                            Text {
+                                text: "WHERE IT STARTED"
+                                color: "#60a5fa"
+                                font.bold: true
+                                font.pixelSize: 17
+                            }
+                            Text {
+                                width: parent.width
+                                text: "Rivet started with a simple goal: make a Linux system that feels like it belongs to the person using it. Debian became the foundation because reliable packages, a maintainable base and a real installer matter more than reinventing everything. XFCE gave us a light desktop to shape, and live-build lets us assemble repeatable images instead of rebuilding everything by hand."
+                                color: "#e8f1f5"
+                                font.pixelSize: 15
+                                lineHeight: 1.18
+                                wrapMode: Text.WordWrap
+                            }
+                            Text {
+                                text: "BUILDING THE SYSTEM"
+                                color: "#60a5fa"
+                                font.bold: true
+                                font.pixelSize: 17
+                            }
+                            Text {
+                                width: parent.width
+                                text: "The project grew its own visual identity: a blue-and-green logo, Chip the beaver, wallpapers, a branded Calamares installer, a welcome screen, a settings hub, a software store and tools such as Chip Fixs. The idea is to make common tasks easier without hiding Linux or taking control away from the person at the keyboard."
+                                color: "#e8f1f5"
+                                font.pixelSize: 15
+                                lineHeight: 1.18
+                                wrapMode: Text.WordWrap
+                            }
                         }
                     }
 
-                    onClicked: {
-                        if (rivetPongField.gameFinished) {
-                            rivetPongField.resetGame()
-                            rivetPongField.serve(1)
-                        } else if (!rivetPongField.gameStarted) {
-                            rivetPongField.serve(1)
+                    Flickable {
+                        id: rightScroll
+                        width: (wikiColumns.width - wikiColumns.spacing) / 2
+                        height: wikiColumns.height
+                        contentWidth: width
+                        contentHeight: rightColumn.implicitHeight
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        Column {
+                            id: rightColumn
+                            width: rightScroll.width
+                            spacing: 11
+
+                            Text {
+                                text: "WHAT WE LEARNED"
+                                color: "#60a5fa"
+                                font.bold: true
+                                font.pixelSize: 17
+                            }
+                            Text {
+                                width: parent.width
+                                text: "We moved through several test images, from #100 and #101 to #102. We wrote build hooks, adjusted package lists, fixed launchers and added automated checks. We also learned that a green build only proves the checks that ran; it cannot prove that a real machine will always reach the desktop."
+                                color: "#e8f1f5"
+                                font.pixelSize: 15
+                                lineHeight: 1.18
+                                wrapMode: Text.WordWrap
+                            }
+                            Text {
+                                text: "RELIABILITY FIRST"
+                                color: "#60a5fa"
+                                font.bold: true
+                                font.pixelSize: 17
+                            }
+                            Text {
+                                width: parent.width
+                                text: "In #102, the custom startup animation failed during a real test and the system did not complete a normal desktop handoff. So we are removing the splash program and its custom integration, returning to visible Linux startup messages, trimming the live dock to essential apps, and replacing Rivet Pong with this wiki. Reliability comes before decoration."
+                                color: "#e8f1f5"
+                                font.pixelSize: 15
+                                lineHeight: 1.18
+                                wrapMode: Text.WordWrap
+                            }
+                            Text {
+                                text: "WHAT COMES NEXT"
+                                color: "#60a5fa"
+                                font.bold: true
+                                font.pixelSize: 17
+                            }
+                            Text {
+                                width: parent.width
+                                text: "Rivet is still pre-alpha. Next we must build a newly authorized image and verify BIOS and UEFI startup, installation to a virtual disk, first login, networking, audio, software updates and removal of live-only launchers. Each bug should become a test or a lesson documented for the next build."
+                                color: "#e8f1f5"
+                                font.pixelSize: 15
+                                lineHeight: 1.18
+                                wrapMode: Text.WordWrap
+                            }
                         }
                     }
+                }
+
+                Text {
+                    text: "Build it, test it, learn from it, and make it better."
+                    color: "#9eb7c3"
+                    font.italic: true
+                    font.pixelSize: 14
                 }
             }
         }
     }
 
-    Timer {
-        id: gameTimer
-        interval: 16
-        repeat: true
-        running: presentation.activatedInCalamares
-        onTriggered: rivetPongField.advanceGame()
-    }
-
     function onActivate() {
         presentation.currentSlide = 0
     }
-
     function onLeave() {
-        // API 2 stops the timer when Calamares leaves the slideshow.
     }
 }
