@@ -62,6 +62,7 @@ def main():
         "WHAT COMES NEXT",
         "font.pixelSize: 15",
         "Flickable",
+        "height: Math.max(120, parent.height - 124)",
     ):
         require(fragment in qml, f"the installer wiki is missing a readable section or layout: {fragment}")
     require("RIVET PONG" not in qml and "rivetPongField" not in qml and "gameTimer" not in qml,
