@@ -203,12 +203,20 @@ def append_root_calamares_log(previous_signature, previous_error):
 
 
 def show_diagnostics(message):
-    try:
-        log_text = LOG_PATH.read_text(encoding="utf-8", errors="replace")
-    except OSError as error:
-        log_text = f"Could not read diagnostic log: {error}"
+    log_text = None
+    read_errors = []
+    selected_path = LOG_PATH
+    for path in dict.fromkeys((LOG_PATH, FALLBACK_LOG_PATH)):
+        try:
+            log_text = path.read_text(encoding="utf-8", errors="replace")
+            selected_path = path
+            break
+        except OSError as error:
+            read_errors.append(f"{path}: {error}")
+    if log_text is None:
+        log_text = "Could not read a diagnostic log. " + "; ".join(read_errors)
     log_text = log_text[-24000:]
-    display_message = f"{message}\n\nDiagnostic log: {LOG_PATH}"
+    display_message = f"{message}\n\nDiagnostic log: {selected_path}"
 
     if Gtk is None:
         write_log(f"GTK diagnostic dialog unavailable: {GTK_IMPORT_ERROR}")
