@@ -274,5 +274,5 @@ fun quit_callback ()
 Plymouth.SetRefreshFunction(refresh_callback);
 Plymouth.SetBootProgressFunction(progress_callback);
 Plymouth.SetUpdateStatusFunction(update_status_callback);
-Plymouth.SetMessageFunction(message_callback);
+Plymouth.SetDisplayMessageFunction(message_callback);
 Plymouth.SetQuitFunction(quit_callback);

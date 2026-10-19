@@ -33,7 +33,7 @@ def main() -> int:
         'phase = "logs";',
         'Image.Text("RIVET LINUX  /  BOOT SEQUENCE"',
         'Plymouth.SetUpdateStatusFunction(update_status_callback);',
-        'Plymouth.SetMessageFunction(message_callback);',
+        'Plymouth.SetDisplayMessageFunction(message_callback);',
         'Plymouth.SetBootProgressFunction(progress_callback);',
         'Plymouth.SetQuitFunction(quit_callback);',
         'Image("smoke-0.png")',

@@ -223,7 +223,7 @@ grep -Fq 'plymouth-set-default-theme -R rivet' "$BOOT_HOOK"
 grep -Fq 'systemd.show_status=1' "$BOOT_HOOK"
 grep -Fq 'generate-plymouth-smoke.py' "$BOOT_HOOK"
 grep -Fq 'Plymouth.SetUpdateStatusFunction(update_status_callback)' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Plymouth.SetMessageFunction(message_callback)' "$PLYMOUTH_SCRIPT"
+grep -Fq 'Plymouth.SetDisplayMessageFunction(message_callback)' "$PLYMOUTH_SCRIPT"
 grep -Fq 'Image("smoke-0.png")' "$PLYMOUTH_SCRIPT"
 grep -Fq 'Welcome to Rivet Linux' "$PLYMOUTH_SCRIPT"
 if grep -Fq 'Let us Do the Magic' "$PLYMOUTH_SCRIPT" || grep -Fq 'logo.base_image.Rotate' "$PLYMOUTH_SCRIPT"; then
@@ -233,10 +233,8 @@ fi
 grep -Fxq 'Name=Rivet Linux' "$PLYMOUTH_THEME"
 grep -Fxq 'ModuleName=script' "$PLYMOUTH_THEME"
 grep -Fq 'ScriptFile=/usr/share/plymouth/themes/rivet/rivet.script' "$PLYMOUTH_THEME"
-grep -Fq 'logo.base_image.Rotate((2 * Math.Pi * index) / logo.frame_count)' "$PLYMOUTH_SCRIPT"
 grep -Fq 'Plymouth.SetRefreshFunction(refresh_callback)' "$PLYMOUTH_SCRIPT"
 grep -Fq 'Plymouth.SetBootProgressFunction(progress_callback)' "$PLYMOUTH_SCRIPT"
-grep -Fq 'Let us Do the Magic' "$PLYMOUTH_SCRIPT"
 grep -Fq 'Welcome to Rivet Linux' "$PLYMOUTH_SCRIPT"
 for legacy_ui_text in 'ATENÇÃO' 'NÃO CONFIRMADO' 'Voltar ao início' 'Verificar agora' 'Opa! Eu sou o Chip.' 'Não disponível' 'Instalando o Rivet Linux' 'VOCÊ VENCEU!'; do
   if grep -Fq "$legacy_ui_text" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$BRANDING_SLIDESHOW"; then
