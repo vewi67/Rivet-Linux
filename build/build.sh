@@ -96,9 +96,8 @@ iso="${images[0]}"
   exit 1
 }
 
-echo "==> Checking ISO format..."
-file "$iso"
-xorriso -indev "$iso" -report_el_torito plain
+echo "==> Checking ISO format and bootable BIOS/UEFI entries..."
+bash "$ROOT_DIR/scripts/validate-iso-boot.sh" "$iso"
 
 checksum_file="$iso.sha256"
 sha256sum "$iso" | tee "$checksum_file"

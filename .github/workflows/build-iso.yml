@@ -157,15 +157,14 @@ jobs:
           test -s "$iso"
           test -s "$checksum"
 
-          echo "==> ISO file:"
+          echo "==> ISO file and checksum:"
           ls -lh "$iso" "$checksum"
-          file "$iso"
 
           echo "==> Verifying SHA-256:"
           (cd build && sha256sum -c "$(basename "$checksum")")
 
-          echo "==> El Torito boot information:"
-          xorriso -indev "$iso" -report_el_torito plain
+          echo "==> Verifying bootable BIOS and UEFI entries:"
+          bash scripts/validate-iso-boot.sh "$iso"
 
           echo "==> ISO validation passed."
 

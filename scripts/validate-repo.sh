@@ -17,6 +17,8 @@ WELCOME_CENTER_TEST="scripts/test-welcome-center.py"
 WELCOME_CENTER_GTK_TEST="scripts/test-welcome-center-gtk.py"
 DOCK_HELPER="build/config/includes.chroot/usr/bin/rivet-start-plank"
 DOCK_TEST="scripts/test-rivet-dock-mode.py"
+ISO_BOOT_VALIDATOR="scripts/validate-iso-boot.sh"
+ISO_BOOT_TEST="scripts/test-iso-boot-validation.py"
 PASSWORD_POLICY_HELPER="build/config/includes.chroot/usr/lib/rivet/configure-calamares-password-policy.py"
 PASSWORD_POLICY_TEST="scripts/test-calamares-password-policy.py"
 INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
@@ -40,8 +42,8 @@ PLYMOUTH_SCRIPT="build/config/includes.chroot/usr/share/plymouth/themes/rivet/ri
 
 required_files=(
   README.md AGENTS.md CONTRIBUTING.md
-  scripts/test-build-script.py scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
-  build/README.md build/build.sh
+  scripts/test-build-script.py "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
+  build/README.md build/build.sh "$ISO_BOOT_VALIDATOR" "$ISO_BOOT_TEST"
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
   "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$RIVET_CONTROL_CENTER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
@@ -89,6 +91,7 @@ fi
 
 echo "==> Checking shell syntax..."
 bash -n build/build.sh
+bash -n "$ISO_BOOT_VALIDATOR"
 bash -n "$BRANDING_HOOK"
 sh -n "$BRANDING_HOOK"
 bash -n "$SLIDESHOW_HOOK"
@@ -137,12 +140,13 @@ PY
 sh -n /tmp/rivet-set-wallpaper-validation.sh
 
 echo "==> Checking Python syntax..."
-PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
+PYTHONPYCACHEPREFIX=/tmp/rivet-pycache python3 -m py_compile "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER" "$ATMOSPHERE_APP" "$INSTALLER_PIPELINE_CHECKER" "$PASSWORD_POLICY_HELPER" "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" scripts/test-build-script.py "$ISO_BOOT_TEST" "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST" scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py
 python3 "$WELCOME_MODE_TEST"
 python3 "$WELCOME_CENTER_TEST"
 python3 "$DOCK_TEST"
 python3 "$PASSWORD_POLICY_TEST"
 python3 scripts/test-build-script.py
+python3 "$ISO_BOOT_TEST"
 python3 scripts/test-wallpaper-defaults.py
 python3 scripts/test-atmosphere.py
 python3 scripts/test-chip-fixs.py
@@ -247,6 +251,8 @@ grep -Fq 'name: Live-build configuration preflight' .github/workflows/validate.y
 grep -Fq 'name: Live-build configuration preflight' .github/workflows/build-iso.yml
 grep -Fq 'needs: [validate, installer-package-validation, live-build-configuration-validation]' .github/workflows/build-iso.yml
 grep -Fq 'Live-build configuration preflight completed; ISO build skipped.' build/build.sh
+grep -Fq 'validate-iso-boot.sh' build/build.sh
+grep -Fq 'bash scripts/validate-iso-boot.sh "$iso"' .github/workflows/build-iso.yml
 grep -Fq 'bash build/build.sh --configure-only' .github/workflows/validate.yml
 grep -Fq 'bash build/build.sh --configure-only' .github/workflows/build-iso.yml
 grep -Fq 'name: Resolve the complete Rivet package set' .github/workflows/validate.yml
