@@ -239,7 +239,7 @@ def show_diagnostics(message):
         content.pack_start(heading, False, False, 8)
 
         location = Gtk.Label(
-            label=f"Diagnostic log: {LOG_PATH}\nYou can select and copy the log below."
+            label=f"Diagnostic log: {selected_path}\nYou can select and copy the log below."
         )
         location.set_line_wrap(True)
         location.set_xalign(0)
