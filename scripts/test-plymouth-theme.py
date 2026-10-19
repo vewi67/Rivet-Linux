@@ -72,8 +72,8 @@ def main() -> int:
             "# -*- shell-script -*-\n"
             "_log_msg()\n"
             "{\n"
-            '\\tif [ "${quiet?}" = "y" ]; then return; fi\n'
-            '\\tprintf "$@"\n'
+            '\tif [ "${quiet?}" = "y" ]; then return; fi\n'
+            '\tprintf "$@"\n'
             "}\n"
         )
         functions_file.write_text(original_functions, encoding="utf-8")
