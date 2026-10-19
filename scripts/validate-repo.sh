@@ -245,6 +245,11 @@ grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
 grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-' .github/workflows/build-iso.yml
+grep -Fq 'release_number:' .github/workflows/build-iso.yml
+grep -Fq 'Validate requested release number' .github/workflows/build-iso.yml
+grep -Fq 'git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}"' .github/workflows/build-iso.yml
+grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
+grep -Fq 'target_commitish: ${{ github.sha }}' .github/workflows/build-iso.yml
 grep -Fq 'name: Validate Rivet' .github/workflows/validate.yml
 grep -Fq 'name: Debian Trixie installer integration' .github/workflows/validate.yml
 grep -Fq 'name: Live-build configuration preflight' .github/workflows/validate.yml

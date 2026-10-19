@@ -12,6 +12,10 @@ on:
           - "NO"
           - "YES"
         default: "NO"
+      release_number:
+        description: "Desired unused release number for rivet-build-N (for example, 102)."
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -28,6 +32,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate requested release number
+        if: inputs.authorize_iso == 'YES'
+        shell: bash
+        env:
+          RELEASE_NUMBER: ${{ inputs.release_number }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            echo "ERROR: release_number must be a positive integer." >&2
+            exit 1
+          fi
+          existing_tag="$(git ls-remote --tags origin "refs/tags/rivet-build-${RELEASE_NUMBER}")"
+          if [[ -n "$existing_tag" ]]; then
+            echo "ERROR: release tag rivet-build-${RELEASE_NUMBER} already exists; choose a new number." >&2
+            exit 1
+          fi
 
       - name: Validate repository
         run: bash scripts/validate-repo.sh
@@ -108,7 +129,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: inputs.authorize_iso == 'YES'
+    if: inputs.authorize_iso == 'YES' && inputs.release_number != ''
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -265,10 +286,12 @@ jobs:
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rivet-build-${{ github.run_number }}
-          name: "Rivet Linux build #${{ github.run_number }}"
+          tag_name: rivet-build-${{ inputs.release_number }}
+          name: "Rivet Linux build #${{ inputs.release_number }}"
+          target_commitish: ${{ github.sha }}
           body: |
-            Automated Rivet Linux development build, not a stable release.
+            Rivet Linux build #${{ inputs.release_number }}. This is a pre-alpha development build, not a stable release.
+            Source commit: ${{ github.sha }}
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
             that limit, download all numbered .part-* files and run
