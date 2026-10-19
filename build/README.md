@@ -51,7 +51,7 @@ Build checks passed: repository validation, Debian Trixie package/Calamares inte
 
 No ISO is built on ordinary pushes. Build #102 is a one-time, explicitly authorized exception triggered only by the dedicated branch `rivet-iso102-authorized-once-20261019`; the workflow refuses to overwrite an existing `rivet-build-102` tag. All subsequent builds remain manual and require explicit `YES`, a positive unused release number, and all three pre-build checks to pass: repository validation, Debian Trixie package/installer integration, and live-build configuration preflight.
 
-The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The English-first locale hook and scripted Plymouth theme are in the source tree used to build #101; their appearance and behavior still need visual verification during VM testing.
+The custom Chip Fixs logo is included from `assets/chip-fixs/logo.png`, staged at `build/config/includes.chroot/usr/share/rivet/chip-fixs/logo.png`, and installed into the hicolor icon theme by the branding hook. The English-first locale hook and animated scripted Plymouth theme are included in the source tree used to build #102; their appearance and behavior still need visual verification during VM testing.
 
 ## Scope
 
