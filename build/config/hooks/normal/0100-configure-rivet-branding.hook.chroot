@@ -311,12 +311,14 @@ for panel_file in \
       <property name="length" type="uint" value="100"/>
       <property name="length-adjust" type="bool" value="true"/>
       <property name="position-locked" type="bool" value="true"/>
-      <property name="size" type="uint" value="26"/>
-      <property name="icon-size" type="uint" value="16"/>
+      <property name="size" type="uint" value="32"/>
+      <property name="icon-size" type="uint" value="20"/>
       <property name="nrows" type="uint" value="1"/>
       <property name="plugin-ids" type="array">
         <value type="int" value="1"/>
         <value type="int" value="2"/>
+        <value type="int" value="3"/>
+        <value type="int" value="4"/>
       </property>
       <property name="background-style" type="uint" value="0"/>
       <property name="enter-opacity" type="uint" value="100"/>
@@ -326,16 +328,57 @@ for panel_file in \
     </property>
   </property>
   <property name="plugins" type="empty">
-    <property name="plugin-1" type="string" value="systray">
+    <property name="plugin-1" type="string" value="whiskermenu"/>
+    <property name="plugin-2" type="string" value="separator">
+      <property name="style" type="uint" value="0"/>
+      <property name="expand" type="bool" value="true"/>
+      <property name="start" type="bool" value="false"/>
+    </property>
+    <property name="plugin-3" type="string" value="systray">
       <property name="show-frame" type="bool" value="false"/>
       <property name="size-max" type="uint" value="22"/>
     </property>
-    <property name="plugin-2" type="string" value="clock">
+    <property name="plugin-4" type="string" value="clock">
       <property name="digital-format" type="string" value="%H:%M"/>
       <property name="tooltip-format" type="string" value="%A %d %B %Y"/>
     </property>
   </property>
 </channel>
+EOF
+done
+
+
+# Configure Whisker Menu as Rivet's app launcher with app search and power actions.
+for whisker_file in "/etc/xdg/xfce4/panel/whiskermenu-1.rc" "/etc/skel/.config/xfce4/panel/whiskermenu-1.rc"; do
+  mkdir -p "$(dirname "$whisker_file")"
+  cat > "$whisker_file" <<'EOF'
+button-title=Rivet
+button-icon=rivet
+show-button-title=true
+show-button-icon=true
+show-command-settings=true
+command-settings=xfce4-settings-manager
+show-command-lockscreen=true
+command-lockscreen=xflock4
+show-command-logout=true
+command-logout=xfce4-session-logout
+show-command-restart=true
+command-restart=xfce4-session-logout --reboot --fast
+show-command-shutdown=true
+command-shutdown=xfce4-session-logout --halt --fast
+show-command-suspend=true
+command-suspend=xfce4-session-logout --suspend
+show-command-hibernate=false
+command-hibernate=xfce4-session-logout --hibernate
+show-command-switchuser=false
+command-switchuser=gdmflexiserver
+show-command-logoutuser=false
+command-logoutuser=xfce4-session-logout --logout --fast
+show-command-menueditor=false
+command-menueditor=menulibre
+show-command-profile=false
+command-profile=mugshot
+confirm-session-command=true
 EOF
 done
 

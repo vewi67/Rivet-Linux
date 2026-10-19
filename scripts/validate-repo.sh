@@ -23,6 +23,7 @@ INSTALLER_HELPER="build/config/includes.chroot/usr/bin/rivet-installer"
 WELCOME_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-welcome.desktop"
 WELCOME_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-welcome.desktop"
 RIVET_INSTALLER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-installer.desktop"
+RIVET_CONTROL_CENTER_LAUNCHER="build/config/includes.chroot/usr/share/applications/rivet-control-center.desktop"
 PLANK_AUTOSTART="build/config/includes.chroot/etc/xdg/autostart/rivet-plank.desktop"
 ATMOSPHERE_APP="build/config/includes.chroot/usr/bin/rivet-atmosphere"
 ATMOSPHERE_GUARD="build/config/includes.chroot/usr/bin/rivet-wallpaper-guard"
@@ -42,7 +43,7 @@ required_files=(
   scripts/test-build-script.py scripts/test-wallpaper-defaults.py scripts/test-atmosphere.py scripts/test-chip-fixs.py "$WELCOME_MODE_TEST" "$WELCOME_CENTER_TEST" "$WELCOME_CENTER_GTK_TEST" "$DOCK_TEST" "$PASSWORD_POLICY_TEST"
   build/README.md build/build.sh
   "$BRANDING_HOOK" "$SLIDESHOW_HOOK" "$BRANDING_DESC" "$BRANDING_SLIDESHOW" "$PACKAGE_LIST" "$WELCOME_APP" "$WELCOME_CENTER_APP" "$DOCK_HELPER" "$INSTALLER_HELPER"
-  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$PLANK_AUTOSTART"
+  "$WELCOME_AUTOSTART" "$WELCOME_LAUNCHER" "$RIVET_INSTALLER_LAUNCHER" "$RIVET_CONTROL_CENTER_LAUNCHER" "$PLANK_AUTOSTART"
   "$ATMOSPHERE_APP" "$ATMOSPHERE_GUARD" "$ATMOSPHERE_DESKTOP" "$INSTALLER_PIPELINE_CHECKER"
   "$CHIP_FIXS_APP" "$CHIP_FIXS_CORE" "$CHIP_FIXS_DESKTOP"
   "$CHIP_FIXS_LOGO_SOURCE" "$CHIP_FIXS_LOGO_INCLUDE" assets/chip-fixs/README.md
@@ -177,7 +178,7 @@ require_package() {
 
 echo "==> Checking required packages..."
 for package in \
-  xfce4 xfce4-panel xfce4-terminal xfce4-notifyd xfce4-power-manager thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
+  xfce4 xfce4-panel xfce4-whiskermenu-plugin xfce4-terminal xfce4-notifyd xfce4-power-manager thunar plank lightdm lightdm-gtk-greeter xserver-xorg \
   network-manager network-manager-gnome blueman pipewire pipewire-pulse pavucontrol wireplumber \
   mate-polkit polkitd pkexec x11-xserver-utils x11-utils firefox-esr \
   gnome-software gnome-software-plugin-deb gnome-software-plugin-flatpak flatpak calamares \
@@ -268,6 +269,19 @@ if grep -Eq '^[[:space:]]+push:' .github/workflows/build-iso.yml; then
 fi
 grep -Fq 'default: "NO"' .github/workflows/build-iso.yml
 grep -Fq "if: inputs.authorize_iso == 'YES'" .github/workflows/build-iso.yml
+grep -Fq 'xfce4-whiskermenu-plugin' "$PACKAGE_LIST"
+grep -Fq 'whiskermenu-1.rc' "$BRANDING_HOOK"
+grep -Fq 'button-title=Rivet' "$BRANDING_HOOK"
+grep -Fq 'button-icon=rivet' "$BRANDING_HOOK"
+grep -Fq 'show-command-shutdown=true' "$BRANDING_HOOK"
+grep -Fq 'show-command-restart=true' "$BRANDING_HOOK"
+grep -Fq 'show-command-logout=true' "$BRANDING_HOOK"
+grep -Fq 'confirm-session-command=true' "$BRANDING_HOOK"
+grep -Fq 'update_menu_entries(' "$DOCK_HELPER"
+grep -Fq 'Welcome.dockitem' "$DOCK_HELPER"
+grep -Fq 'rivet-control-center.desktop' "$DOCK_HELPER"
+grep -Fq 'Name=Rivet Control Center' "$RIVET_CONTROL_CENTER_LAUNCHER"
+grep -Fq 'Exec=/usr/bin/rivet-welcome-center --show-again' "$RIVET_CONTROL_CENTER_LAUNCHER"
 
 echo "==> Checking XFCE status-panel XML..."
 python3 - "$BRANDING_HOOK" <<'PY'
@@ -291,9 +305,16 @@ plugins = {
     item.attrib.get("name"): item.attrib.get("value")
     for item in root.findall("./property[@name='plugins']/property")
 }
-if plugins.get("plugin-1") != "systray":
+if plugins.get("plugin-1") != "whiskermenu":
+    raise SystemExit("ERROR: XFCE top panel must provide the Rivet Whisker application menu.")
+if plugins.get("plugin-2") != "separator":
+    raise SystemExit("ERROR: XFCE top panel must have an expandable separator after the menu.")
+separator = root.find("./property[@name='plugins']/property[@name='plugin-2']/property[@name='expand']")
+if separator is None or separator.attrib.get("value") != "true":
+    raise SystemExit("ERROR: XFCE panel separator must push the tray and clock to the right.")
+if plugins.get("plugin-3") != "systray":
     raise SystemExit("ERROR: XFCE status panel must provide a system tray for NetworkManager.")
-if plugins.get("plugin-2") != "clock":
+if plugins.get("plugin-4") != "clock":
     raise SystemExit("ERROR: XFCE status panel clock plugin is missing.")
 panels = root.find("./property[@name='panels']")
 panel = panels.find("./property[@name='panel-1']") if panels is not None else None
