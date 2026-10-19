@@ -1,11 +1,7 @@
 name: Build Rivet ISO
 
 on:
-  # Exactly one authorized retry for ISO #101 after a release-target permission failure.
-  push:
-    branches:
-      - rivet-iso101-retry-once-20261019
-  # Normal future ISO builds remain manual and opt-in.
+  # ISO builds are opt-in only. The default confirmation is NO.
   workflow_dispatch:
     inputs:
       authorize_iso:
@@ -56,16 +52,6 @@ jobs:
 
       - name: Validate repository
         run: bash scripts/validate-repo.sh
-
-      - name: Ensure the ISO #101 release tag is unused
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ -n "$(git ls-remote --tags origin refs/tags/rivet-build-101)" ]]; then
-            echo "ERROR: rivet-build-101 already exists; refusing to overwrite it." >&2
-            exit 1
-          fi
 
   live-build-configuration-validation:
     name: Live-build configuration preflight
@@ -143,7 +129,7 @@ jobs:
 
   build:
     name: Build ISO
-    if: (inputs.authorize_iso == 'YES' && inputs.release_number != '') || (github.event_name == 'push' && github.ref == 'refs/heads/rivet-iso101-retry-once-20261019')
+    if: inputs.authorize_iso == 'YES' && inputs.release_number != ''
     needs: [validate, installer-package-validation, live-build-configuration-validation]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -300,13 +286,12 @@ jobs:
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: rivet-build-101
-          name: "Rivet Linux #101 - App Menu and Post-Install Fixes"
-          target_commitish: 4086ed8796556e048220be4609df820555ce72c0
+          tag_name: rivet-build-${{ inputs.release_number }}
+          name: "Rivet Linux build #${{ inputs.release_number }}"
+          target_commitish: ${{ github.sha }}
           body: |
-            Rivet Linux #101, with Whisker application search, session power actions, and live-only installer/welcome launchers removed from installed sessions.
-
-            Pre-alpha development build, not a stable release. The ISO was assembled from the Rivet source tree whose installed payload inputs match the clean default-branch commit 4086ed8796556e048220be4609df820555ce72c0. The one-time retry changes only CI release triggering and validation guards; it does not change the ISO payload.
+            Rivet Linux build #${{ inputs.release_number }}. This is a pre-alpha development build, not a stable release.
+            Source commit: ${{ github.sha }}
 
             GitHub limits each release asset to less than 2 GiB. If the ISO exceeds
             that limit, download all numbered .part-* files and run
