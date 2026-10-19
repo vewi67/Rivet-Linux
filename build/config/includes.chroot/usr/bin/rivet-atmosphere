@@ -105,30 +105,47 @@ def apply_mode(mode: str) -> tuple[int, int]:
     previous_content = MODE_FILE.read_text(encoding="utf-8") if MODE_FILE.exists() else None
     save_mode(mode)
     try:
-        result = subprocess.run(
-            [GUARD, "--once"],
-            check=False,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=10,
-        )
-    except subprocess.TimeoutExpired as error:
-        restore_mode(previous_content)
-        raise RuntimeError("Rivet Atmosphere timed out while applying the wallpaper mode.") from error
-    except OSError as error:
-        restore_mode(previous_content)
-        raise RuntimeError(f"Could not start the Rivet wallpaper guard: {error}") from error
+        try:
+            result = subprocess.run(
+                [GUARD, "--once"],
+                check=False,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=10,
+            )
+        except subprocess.TimeoutExpired as error:
+            raise RuntimeError("Rivet Atmosphere timed out while applying the wallpaper mode.") from error
+        except OSError as error:
+            raise RuntimeError(f"Could not start the Rivet wallpaper guard: {error}") from error
 
-    if result.returncode != 0:
-        restore_mode(previous_content)
-        raise RuntimeError(result.stderr.strip() or "Could not update the wallpaper mode.")
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or "Could not update the wallpaper mode.")
 
-    refreshed = image_properties()
-    active_prefixes = {
-        prefix for _prop, prefix, image in refreshed
-        if is_rivet_art(image) and cycle_enabled(prefix)
-    }
+        # Do not commit the new preference unless the post-apply state can be read.
+        refreshed = image_properties()
+        active_prefixes = {
+            prefix for _prop, prefix, image in refreshed
+            if is_rivet_art(image) and cycle_enabled(prefix)
+        }
+    except (OSError, RuntimeError, ValueError) as error:
+        try:
+            restore_mode(previous_content)
+        except OSError as restore_error:
+            raise RuntimeError(
+                f"{error}; additionally, the previous preference could not be restored: {restore_error}"
+            ) from restore_error
+
+        # Best effort: bring XFCE back into line with the restored preference.
+        try:
+            subprocess.run(
+                [GUARD, "--once"], check=False, text=True,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+        raise
+
     return len(active_prefixes), len(eligible_prefixes)
 
 
@@ -248,8 +265,12 @@ class RivetAtmosphere(Gtk.Window):
                 self.status.set_text("Atmosphere is off. Your wallpaper will stay still.")
         except (OSError, RuntimeError, ValueError) as error:
             self.status.set_text(str(error))
+            try:
+                stored_mode = MODE_FILE.read_text(encoding="utf-8").strip() if MODE_FILE.exists() else "ambient"
+            except OSError:
+                stored_mode = "ambient"
             self._updating = True
-            switch.set_active(False)
+            switch.set_active(stored_mode != "static")
             self._updating = False
 
     @staticmethod
