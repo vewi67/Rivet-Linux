@@ -23,6 +23,14 @@ get_image_properties() {
     awk '$1 ~ /^\/backdrop\/screen[0-9]+\/monitor[^/]+\/workspace-?[0-9]+\/(last-image|last-single-image)$/ {print $1}' || true
 }
 
+is_rivet_wallpaper() {
+  image="$1"
+  case "$image" in
+    "$RIVET_WALLPAPER_DIR"/rivet-*.jpeg) [ -s "$image" ] ;;
+    *) return 1 ;;
+  esac
+}
+
 configure_property() {
   property="$1"
   case "$property" in
@@ -39,18 +47,20 @@ configure_property() {
       enabled=false
       ;;
     ambient|"")
-      case "$image" in
-        "$RIVET_WALLPAPER_DIR"/rivet-*.jpeg)
-          if [ -s "$image" ]; then
-            enabled=true
-          else
-            enabled=false
-          fi
-          ;;
-        *)
-          enabled=false
-          ;;
-      esac
+      sibling_property="$prefix/last-image"
+      if [ "$property" = "$sibling_property" ]; then
+        sibling_property="$prefix/last-single-image"
+      fi
+      sibling_image="$(xfconf-query -c "$CHANNEL" -p "$sibling_property" 2>/dev/null || true)"
+
+      # XFCE can retain both aliases for one workspace. If either alias points
+      # outside Rivet's collection, keep the whole area static.
+      if { [ -n "$sibling_image" ] && ! is_rivet_wallpaper "$sibling_image"; } ||
+         ! is_rivet_wallpaper "$image"; then
+        enabled=false
+      else
+        enabled=true
+      fi
       ;;
     *)
       # Unknown preferences fail safe to a static desktop.
