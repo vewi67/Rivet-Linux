@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Regression tests for the conditional Rivet Plank installer item."""
+"""Regression tests for Rivet Plank defaults and conditional live-only entries."""
 
 import importlib.machinery
 import importlib.util
 from pathlib import Path
+import re
 import tempfile
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 APP_PATH = REPOSITORY / "build/config/includes.chroot/usr/bin/rivet-start-plank"
+BRANDING_HOOK = REPOSITORY / "build/config/hooks/normal/0100-configure-rivet-branding.hook.chroot"
 INSTALLER_ITEM = "Install-Rivet.dockitem"
 WELCOME_ITEM = "Welcome.dockitem"
 
@@ -32,12 +34,26 @@ def read_items(settings: Path):
 
 def main():
     module = load_app()
+
+    hook_text = BRANDING_HOOK.read_text(encoding="utf-8")
+    dock_match = re.search(r"^DockItems=(.*?)\s*$", hook_text, re.MULTILINE)
+    if dock_match is None:
+        raise AssertionError("Default Plank settings must define DockItems.")
+    default_items = [item for item in dock_match.group(1).split(";") if item]
+    expected_default_items = [
+        "Firefox.dockitem", "Files.dockitem", "Welcome.dockitem",
+        "Software.dockitem", "Chip-Fixs.dockitem",
+    ]
+    assert default_items == expected_default_items, (
+        f"Unexpected default dock items: {default_items!r}"
+    )
+
     with tempfile.TemporaryDirectory(prefix="rivet-dock-mode-") as temporary:
         settings = Path(temporary) / "settings"
         settings.write_text(
             "[PlankDockPreferences]\n"
             "DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;"
-            "Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;\n"
+            "Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;\n"
             "IconSize=48\n"
             "\n[AnotherSection]\nKeepThis=unchanged\n",
             encoding="utf-8",
@@ -51,7 +67,7 @@ def main():
         assert WELCOME_ITEM not in installed_items
         assert installed_items == [
             "Firefox.dockitem", "Files.dockitem", "Software.dockitem",
-            "Chip-Fixs.dockitem", "Settings.dockitem",
+            "Chip-Fixs.dockitem",
         ]
         installed_snapshot = settings.read_text(encoding="utf-8")
         assert "KeepThis=unchanged" in installed_snapshot
@@ -65,6 +81,10 @@ def main():
         live_items = read_items(settings)
         assert live_items.count(INSTALLER_ITEM) == 1
         assert live_items.count(WELCOME_ITEM) == 1
+        assert live_items == [
+            "Firefox.dockitem", "Files.dockitem", WELCOME_ITEM, INSTALLER_ITEM,
+            "Software.dockitem", "Chip-Fixs.dockitem",
+        ]
         assert live_items.index(INSTALLER_ITEM) == live_items.index(WELCOME_ITEM) + 1
         assert live_items.index(WELCOME_ITEM) == live_items.index("Files.dockitem") + 1
         assert not module.update_dock_items(settings, True), (

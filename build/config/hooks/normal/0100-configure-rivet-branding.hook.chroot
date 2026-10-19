@@ -619,7 +619,7 @@ PLANK_LAUNCHERS="${PLANK_DIR}/launchers"
 mkdir -p "$PLANK_LAUNCHERS"
 cat > "${PLANK_DIR}/settings" <<'EOF'
 [PlankDockPreferences]
-DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;
+DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;Chip-Fixs.dockitem;
 IconSize=48
 Position=3
 Alignment=3

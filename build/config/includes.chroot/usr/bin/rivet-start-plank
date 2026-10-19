@@ -8,6 +8,7 @@ import sys
 
 INSTALLER_ITEM = "Install-Rivet.dockitem"
 WELCOME_ITEM = "Welcome.dockitem"
+REMOVED_DEFAULT_DOCK_ITEMS = frozenset({"Settings.dockitem", "Atmosphere.dockitem"})
 MANAGED_OVERRIDE_MARKER = "X-Rivet-Managed=true"
 HIDDEN_OVERRIDE = (
     "[Desktop Entry]\n"
@@ -74,6 +75,9 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
     original_value = line.rstrip("\r\n").split("=", 1)[1]
     had_trailing_separator = original_value.endswith(";")
     items = [item for item in original_value.split(";") if item]
+
+    # Keep the default dock focused; these apps remain available from the menu/settings.
+    items = [item for item in items if item not in REMOVED_DEFAULT_DOCK_ITEMS]
 
     # Welcome and Install Rivet belong to the live session only.
     # Preserve the welcome item position in live mode and normalize our entries.
