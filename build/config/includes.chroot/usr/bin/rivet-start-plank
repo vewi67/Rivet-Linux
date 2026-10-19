@@ -8,7 +8,7 @@ import sys
 
 INSTALLER_ITEM = "Install-Rivet.dockitem"
 WELCOME_ITEM = "Welcome.dockitem"
-REMOVED_DEFAULT_DOCK_ITEMS = frozenset({"Settings.dockitem", "Atmosphere.dockitem"})
+BASE_DOCK_ITEMS = ("Firefox.dockitem", "Files.dockitem", "Terminal.dockitem")
 MANAGED_OVERRIDE_MARKER = "X-Rivet-Managed=true"
 HIDDEN_OVERRIDE = (
     "[Desktop Entry]\n"
@@ -76,8 +76,8 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
     had_trailing_separator = original_value.endswith(";")
     items = [item for item in original_value.split(";") if item]
 
-    # Keep the default dock focused; these apps remain available from the menu/settings.
-    items = [item for item in items if item not in REMOVED_DEFAULT_DOCK_ITEMS]
+    # Keep only essential apps in the dock; other tools remain in the app menu.
+    items = list(dict.fromkeys(item for item in items if item in BASE_DOCK_ITEMS))
 
     # Welcome and Install Rivet belong to the live session only.
     # Preserve the welcome item position in live mode and normalize our entries.
@@ -87,8 +87,9 @@ def update_dock_items(settings_path: Path, live_session: bool) -> bool:
             index for index, item in enumerate(items) if item == WELCOME_ITEM
         ]
         if not welcome_indexes:
+            terminal_index = next((index for index, item in enumerate(items) if item == "Terminal.dockitem"), None)
             files_index = next((index for index, item in enumerate(items) if item == "Files.dockitem"), None)
-            insert_at = files_index + 1 if files_index is not None else 0
+            insert_at = terminal_index + 1 if terminal_index is not None else files_index + 1 if files_index is not None else 0
             items.insert(insert_at, WELCOME_ITEM)
         else:
             first_welcome = welcome_indexes[0]

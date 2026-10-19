@@ -28,9 +28,11 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add repository validation
 - [x] Add ISO format and boot-metadata checks
 - [x] Generate a SHA-256 checksum during builds
-- [x] Build and publish the #101 ISO and SHA-256 checksum ([GitHub Release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-101)); repository, installer integration, and live-build preflight checks passed, as did checksum and BIOS/UEFI boot-catalog verification.
-- [x] Manually boot and install #100 in a VirtualBox VM; basic desktop/installer path succeeded
-- [ ] Manually boot and install #101 in a VirtualBox VM; verify Whisker menu and post-install launcher cleanup
+- [x] Build and publish #101, then publish #102 with ISO/checksum and BIOS/UEFI boot-catalog checks ([#102 release](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102)).
+- [x] Manually boot and install #100 in a VirtualBox VM; basic desktop/installer path succeeded.
+- [x] Manually test #101; desktop and installer experience was much closer to the target.
+- [x] Report the #102 runtime regression: the custom startup splash failed before the desktop handoff.
+- [ ] Build and runtime-test a new, explicitly authorized image with the plain-text boot path.
 - [ ] Test boot in a VM using UEFI
 - [ ] Test legacy BIOS boot
 - [ ] Test XFCE and default wallpaper
@@ -45,7 +47,8 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add Rivet Software to the application menu, dock, and welcome settings hub
 - [x] Add Whisker Menu with application search and session power actions to the top panel in source
 - [x] Make the installer and live welcome dock/menu entries conditional on live-session detection in source
-- [ ] Verify menu search/power actions and live-only launcher cleanup in the next generated ISO
+- [ ] Verify menu search/power actions, the minimal live dock, and live-only launcher cleanup in the next generated ISO.
+- [ ] Verify the two-column Calamares wiki remains readable at common VM resolutions.
 - [ ] Test application search, installation, removal, and updates in a built ISO
 
 ## Phase 2: First Rivet experience
@@ -58,11 +61,10 @@ Goal: produce a reproducible ISO that boots, starts XFCE, and can be installed i
 - [x] Add the installed-system Welcome to Rivet settings center with Chip
 - [x] Separate the live installer welcome from the installed settings hub
 - [x] Add automated checks for the welcome UI, launch mode and live-only installer dock item
-- [x] Define the English-first default locale and Plymouth boot identity
-- [x] Replace the legacy spinning logo with a two-stage boot-status log and animated Rivet smoke/welcome finale in source
-- [x] Animate incoming boot-log lines and bridge real initramfs-tools messages into Plymouth in source
-- [ ] Verify actual initramfs/system boot messages enter the splash correctly, the smoke animation renders, and the graphical handoff works on BIOS and UEFI VMs
-- [ ] Verify splash animation, welcome transition, and installed locale in UEFI/BIOS VMs
+- [x] Define the English-first default locale.
+- [x] Remove the experimental graphical splash, its package/theme helpers and the installer stage after the #102 runtime regression.
+- [x] Restore visible kernel/systemd startup messages in live and installed boot defaults.
+- [ ] Verify plain-text boot, display-manager handoff, and first desktop login on BIOS and UEFI in the next authorized ISO.
 - [x] Implement the Chip Fixs interface and diagnostic core prototype
 - [x] Add local hardware inventory and explicitly authorized advanced reads
 - [x] Add confirmation-gated recovery actions for selected network/audio service issues

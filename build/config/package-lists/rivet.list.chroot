@@ -9,8 +9,6 @@ thunar-archive-plugin
 thunar-volman
 plank
 initramfs-tools
-plymouth
-plymouth-themes
 lightdm
 lightdm-gtk-greeter
 xserver-xorg

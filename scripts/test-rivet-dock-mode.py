@@ -41,8 +41,7 @@ def main():
         raise AssertionError("Default Plank settings must define DockItems.")
     default_items = [item for item in dock_match.group(1).split(";") if item]
     expected_default_items = [
-        "Firefox.dockitem", "Files.dockitem", "Welcome.dockitem",
-        "Software.dockitem", "Chip-Fixs.dockitem",
+        "Firefox.dockitem", "Files.dockitem", "Terminal.dockitem", "Welcome.dockitem",
     ]
     assert default_items == expected_default_items, (
         f"Unexpected default dock items: {default_items!r}"
@@ -52,8 +51,8 @@ def main():
         settings = Path(temporary) / "settings"
         settings.write_text(
             "[PlankDockPreferences]\n"
-            "DockItems=Firefox.dockitem;Files.dockitem;Welcome.dockitem;Software.dockitem;"
-            "Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;\n"
+            "DockItems=Firefox.dockitem;Files.dockitem;Terminal.dockitem;Welcome.dockitem;Software.dockitem;"
+            "Install-Rivet.dockitem;Chip-Fixs.dockitem;Settings.dockitem;Atmosphere.dockitem;Firefox.dockitem;\n"
             "IconSize=48\n"
             "\n[AnotherSection]\nKeepThis=unchanged\n",
             encoding="utf-8",
@@ -66,8 +65,7 @@ def main():
         assert INSTALLER_ITEM not in installed_items
         assert WELCOME_ITEM not in installed_items
         assert installed_items == [
-            "Firefox.dockitem", "Files.dockitem", "Software.dockitem",
-            "Chip-Fixs.dockitem",
+            "Firefox.dockitem", "Files.dockitem", "Terminal.dockitem",
         ]
         installed_snapshot = settings.read_text(encoding="utf-8")
         assert "KeepThis=unchanged" in installed_snapshot
@@ -82,11 +80,10 @@ def main():
         assert live_items.count(INSTALLER_ITEM) == 1
         assert live_items.count(WELCOME_ITEM) == 1
         assert live_items == [
-            "Firefox.dockitem", "Files.dockitem", WELCOME_ITEM, INSTALLER_ITEM,
-            "Software.dockitem", "Chip-Fixs.dockitem",
+            "Firefox.dockitem", "Files.dockitem", "Terminal.dockitem", WELCOME_ITEM, INSTALLER_ITEM,
         ]
         assert live_items.index(INSTALLER_ITEM) == live_items.index(WELCOME_ITEM) + 1
-        assert live_items.index(WELCOME_ITEM) == live_items.index("Files.dockitem") + 1
+        assert live_items.index(WELCOME_ITEM) == live_items.index("Terminal.dockitem") + 1
         assert not module.update_dock_items(settings, True), (
             "Repeating live-mode configuration should be idempotent."
         )
