@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for Rivet Atmosphere app state rollback and unique-area counts."""
 
+import importlib.machinery
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -20,11 +21,12 @@ repository_module = types.ModuleType("gi.repository")
 repository_module.Gtk = types.SimpleNamespace(Window=object)
 gi_module.repository = repository_module
 with mock.patch.dict(sys.modules, {"gi": gi_module, "gi.repository": repository_module}):
-    spec = importlib.util.spec_from_file_location("rivet_atmosphere_app", APP_PATH)
-    if spec is None or spec.loader is None:
+    loader = importlib.machinery.SourceFileLoader("rivet_atmosphere_app", str(APP_PATH))
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    if spec is None:
         raise AssertionError(f"Could not load {APP_PATH}")
     app = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(app)
+    loader.exec_module(app)
 
 
 class AtmosphereStateTests(unittest.TestCase):
