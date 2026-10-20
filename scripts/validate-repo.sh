@@ -243,6 +243,8 @@ grep -Fq 'split -b 1800M' .github/workflows/build-iso.yml
 grep -Fq 'reassemble-rivet-iso.sh' .github/workflows/build-iso.yml
 grep -Fq 'build/release-assets/*' .github/workflows/build-iso.yml
 grep -Fq 'uses: actions/upload-artifact@v4' .github/workflows/build-iso.yml
+grep -Fq 'name: Diagnose release credential selection' .github/workflows/build-iso.yml
+grep -Fq 'token: ${{ secrets.RELEASE_PAT || github.token }}' .github/workflows/build-iso.yml
 grep -Fq 'name: rivet-build-${{ inputs.release_number }}-release-assets' .github/workflows/build-iso.yml
 grep -Fq 'retention-days: 30' .github/workflows/build-iso.yml
 grep -Fq 'ref: ${{ github.event.repository.default_branch }}' .github/workflows/build-iso.yml
