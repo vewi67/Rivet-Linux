@@ -305,9 +305,21 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Diagnose release credential selection
+        shell: bash
+        env:
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
+        run: |
+          if [[ -n "$RELEASE_PAT" ]]; then
+            echo "Using repository secret RELEASE_PAT to publish the release."
+          else
+            echo "::warning::RELEASE_PAT is not configured; falling back to GITHUB_TOKEN. If publishing gets HTTP 403, set Actions > General > Workflow permissions to Read and write, or add a fine-grained RELEASE_PAT secret with Contents: Read and write."
+          fi
+
       - name: Publish ISO as a GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.RELEASE_PAT || github.token }}
           tag_name: rivet-build-${{ inputs.release_number }}
           name: "Rivet Linux build #${{ inputs.release_number }}"
           target_commitish: ${{ steps.source.outputs.sha }}
