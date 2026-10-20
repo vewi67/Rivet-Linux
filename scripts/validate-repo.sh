@@ -246,7 +246,11 @@ grep -Fq 'uses: actions/upload-artifact@v4' .github/workflows/build-iso.yml
 grep -Fq 'name: Diagnose release credential selection' .github/workflows/build-iso.yml
 grep -Fq 'token: ${{ secrets.RELEASE_PAT || github.token }}' .github/workflows/build-iso.yml
 grep -Fq 'name: rivet-build-${{ inputs.release_number }}-release-assets' .github/workflows/build-iso.yml
-grep -Fq 'retention-days: 30' .github/workflows/build-iso.yml
+grep -Fq 'name: Check recovery artifact size against included storage' .github/workflows/build-iso.yml
+grep -Fq 'max_bytes=$((400 * 1024 * 1024))' .github/workflows/build-iso.yml
+grep -Fq "if: steps.recovery-artifact.outputs.upload == 'true'" .github/workflows/build-iso.yml
+grep -Fq 'continue-on-error: true' .github/workflows/build-iso.yml
+grep -Fq 'retention-days: 3' .github/workflows/build-iso.yml
 grep -Fq 'ref: ${{ github.event.repository.default_branch }}' .github/workflows/build-iso.yml
 grep -Fq 'tag_name: rivet-build-${{ inputs.release_number }}' .github/workflows/build-iso.yml
 grep -Fq 'release_number:' .github/workflows/build-iso.yml
