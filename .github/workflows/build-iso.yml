@@ -297,13 +297,29 @@ jobs:
           If the release contains a single ISO instead, the same script verifies it.
           README
 
+      - name: Check recovery artifact size against included storage
+        id: recovery-artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          size_bytes="$(du -sb build/release-assets | cut -f1)"
+          max_bytes=$((400 * 1024 * 1024))
+          if (( size_bytes > max_bytes )); then
+            echo "upload=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Skipping the Actions recovery artifact because it exceeds 400 MiB; the release assets will still be published."
+          else
+            echo "upload=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Preserve release payload as a recovery artifact
+        if: steps.recovery-artifact.outputs.upload == 'true'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: rivet-build-${{ inputs.release_number }}-release-assets
           path: build/release-assets/*
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3
 
       - name: Diagnose release credential selection
         shell: bash
