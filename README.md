@@ -29,6 +29,13 @@ Those are build-time and image-structure checks, not a substitute for testing th
 
 The manual ISO workflow requires an explicit `YES` authorization, an unused release number, and all three pre-build checks. A normal push does not build or publish an ISO.
 
+## ISO download (not recommended)
+
+The latest published ISO is [Rivet Linux build #102](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102).
+
+> [!WARNING]
+> **Do not download this ISO unless you specifically want to experiment with an unfinished development build.** There is a high chance that it may not work correctly. Booting, installation, and post-install behavior have not been fully verified, and the image is **not recommended for normal use**. Do not install it on a computer you rely on or use it with important data.
+
 ## Current architecture
 
 | Component | Choice |
