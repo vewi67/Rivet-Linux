@@ -28,11 +28,15 @@ The goal is to make everyday computing straightforward without taking control aw
 
 ## Why Rivet is different
 
-### An AI-first Linux experiment
+### The ambition: a Linux distribution made entirely through AI-led development
 
-Rivet is being developed with AI as a central builder and collaborator across its code, configuration, documentation, troubleshooting, and design. One of the project's ambitions is to help pioneer a Linux distribution created entirely through AI-led development.
+AI is a central builder and collaborator across Rivet's code, configuration, documentation, troubleshooting, and design. Rivet aims to push toward a Linux distribution whose development is carried out entirely through AI-led implementation, with human direction and review.
 
-That ambition is part of Rivet's identity and what makes the project exciting: not just using AI to write snippets, but exploring how far AI-assisted development can take a complete operating-system project. **We do not claim that Rivet's status as the world's first 100% AI-made Linux distribution has been independently verified.** The project is still evolving, and its methods and results should be judged openly.
+**Our search for prior art:** we found projects such as [SlopOS](https://github.com/SlopLabs/slopos), which describes itself as an operating system designed and written by AI agents, and [UniqOS](https://github.com/NullLabTests/UniqOS), a custom operating system built with AI assistance. We also found Linux distributions that integrate AI or describe themselves as *vibe-coded*. However, in the sources we checked, we did **not** find independently verified evidence establishing that an earlier Linux distribution was developed **100% by AI**.
+
+That does **not** prove Rivet is the world's first. “100% AI-made” can mean different things, and Rivet's development still involves human direction, decisions, and review. For now, we describe being first as an **ambition and a claim under investigation**, not a verified world record.
+
+**Know an earlier project that fits this exact claim?** Please [open an issue](https://github.com/vewi67/Rivet-Linux/issues) with its name and evidence or links. We'll review credible examples and update this section if we find a project that predates Rivet or better fits the description. The goal is to get the history right, not to win an argument.
 
 ### Our principles
 
