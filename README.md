@@ -1,42 +1,78 @@
 # Rivet Linux
 
-> **Your computer. Your rules.**
+<p align="center">
+  <strong>Your computer. Your rules.</strong><br>
+  A Debian-based Linux distribution exploring what AI-led development can build.
+</p>
 
-Rivet is a Debian-based Linux distribution built around one simple idea:
+<p align="center">
+  <a href="https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102"><strong>⬇️ Download Rivet Linux #102</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/vewi67/Rivet-Linux/releases">All releases</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/vewi67/Rivet-Linux/issues">Report an issue</a>
+</p>
+
+> [!CAUTION]
+> **Experimental ISO: download only if you want to test an unfinished project.** Rivet Linux is in **pre-alpha**, and there is a high chance this ISO may fail to boot, install, or work correctly after installation. It is **not recommended for normal use**. Test it in a virtual machine if possible. Do not install it on a computer you rely on, and never use it with important data.
+>
+> Build #102 has a known startup-splash problem that prevented a normal desktop handoff in testing. Fixes have been made in the source, but those changes have **not** been built into a replacement ISO yet. The download is still the older #102 image.
+
+## What is Rivet?
+
+Rivet Linux is a Debian-based distribution built around one simple principle:
 
 **YOUR COMPUTER IS YOURS. CHANGE WHAT YOU WANT.**
 
-Rivet aims to make everyday computing straightforward without taking control away from the user.
+The goal is to make everyday computing straightforward without taking control away from the person using the computer. Rivet is an independent, experimental project built with Debian components, an XFCE desktop, and custom Rivet tools and artwork.
 
-## Principles
+## Why Rivet is different
+
+### An AI-first Linux experiment
+
+Rivet is being developed with AI as a central builder and collaborator across its code, configuration, documentation, troubleshooting, and design. One of the project's ambitions is to help pioneer a Linux distribution created entirely through AI-led development.
+
+That ambition is part of Rivet's identity and what makes the project exciting: not just using AI to write snippets, but exploring how far AI-assisted development can take a complete operating-system project. **We do not claim that Rivet's status as the world's first 100% AI-made Linux distribution has been independently verified.** The project is still evolving, and its methods and results should be judged openly.
+
+### Our principles
 
 - **Control:** important system decisions should not be hidden.
 - **Simplicity:** common tasks should have obvious paths.
 - **Freedom:** users can configure the system and choose their software.
 - **Lightweight by design:** avoid unnecessary software, services, and layers.
-- **Compatibility:** reuse Debian components and established tools.
+- **Compatibility:** build on Debian and established Linux components.
 - **Clarity:** prefer predictable behavior over unexplained automation.
 
 ## Project status
 
 **Pre-alpha. Not ready for daily use.**
 
-The Debian live-build configuration, Rivet visual identity, Calamares branding, Chip welcome experience, Rivet Atmosphere controls, GNOME Software store with Debian package and Flatpak integration, and Chip Fixs prototype are integrated into the development configuration. The Calamares slideshow now presents a readable Rivet history/wiki page instead of the experimental Rivet Pong game. Chip Fixs includes a GTK interface, separate diagnostic core, hardware inventory, bounded system checks, confirmation-gated service repairs, and its custom icon.
+The development configuration includes:
 
-**Latest published image: [Rivet Linux #102](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102).** A real test found that the custom startup splash in #102 failed before a normal desktop handoff. The current source correction removes the splash program and its custom integration, restores visible Linux startup messages, simplifies the live dock and replaces Rivet Pong with a readable installer wiki. These are source changes, not a new ISO: no replacement image has been built or published yet.
+- Debian live-build image configuration
+- XFCE desktop, LightDM, and Thunar
+- Rivet branding, wallpapers, and Chip the beaver mascot
+- Calamares installer branding
+- Chip welcome experience and installed settings hub
+- Rivet Atmosphere wallpaper controls
+- GNOME Software integration for Debian packages and Flatpak
+- Chip Fixs, an early system-diagnostics and repair prototype
 
-Those are build-time and image-structure checks, not a substitute for testing the new ISO in a VM. Still to verify at runtime: BIOS and UEFI boots, the installed first-login flow, disappearance of live-only dock/menu entries after installation, the Rivet Control Center, networking, audio, wallpapers, Calamares branding, GNOME Software operations, and real-hardware behavior. Rivet remains pre-alpha and is not ready for daily use.
+These features are part of the development configuration. Their presence does **not** mean every feature has been fully tested in a booted or installed system.
 
-The manual ISO workflow requires an explicit `YES` authorization, an unused release number, and all three pre-build checks. A normal push does not build or publish an ISO.
+### What still needs testing
 
-## ISO download (not recommended)
+BIOS and UEFI boot, installation to a virtual disk, first login, removal of live-session-only entries after installation, networking, audio, wallpapers, the settings hub, software installation, and behavior on real hardware all need further runtime verification.
 
-The latest published ISO is [Rivet Linux build #102](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102).
+The latest source changes include removing the faulty custom startup-splash integration, restoring visible Linux startup messages, simplifying the live dock, and replacing the experimental Rivet Pong installer slideshow with a readable Rivet information page. **These source fixes are not included in the published #102 ISO.**
 
-> [!WARNING]
-> **Do not download this ISO unless you specifically want to experiment with an unfinished development build.** There is a high chance that it may not work correctly. Booting, installation, and post-install behavior have not been fully verified, and the image is **not recommended for normal use**. Do not install it on a computer you rely on or use it with important data.
+## Download
 
-## Current architecture
+**[Get Rivet Linux #102 from GitHub Releases](https://github.com/vewi67/Rivet-Linux/releases/tag/rivet-build-102)**
+
+The release page contains the ISO and its supporting download files. Read the warning at the top before downloading. This is an experimental development image, not a stable release.
+
+## Technology
 
 | Component | Choice |
 |---|---|
@@ -46,7 +82,7 @@ The latest published ISO is [Rivet Linux build #102](https://github.com/vewi67/R
 | Display server | Xorg |
 | Display manager | LightDM |
 | File manager | Thunar |
-| Network | NetworkManager |
+| Networking | NetworkManager |
 | Audio | PipeWire + WirePlumber |
 | Init | systemd |
 | Initramfs | initramfs-tools |
@@ -54,63 +90,69 @@ The latest published ISO is [Rivet Linux build #102](https://github.com/vewi67/R
 | Default filesystem | ext4 |
 | ISO builder | Debian live-build |
 | Installer | Calamares |
-| Package management | APT + dpkg + GNOME Software + Flatpak/Flathub |
-| Welcome experience | Python + GTK 3 live welcome and installed settings hub |
-| Wallpaper atmosphere | XFCE native backdrop cycler + GTK 3 control |
-| System utility | Chip Fixs (Python + GTK 3) |
+| Software management | APT, dpkg, GNOME Software, Flatpak/Flathub |
+| Welcome experience | Python + GTK 3 |
+| Wallpaper controls | XFCE + GTK 3 |
+| System utility | Chip Fixs, Python + GTK 3 |
 | Mascot | Chip the beaver |
 
 ## Repository layout
 
-- .github/workflows/: repository checks and ISO build
-- build/build.sh: local ISO build entry point
-- build/config/package-lists/: installed software selection
-- build/config/hooks/: image-time configuration
-- build/config/includes.chroot/: files included in the live system
-- config/: project-level configuration notes
-- docs/: architecture, philosophy, and roadmap
-- scripts/: repository validation
+- `.github/workflows/`: repository checks and ISO build workflow
+- `build/build.sh`: local ISO build entry point
+- `build/config/package-lists/`: installed software selection
+- `build/config/hooks/`: image-time configuration
+- `build/config/includes.chroot/`: files included in the live system
+- `config/`: project-level configuration notes
+- `docs/`: architecture, philosophy, and roadmap
+- `scripts/`: repository validation
 
 ## Validate the repository
 
-Run from the repository root:
+From the repository root, run:
 
-    bash scripts/validate-repo.sh
+```bash
+bash scripts/validate-repo.sh
+```
 
-This checks required files, shell and Python syntax, package-list consistency, branding assets, launcher integration, and documentation conventions. It does not replace building or testing the ISO.
+This checks required files, shell and Python syntax, package-list consistency, branding assets, launcher integration, and documentation conventions. It does not build or test the ISO.
 
 ## Build locally
 
-On a Debian-based build environment with live-build, xorriso, file, and coreutils installed, first check the live-build configuration without generating an ISO:
+On a Debian-based build environment with `live-build`, `xorriso`, `file`, and `coreutils` installed, first run the configuration preflight:
 
-    bash build/build.sh --configure-only
+```bash
+bash build/build.sh --configure-only
+```
 
-When that preflight passes and you have decided to build locally, run:
+After reviewing the preflight and deciding to build, run:
 
-    bash build/build.sh
+```bash
+bash build/build.sh
+```
 
-The resulting ISO and its SHA-256 checksum are written under build/. See build/README.md for details.
+The ISO and SHA-256 checksum are written under `build/`. See [build/README.md](build/README.md) for details.
+
+The automated manual-ISO workflow requires explicit `YES` authorization, an unused release number, and all required pre-build checks. A normal push does not build or publish an ISO.
 
 ## First milestone
 
-The first milestone is a bootable, usable, installable ISO that can:
+Rivet's first milestone is a bootable, usable, installable ISO that can:
 
-1. boot in a virtual machine using BIOS or UEFI;
-2. start XFCE;
-3. provide working networking;
-4. provide audio when the virtual machine exposes it;
-5. launch the included applications;
-6. open the Rivet-branded Calamares installer;
-7. install to a virtual disk;
-8. boot the installed system;
-9. create and use a normal account;
-10. update installed packages.
+1. Boot in a virtual machine using BIOS or UEFI.
+2. Start XFCE.
+3. Provide working networking and audio when supported by the environment.
+4. Launch included applications.
+5. Open the Rivet-branded Calamares installer.
+6. Install to a virtual disk and boot the installed system.
+7. Create and use a normal account.
+8. Update installed packages.
 
-This is a development image, not a release. Do not use it as the only copy of an important system.
+Rivet has **not yet demonstrated that all these milestones work reliably**. The project is still under active development.
 
 ## License and attribution
 
-Rivet's original source code, build scripts, and configuration are licensed under **GNU GPL-3.0-or-later**, unless a file says otherwise. This lets others use Rivet as a foundation, modify it, and redistribute covered code under the license's terms. Modified distributions must preserve required notices and clearly identify modifications as required by the GPL.
+Rivet's original source code, build scripts, and configuration are licensed under **GNU GPL-3.0-or-later**, unless a file says otherwise. Covered code may be used, modified, and redistributed under the license's terms, with required notices preserved.
 
 Rivet branding and artwork, including the name, logo, and Chip mascot, are not automatically covered by the code license. See [docs/branding-and-attribution.md](docs/branding-and-attribution.md) for attribution guidance, branding boundaries, and third-party license notes.
 
@@ -118,4 +160,4 @@ Rivet branding and artwork, including the name, logo, and Chip mascot, are not a
 
 > **Define before implementing. Keep stable components when they work. Do not add complexity just because it is possible.**
 
-See docs/architecture.md, docs/roadmap.md, docs/branding-and-attribution.md, and CONTRIBUTING.md.
+See [docs/architecture.md](docs/architecture.md), [docs/roadmap.md](docs/roadmap.md), [docs/branding-and-attribution.md](docs/branding-and-attribution.md), and [CONTRIBUTING.md](CONTRIBUTING.md).
